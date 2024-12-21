@@ -3,7 +3,6 @@ package com.flansmod.warforge.server;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.SortedSet;
 import java.util.UUID;
 
 import com.flansmod.warforge.common.WarForgeMod;
@@ -128,7 +127,7 @@ public class Leaderboard
 		info.stat = stat;
 		if(playerAsking != null && !playerAsking.equals(Faction.NULL))
 		{
-			Faction faction = WarForgeMod.FACTIONS.GetFactionOfPlayer(playerAsking);
+			Faction faction = WarForgeMod.FACTIONS.getFactionOfPlayer(playerAsking);
 			if(faction != null)
 				info.mMyFaction = faction.CreateInfo();
 		}

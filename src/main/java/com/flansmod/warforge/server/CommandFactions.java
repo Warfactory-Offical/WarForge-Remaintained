@@ -1,7 +1,6 @@
 package com.flansmod.warforge.server;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -109,7 +108,7 @@ public class CommandFactions extends CommandBase
 		Faction faction = null;
 		if(sender instanceof EntityPlayer)
 		{
-			faction = WarForgeMod.FACTIONS.GetFactionOfPlayer(((EntityPlayer)sender).getUniqueID());
+			faction = WarForgeMod.FACTIONS.getFactionOfPlayer(((EntityPlayer)sender).getUniqueID());
 		}
 		
 		// Argument 0 is subcommand
@@ -129,7 +128,7 @@ public class CommandFactions extends CommandBase
 				sender.sendMessage(new TextComponentString("/f legacy"));
 				sender.sendMessage(new TextComponentString("/f notoriety"));
 				
-				if(WarForgeMod.IsOp(sender))
+				if(WarForgeMod.isOp(sender))
 				{
 					sender.sendMessage(new TextComponentString("/f safezone"));
 					sender.sendMessage(new TextComponentString("/f warzone"));
@@ -160,7 +159,7 @@ public class CommandFactions extends CommandBase
 				}
 				
 				// First, resolve the op version where we can specify the faction
-				if(args.length >= 3 && WarForgeMod.IsOp(sender))
+				if(args.length >= 3 && WarForgeMod.isOp(sender))
 				{
 					faction = WarForgeMod.FACTIONS.GetFaction(args[2]);
 					if(faction != null)
@@ -193,7 +192,7 @@ public class CommandFactions extends CommandBase
 			}
 			case "disband":
 			{
-				if(WarForgeMod.IsOp(sender) && args.length == 2)
+				if(WarForgeMod.isOp(sender) && args.length == 2)
 				{
 					Faction toDisband = WarForgeMod.FACTIONS.GetFaction(args[1]);
 					if(toDisband != null)
@@ -230,7 +229,7 @@ public class CommandFactions extends CommandBase
 						
 						if(faction == null)
 						{
-							faction = WarForgeMod.FACTIONS.GetFactionOfPlayer(toRemoveID);
+							faction = WarForgeMod.FACTIONS.getFactionOfPlayer(toRemoveID);
 						}
 						
 						WarForgeMod.FACTIONS.RequestRemovePlayerFromFaction(sender, faction.mUUID, toRemoveID);
@@ -276,7 +275,7 @@ public class CommandFactions extends CommandBase
 						}
 						else
 						{
-							Faction targetFaction = WarForgeMod.FACTIONS.GetFactionOfPlayer(profile.getId());
+							Faction targetFaction = WarForgeMod.FACTIONS.getFactionOfPlayer(profile.getId());
 							if(targetFaction == null)
 							{
 								sender.sendMessage(new TextComponentString("That player is not in a faction"));
@@ -299,7 +298,7 @@ public class CommandFactions extends CommandBase
 
 				long day = WarForgeMod.INSTANCE.numberOfSiegeDaysTicked;
 				long flagCoolown = WarForgeMod.FACTIONS.getPlayerCooldown(sender.getCommandSenderEntity().getUniqueID());
-				long ms = WarForgeMod.INSTANCE.GetMSToNextYield();
+				long ms = WarForgeMod.INSTANCE.getTimeToNextYieldMs();
 				long s = ms / 1000;
 				long m = s / 60;
 				long h = m / 60;
@@ -311,7 +310,7 @@ public class CommandFactions extends CommandBase
 				+ String.format("%02d", (m % 60)) + ":"
 				+ String.format("%02d", (s % 60))));
 				
-				ms = WarForgeMod.INSTANCE.GetMSToNextSiegeAdvance();
+				ms = WarForgeMod.INSTANCE.getTimeToNextSiegeAdvanceMs();
 				s = ms / 1000;
 				m = s / 60;
 				h = m / 60;
@@ -348,7 +347,7 @@ public class CommandFactions extends CommandBase
 					}
 					if(factionToSend == null)
 					{
-						factionToSend = WarForgeMod.FACTIONS.GetFactionOfPlayer(((EntityPlayerMP)sender).getUniqueID());
+						factionToSend = WarForgeMod.FACTIONS.getFactionOfPlayer(((EntityPlayerMP)sender).getUniqueID());
 					}
 
 					if(factionToSend == null)
@@ -356,7 +355,7 @@ public class CommandFactions extends CommandBase
 						sender.sendMessage(new TextComponentString("Could not find that faction"));
 					}
 					else {
-						Faction senderFaction = WarForgeMod.FACTIONS.GetFactionOfPlayer(((EntityPlayerMP) sender).getUniqueID());
+						Faction senderFaction = WarForgeMod.FACTIONS.getFactionOfPlayer(((EntityPlayerMP) sender).getUniqueID());
 						if (senderFaction == null || senderFaction.mUUID.equals(Faction.NULL) || !senderFaction.equals(factionToSend)) {
 							sender.sendMessage(new TextComponentString("Information cannot be provided to non-faction members"));
 						} else {
@@ -493,12 +492,12 @@ public class CommandFactions extends CommandBase
 			case "safezone":
 			case "claimsafe":
 			{
-				if(WarForgeMod.IsOp(sender))
+				if(WarForgeMod.isOp(sender))
 				{
 					if(sender instanceof EntityPlayer)
 					{
 						EntityPlayer player = (EntityPlayer)sender;
-						DimChunkPos pos = new DimBlockPos(player.dimension, player.getPosition()).ToChunkPos();
+						DimChunkPos pos = new DimBlockPos(player.dimension, player.getPosition()).toChunkPos();
 						WarForgeMod.FACTIONS.RequestOpClaim(player, pos, FactionStorage.SAFE_ZONE_ID);
 					}
 					else
@@ -516,12 +515,12 @@ public class CommandFactions extends CommandBase
 			case "war":
 			case "claimwarzone":
 			{
-				if(WarForgeMod.IsOp(sender))
+				if(WarForgeMod.isOp(sender))
 				{
 					if(sender instanceof EntityPlayer)
 					{
 						EntityPlayer player = (EntityPlayer)sender;
-						DimChunkPos pos = new DimBlockPos(player.dimension, player.getPosition()).ToChunkPos();
+						DimChunkPos pos = new DimBlockPos(player.dimension, player.getPosition()).toChunkPos();
 						WarForgeMod.FACTIONS.RequestOpClaim(player, pos, FactionStorage.WAR_ZONE_ID);
 					}
 					else
@@ -539,7 +538,7 @@ public class CommandFactions extends CommandBase
 			case "protection":
 			case "protectionOverride":
 			{
-				if(WarForgeMod.IsOp(sender))
+				if(WarForgeMod.isOp(sender))
 				{
 					ProtectionsModule.OP_OVERRIDE = !ProtectionsModule.OP_OVERRIDE;
 					if(ProtectionsModule.OP_OVERRIDE)
@@ -623,7 +622,7 @@ public class CommandFactions extends CommandBase
 			}
 			case "clearnotoriety":
 			{
-				if(WarForgeMod.IsOp(sender))
+				if(WarForgeMod.isOp(sender))
 				{
 					WarForgeMod.FACTIONS.ClearNotoriety();
 				}
@@ -631,7 +630,7 @@ public class CommandFactions extends CommandBase
 			}
 			case "clearlegacy":
 			{
-				if(WarForgeMod.IsOp(sender))
+				if(WarForgeMod.isOp(sender))
 				{
 					WarForgeMod.FACTIONS.ClearLegacy();
 				}
@@ -676,7 +675,7 @@ public class CommandFactions extends CommandBase
 			}
 			case "resetflagcooldowns":
 			{
-				if(WarForgeMod.IsOp(sender))
+				if(WarForgeMod.isOp(sender))
 				{
 					WarForgeMod.FACTIONS.OpResetFlagCooldowns();
 				}

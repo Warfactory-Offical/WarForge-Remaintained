@@ -1,7 +1,6 @@
 package com.flansmod.warforge.server;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import com.flansmod.warforge.common.DimBlockPos;
@@ -61,7 +60,7 @@ public class TeleportsModule
 			return;
 		}
 		
-		Faction faction = WarForgeMod.FACTIONS.GetFactionOfPlayer(player.getUniqueID());
+		Faction faction = WarForgeMod.FACTIONS.getFactionOfPlayer(player.getUniqueID());
 		if(faction == null)
 		{
 			player.sendMessage(new TextComponentString("You are not in a faction"));

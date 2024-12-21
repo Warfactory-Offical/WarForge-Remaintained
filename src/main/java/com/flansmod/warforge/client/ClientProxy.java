@@ -22,7 +22,6 @@ import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemBlock;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -31,11 +30,9 @@ import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.relauncher.Side;
 
 public class ClientProxy extends CommonProxy
 {
@@ -46,7 +43,7 @@ public class ClientProxy extends CommonProxy
 			"key.warforge.factionchat");
 	
 	@Override
-	public void PreInit(FMLPreInitializationEvent event)
+	public void preInit(FMLPreInitializationEvent event)
 	{
 		MinecraftForge.EVENT_BUS.register(this);
 		MinecraftForge.EVENT_BUS.register(new ClientTickHandler());
@@ -134,17 +131,17 @@ public class ClientProxy extends CommonProxy
 	public void UpdateSiegeInfo(SiegeCampProgressInfo info) 
 	{
 		// sent to client on server stop to avoid de-sync
-		if (info.mAttackingName.equals("c") && info.mDefendingName.equals("c")) {
+		if (info.attackingName.equals("c") && info.defendingName.equals("c")) {
 			sSiegeInfo.clear();
 			return;
 		}
 
-		if(sSiegeInfo.containsKey(info.mAttackingPos))
+		if(sSiegeInfo.containsKey(info.attackingPos))
 		{
-			sSiegeInfo.remove(info.mAttackingPos);
+			sSiegeInfo.remove(info.attackingPos);
 		}
 		
-		sSiegeInfo.put(info.mAttackingPos, info);
+		sSiegeInfo.put(info.attackingPos, info);
 	}
 	
 	public static void RequestFactionInfo(UUID factionID)

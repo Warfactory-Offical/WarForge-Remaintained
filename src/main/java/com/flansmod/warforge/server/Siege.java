@@ -15,8 +15,6 @@ import net.minecraft.nbt.NBTTagIntArray;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
@@ -124,11 +122,11 @@ public class Siege {
 		}
 		
 		SiegeCampProgressInfo info = new SiegeCampProgressInfo();
-		info.mAttackingPos = mAttackingSiegeCamps.get(0);
-		info.mAttackingName = attackers.mName;
+		info.attackingPos = mAttackingSiegeCamps.get(0);
+		info.attackingName = attackers.mName;
 		info.mAttackingColour = attackers.mColour;
-		info.mDefendingPos = mDefendingClaim;
-		info.mDefendingName = defenders.mName;
+		info.defendingPos = mDefendingClaim;
+		info.defendingName = defenders.mName;
 		info.mDefendingColour = defenders.mColour;
 		info.mProgress = GetAttackProgress();
 		info.mCompletionPoint = GetAttackSuccessThreshold();
@@ -147,8 +145,8 @@ public class Siege {
 		}
 		
 		CalculateBasePower();
-		WarForgeMod.INSTANCE.MessageAll(new TextComponentString(attackers.mName + " started a siege against " + defenders.mName), true);
-		WarForgeMod.FACTIONS.SendSiegeInfoToNearby(mDefendingClaim.ToChunkPos());
+		WarForgeMod.INSTANCE.messageAll(new TextComponentString(attackers.mName + " started a siege against " + defenders.mName), true);
+		WarForgeMod.FACTIONS.SendSiegeInfoToNearby(mDefendingClaim.toChunkPos());
 		return true;
 	}
 	
@@ -206,7 +204,7 @@ public class Siege {
 			attackers.MessageAll(new TextComponentString("Your siege on " + defenders.mName + " at " + mDefendingClaim.ToFancyString() + " did not shift today. The progress is at " + GetAttackProgress() + "/" + mBaseDifficulty));
 		}
 		
-		WarForgeMod.FACTIONS.SendSiegeInfoToNearby(mDefendingClaim.ToChunkPos());
+		WarForgeMod.FACTIONS.SendSiegeInfoToNearby(mDefendingClaim.toChunkPos());
 	}
 	
 	public void CalculateBasePower()
@@ -232,11 +230,11 @@ public class Siege {
 			}
 		}
 		
-		DimChunkPos defendingChunk = mDefendingClaim.ToChunkPos();
+		DimChunkPos defendingChunk = mDefendingClaim.toChunkPos();
 		for(EnumFacing direction : EnumFacing.HORIZONTALS)
 		{
 			DimChunkPos checkChunk = defendingChunk.Offset(direction, 1);
-			UUID factionInChunk = WarForgeMod.FACTIONS.GetClaim(checkChunk);
+			UUID factionInChunk = WarForgeMod.FACTIONS.getClaim(checkChunk);
 			// Sum up all additional attack claims
 			if(factionInChunk.equals(mAttackingFaction))
 			{
@@ -290,7 +288,7 @@ public class Siege {
 
     private boolean isPlayerInWarzone(DimBlockPos siegeCampPos, EntityPlayerMP player) {
 		// convert siege camp pos to chunk pos and player to chunk pos for clarity
-		DimChunkPos siegeCampChunkPos = siegeCampPos.ToChunkPos();
+		DimChunkPos siegeCampChunkPos = siegeCampPos.toChunkPos();
 		DimChunkPos playerChunkPos = new DimChunkPos(player.dimension, player.getPosition());
 
         return isPlayerInRadius(siegeCampChunkPos, playerChunkPos);
@@ -317,8 +315,8 @@ public class Siege {
     public void OnPVPKill(EntityPlayerMP killer, EntityPlayerMP killed) {
         Faction attackers = WarForgeMod.FACTIONS.GetFaction(mAttackingFaction);
         Faction defenders = WarForgeMod.FACTIONS.GetFaction(mDefendingFaction);
-        Faction killerFaction = WarForgeMod.FACTIONS.GetFactionOfPlayer(killer.getUniqueID());
-        Faction killedFaction = WarForgeMod.FACTIONS.GetFactionOfPlayer(killed.getUniqueID());
+        Faction killerFaction = WarForgeMod.FACTIONS.getFactionOfPlayer(killer.getUniqueID());
+        Faction killedFaction = WarForgeMod.FACTIONS.getFactionOfPlayer(killed.getUniqueID());
 
         if (attackers == null || defenders == null || WarForgeMod.MC_SERVER == null) {
             WarForgeMod.LOGGER.error("Invalid factions in siege.");
@@ -346,7 +344,7 @@ public class Siege {
 
 		// update progress appropriately; either valid attack, or def by this point, so state of one bool implies the state of the other
 		mAttackProgress += attackValid ? WarForgeConfig.SIEGE_SWING_PER_DEFENDER_DEATH : -WarForgeConfig.SIEGE_SWING_PER_ATTACKER_DEATH;
-		WarForgeMod.FACTIONS.SendSiegeInfoToNearby(mDefendingClaim.ToChunkPos());
+		WarForgeMod.FACTIONS.SendSiegeInfoToNearby(mDefendingClaim.toChunkPos());
 
 		// build notification
 		ITextComponent notification = new TextComponentTranslation("warforge.notification.siege_death",

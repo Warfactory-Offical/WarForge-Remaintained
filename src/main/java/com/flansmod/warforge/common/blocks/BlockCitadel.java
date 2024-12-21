@@ -30,8 +30,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class BlockCitadel extends Block implements ITileEntityProvider
 {
@@ -69,7 +67,7 @@ public class BlockCitadel extends Block implements ITileEntityProvider
 	public boolean canPlaceBlockAt(World world, BlockPos pos)
 	{
 		// Can't claim a chunk claimed by another faction
-		UUID existingClaim = WarForgeMod.FACTIONS.GetClaim(new DimChunkPos(world.provider.getDimension(), pos));
+		UUID existingClaim = WarForgeMod.FACTIONS.getClaim(new DimChunkPos(world.provider.getDimension(), pos));
 		if(!existingClaim.equals(Faction.NULL))
 			return false;
 		
@@ -104,7 +102,7 @@ public class BlockCitadel extends Block implements ITileEntityProvider
 			return false;
 		if(!world.isRemote)
 		{
-			Faction playerFaction = WarForgeMod.FACTIONS.GetFactionOfPlayer(player.getUniqueID());
+			Faction playerFaction = WarForgeMod.FACTIONS.getFactionOfPlayer(player.getUniqueID());
 			TileEntityCitadel citadel = (TileEntityCitadel)world.getTileEntity(pos);
 			
 			// If the player has no faction and is the placer, they can open the UI
@@ -125,7 +123,7 @@ public class BlockCitadel extends Block implements ITileEntityProvider
 				else
 				{
 					DimBlockPos citadelPos = new DimBlockPos(world.provider.getDimension(), pos);
-					Faction chunkFaction = WarForgeMod.FACTIONS.GetFaction(WarForgeMod.FACTIONS.GetClaim(citadelPos.ToChunkPos()));
+					Faction chunkFaction = WarForgeMod.FACTIONS.GetFaction(WarForgeMod.FACTIONS.getClaim(citadelPos.toChunkPos()));
 					// if ghost citadel exists in chunk claimed by faction, delete it
 					if (FactionStorage.isValidFaction(chunkFaction)) {
 						world.destroyBlock(pos, false);

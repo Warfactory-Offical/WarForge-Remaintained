@@ -4,12 +4,12 @@ import com.flansmod.warforge.common.DimBlockPos;
 
 public class SiegeCampProgressInfo
 {
-	public DimBlockPos mDefendingPos;
-	public DimBlockPos mAttackingPos;
+	public DimBlockPos defendingPos;
+	public DimBlockPos attackingPos;
 	public int mAttackingColour;
 	public int mDefendingColour;
-	public String mAttackingName;
-	public String mDefendingName;
+	public String attackingName;
+	public String defendingName;
 	
 	public int mCompletionPoint = 5;
 	public int mPreviousProgress = 0;

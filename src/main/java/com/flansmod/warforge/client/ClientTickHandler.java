@@ -3,8 +3,6 @@ package com.flansmod.warforge.client;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
-import java.util.UUID;
 
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.DimChunkPos;
@@ -13,20 +11,16 @@ import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.IClaim;
 import com.flansmod.warforge.common.blocks.TileEntityCitadel;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
-import com.flansmod.warforge.server.Faction;
 import com.google.common.collect.Lists;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.model.ModelBanner;
-import net.minecraft.client.model.ModelBox;
 import net.minecraft.client.renderer.BannerTextures;
-import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GLAllocation;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.tileentity.TileEntityBannerRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -38,21 +32,16 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.BannerPattern;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityBanner;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3i;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 
 public class ClientTickHandler 
 {
@@ -117,7 +106,7 @@ public class ClientTickHandler
 					{
 						if(te instanceof IClaim)
 						{
-							DimChunkPos tePos = ((IClaim) te).GetPos().ToChunkPos();
+							DimChunkPos tePos = ((IClaim) te).GetPos().toChunkPos();
 							if(tePos.equals(mStandingInChunk))
 								preClaim = (IClaim)te;
 							
@@ -225,8 +214,8 @@ public class ClientTickHandler
 				
 				for(SiegeCampProgressInfo info : ClientProxy.sSiegeInfo.values())
 				{
-					double distSq = info.mDefendingPos.distanceSq(player.posX, player.posY, player.posZ);
-					if(info.mDefendingPos.mDim == player.dimension 
+					double distSq = info.defendingPos.distanceSq(player.posX, player.posY, player.posZ);
+					if(info.defendingPos.mDim == player.dimension
 					&& distSq < WarForgeConfig.SIEGE_INFO_RADIUS * WarForgeConfig.SIEGE_INFO_RADIUS)
 					{
 						if(distSq < bestDistanceSq)
@@ -319,9 +308,9 @@ public class ClientTickHandler
 					}
 					
 					// Draw text
-					mc.fontRenderer.drawStringWithShadow(infoToRender.mDefendingName, j + 6, k + 6, infoToRender.mDefendingColour);
+					mc.fontRenderer.drawStringWithShadow(infoToRender.defendingName, j + 6, k + 6, infoToRender.mDefendingColour);
 					mc.fontRenderer.drawStringWithShadow("VS", j + xSize / 2 - mc.fontRenderer.getStringWidth("VS") / 2, k + 6, 0xffffff);
-					mc.fontRenderer.drawStringWithShadow(infoToRender.mAttackingName, j + xSize - 6 - mc.fontRenderer.getStringWidth(infoToRender.mAttackingName), k + 6, infoToRender.mAttackingColour);
+					mc.fontRenderer.drawStringWithShadow(infoToRender.attackingName, j + xSize - 6 - mc.fontRenderer.getStringWidth(infoToRender.attackingName), k + 6, infoToRender.mAttackingColour);
 					
 					String toWin = (infoToRender.mProgress < infoToRender.mCompletionPoint) ? (infoToRender.mCompletionPoint - infoToRender.mProgress) + " to win" : "Station siege to win";
 					String toDefend = (infoToRender.mProgress + 5) + " to defend";
@@ -421,7 +410,7 @@ public class ClientTickHandler
 			if(te instanceof IClaim)
 			{
 				DimBlockPos blockPos = ((IClaim) te).GetPos();
-				DimChunkPos chunkPos = blockPos.ToChunkPos();
+				DimChunkPos chunkPos = blockPos.toChunkPos();
 			
 				if(mRenderData.containsKey(chunkPos))
 				{
@@ -786,7 +775,7 @@ public class ClientTickHandler
 					if(te instanceof IClaim)
 					{
 						DimBlockPos blockPos = ((IClaim) te).GetPos();
-						DimChunkPos chunkPos = blockPos.ToChunkPos();
+						DimChunkPos chunkPos = blockPos.toChunkPos();
 						
 						if(playerPos.x == chunkPos.x && playerPos.z == chunkPos.z)
 						{

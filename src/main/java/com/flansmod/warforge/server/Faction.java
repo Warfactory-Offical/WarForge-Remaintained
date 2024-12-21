@@ -352,7 +352,7 @@ public class Faction
 		if(claimBlockPos.equals(mCitadelPos))
 		{
 			WarForgeMod.FACTIONS.FactionDefeated(this);
-			WarForgeMod.INSTANCE.MessageAll(new TextComponentString(mName + "'s citadel was destroyed. " + mName + " is no more."), true);
+			WarForgeMod.INSTANCE.messageAll(new TextComponentString(mName + "'s citadel was destroyed. " + mName + " is no more."), true);
 		}
 		else
 		{
@@ -439,7 +439,7 @@ public class Faction
 	{
 		for(DimBlockPos claimPos : mClaims.keySet())
 		{
-			if(claimPos.ToChunkPos().equals(pos))
+			if(claimPos.toChunkPos().equals(pos))
 				return claimPos;
 		}
 		return null;
@@ -448,7 +448,7 @@ public class Faction
 	public void EvaluateVault() 
 	{
 		World world = WarForgeMod.MC_SERVER.getWorld(mCitadelPos.mDim);
-		DimChunkPos chunkPos = mCitadelPos.ToChunkPos();
+		DimChunkPos chunkPos = mCitadelPos.toChunkPos();
 		
 		int count = 0;
 		if(world != null)

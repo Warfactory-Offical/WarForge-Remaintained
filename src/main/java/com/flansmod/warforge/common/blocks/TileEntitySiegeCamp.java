@@ -78,7 +78,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 	}
 
 	private Faction getDefenders(DimBlockPos siegeTarget) {
-		return WarForgeMod.FACTIONS.GetFaction(WarForgeMod.FACTIONS.GetClaim(siegeTarget));
+		return WarForgeMod.FACTIONS.GetFaction(WarForgeMod.FACTIONS.getClaim(siegeTarget));
 	}
 
 	@Override
@@ -154,12 +154,12 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 		// only modify external information if not performing cleanup on this tile entity
 		if (!siegeStatus.isCleanup()) {
 			// update siege info and notify all nearby
-			Siege siege = WarForgeMod.FACTIONS.getSieges().get(mSiegeTarget.ToChunkPos());
+			Siege siege = WarForgeMod.FACTIONS.getSieges().get(mSiegeTarget.toChunkPos());
 			if(siege != null) {
 				SiegeCampProgressInfo info = siege.GetSiegeInfo();
 				info.mProgress = siegeStatus.isFailed() ? -5 : info.mCompletionPoint;
 				PacketSiegeCampProgressUpdate packet = new PacketSiegeCampProgressUpdate();
-				packet.mInfo = info;
+				packet.info = info;
 
 				for (EntityPlayer attacker : getAttacking().getOnlinePlayers(Objects::nonNull)) WarForgeMod.NETWORK.sendTo(packet, (EntityPlayerMP) attacker);
 				for (EntityPlayer defender : defenders.getOnlinePlayers(Objects::nonNull)) WarForgeMod.NETWORK.sendTo(packet, (EntityPlayerMP) defender);
@@ -167,8 +167,8 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 
 			// attempt to actually modify siege information, now that all nearby have been updated
 			try {
-				WarForgeMod.FACTIONS.getSieges().get(mSiegeTarget.ToChunkPos()).setAttackProgress(siegeStatus.isFailed() ? -5 : WarForgeMod.FACTIONS.getSieges().get(mSiegeTarget.ToChunkPos()).GetAttackSuccessThreshold()); // ends siege
-				WarForgeMod.FACTIONS.handleCompletedSiege(mSiegeTarget.ToChunkPos(), false); // performs check on completed sieges without invoking checks on unrelated sieges
+				WarForgeMod.FACTIONS.getSieges().get(mSiegeTarget.toChunkPos()).setAttackProgress(siegeStatus.isFailed() ? -5 : WarForgeMod.FACTIONS.getSieges().get(mSiegeTarget.toChunkPos()).GetAttackSuccessThreshold()); // ends siege
+				WarForgeMod.FACTIONS.handleCompletedSiege(mSiegeTarget.toChunkPos(), false); // performs check on completed sieges without invoking checks on unrelated sieges
 			} catch (Exception e) {
 				WarForgeMod.LOGGER.atError().log("Got exception when attempting to force end siege of: " + e + " with siegeTarget of: " + mSiegeTarget + " and pos of: " + getPos());
 				e.printStackTrace();
@@ -451,11 +451,11 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 	}
 
 	private <T extends EntityLivingBase> Faction getFac(T player) {
-		return WarForgeMod.FACTIONS.GetFactionOfPlayer(player.getUniqueID());
+		return WarForgeMod.FACTIONS.getFactionOfPlayer(player.getUniqueID());
 	}
 
 	private Faction getPlayerFac(UUID playerID) {
-		return WarForgeMod.FACTIONS.GetFactionOfPlayer(playerID);
+		return WarForgeMod.FACTIONS.getFactionOfPlayer(playerID);
 	}
 
 	@Override

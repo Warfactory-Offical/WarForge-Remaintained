@@ -6,10 +6,8 @@ import net.minecraft.nbt.NBTTagIntArray;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
-import net.minecraftforge.common.DimensionManager;
 
 public class DimBlockPos extends BlockPos
 {
@@ -53,7 +51,7 @@ public class DimBlockPos extends BlockPos
     	mDim = dim;
     }
     
-    public DimChunkPos ToChunkPos()
+    public DimChunkPos toChunkPos()
     {
     	return new DimChunkPos(mDim, getX() >> 4, getZ() >> 4);
     }

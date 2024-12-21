@@ -9,7 +9,6 @@ import com.flansmod.warforge.common.network.PacketFactionInfo;
 import com.flansmod.warforge.server.Faction;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockBeacon;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -21,7 +20,6 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityFurnace;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
@@ -30,8 +28,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class BlockBasicClaim extends Block implements ITileEntityProvider
 {
@@ -76,7 +72,7 @@ public class BlockBasicClaim extends Block implements ITileEntityProvider
 		if(!world.isRemote)
 		{
 			// Can't claim a chunk claimed by another faction
-			UUID existingClaim = WarForgeMod.FACTIONS.GetClaim(new DimChunkPos(world.provider.getDimension(), pos));
+			UUID existingClaim = WarForgeMod.FACTIONS.getClaim(new DimChunkPos(world.provider.getDimension(), pos));
 			if(!existingClaim.equals(Faction.NULL))
 				return false;
 					
@@ -110,7 +106,7 @@ public class BlockBasicClaim extends Block implements ITileEntityProvider
 			return false;
 		if(!world.isRemote)
 		{
-			Faction playerFaction = WarForgeMod.FACTIONS.GetFactionOfPlayer(player.getUniqueID());
+			Faction playerFaction = WarForgeMod.FACTIONS.getFactionOfPlayer(player.getUniqueID());
 			TileEntityBasicClaim claimTE = (TileEntityBasicClaim)world.getTileEntity(pos);
 			
 			// Any factionless players, and players who aren't in this faction get an info panel			
