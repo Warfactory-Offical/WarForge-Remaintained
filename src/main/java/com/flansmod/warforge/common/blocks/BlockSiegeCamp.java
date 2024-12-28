@@ -121,11 +121,11 @@ public class BlockSiegeCamp extends Block implements ITileEntityProvider
 			if(te != null)
 			{
 				TileEntitySiegeCamp siegeCamp = (TileEntitySiegeCamp)te;
-				FACTIONS.OnNonCitadelClaimPlaced(siegeCamp, placer);
-				siegeCamp.OnPlacedBy(placer);
+				FACTIONS.onNonCitadelClaimPlaced(siegeCamp, placer);
+				siegeCamp.onPlacedBy(placer);
 				if(placer instanceof EntityPlayerMP)
 				{
-					FACTIONS.RequestPlaceFlag((EntityPlayerMP)placer, new DimBlockPos(world.provider.getDimension(), pos));
+					FACTIONS.requestPlaceFlag((EntityPlayerMP)placer, new DimBlockPos(world.provider.getDimension(), pos));
 				}
 			}
 		}
@@ -159,17 +159,17 @@ public class BlockSiegeCamp extends Block implements ITileEntityProvider
 
 		if(siegeCamp != null) {
 			ArrayList<DimChunkPos> validTargets = new ArrayList<>(Arrays.asList(new DimChunkPos[4]));
-			FACTIONS.GetAdjacentClaims(FACTIONS.getFactionOfPlayer(player.getUniqueID()).mUUID, new DimBlockPos(world.provider.getDimension(), pos), validTargets);
+			FACTIONS.GetAdjacentClaims(FACTIONS.getFactionOfPlayer(player.getUniqueID()).uuid, new DimBlockPos(world.provider.getDimension(), pos), validTargets);
 
 			for (int i = 0; i < validTargets.size(); ++i) {
 				if (validTargets.get(i) == null) continue; // unregistered elements may be null
 				SiegeCampAttackInfo info = new SiegeCampAttackInfo();
-				Faction targetFaction = FACTIONS.GetFaction(FACTIONS.getClaim(validTargets.get(i)));
+				Faction targetFaction = FACTIONS.getFaction(FACTIONS.getClaim(validTargets.get(i)));
 
 				info.mDirection = EnumFacing.HORIZONTALS[i];
-				info.mFactionUUID = targetFaction.mUUID;
-				info.mFactionName = targetFaction.mName;
-				info.mFactionColour = targetFaction.mColour;
+				info.mFactionUUID = targetFaction.uuid;
+				info.mFactionName = targetFaction.name;
+				info.mFactionColour = targetFaction.colour;
 
 				list.add(info);
 			}

@@ -17,21 +17,21 @@ public class Leaderboard
 	public static class FactionSorterNotoriety implements Comparator<Faction>
 	{
 		@Override
-		public int compare(Faction a, Faction b) { return Integer.compare(b.mNotoriety, a.mNotoriety); }
+		public int compare(Faction a, Faction b) { return Integer.compare(b.notoriety, a.notoriety); }
 	}
 	
 	
 	public static class FactionSorterWealth implements Comparator<Faction>
 	{
 		@Override
-		public int compare(Faction a, Faction b) { return Integer.compare(b.mWealth, a.mWealth); }
+		public int compare(Faction a, Faction b) { return Integer.compare(b.wealth, a.wealth); }
 	}
 	
 	
 	public static class FactionSorterLegacy implements Comparator<Faction>
 	{
 		@Override
-		public int compare(Faction a, Faction b) { return Integer.compare(b.mLegacy, a.mLegacy); }
+		public int compare(Faction a, Faction b) { return Integer.compare(b.legacy, a.legacy); }
 	}
 	
 	public static class FactionSorterTotal implements Comparator<Faction>
@@ -39,7 +39,7 @@ public class Leaderboard
 		@Override
 		public int compare(Faction a, Faction b) 
 		{ 
-			return Integer.compare(b.mLegacy + b.mNotoriety + b.mWealth, a.mLegacy + a.mNotoriety + a.mWealth); 
+			return Integer.compare(b.legacy + b.notoriety + b.wealth, a.legacy + a.notoriety + a.wealth);
 		}
 	}
 	
@@ -129,7 +129,7 @@ public class Leaderboard
 		{
 			Faction faction = WarForgeMod.FACTIONS.getFactionOfPlayer(playerAsking);
 			if(faction != null)
-				info.mMyFaction = faction.CreateInfo();
+				info.myFaction = faction.createInfo();
 		}
 		ArrayList<Faction> sorted = new ArrayList<Faction>(mFactions.size());
 		GetSortedList(stat, sorted);
@@ -138,7 +138,7 @@ public class Leaderboard
 			// Only fill in in-range ones, leave rest null, handle on client
 			if(0 <= i && i < sorted.size())
 			{
-				info.mFactionInfos[i - firstIndex] = sorted.get(i).CreateInfo();
+				info.factionInfos[i - firstIndex] = sorted.get(i).createInfo();
 			}
 		}
 		

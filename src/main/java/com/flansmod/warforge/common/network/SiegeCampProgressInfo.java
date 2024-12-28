@@ -11,16 +11,16 @@ public class SiegeCampProgressInfo
 	public String attackingName;
 	public String defendingName;
 	
-	public int mCompletionPoint = 5;
+	public int completionPoint = 5;
 	public int mPreviousProgress = 0;
-	public int mProgress = 0;
+	public int progress = 0;
 	
 	public int expiredTicks = 0;
 	
 	
 	public void ClientTick()
 	{
-		if(mProgress <= -5 || mProgress >= mCompletionPoint)
+		if(progress <= -5 || progress >= completionPoint)
 		{
 			expiredTicks++;
 		}

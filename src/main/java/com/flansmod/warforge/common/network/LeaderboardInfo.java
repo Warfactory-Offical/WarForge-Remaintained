@@ -8,6 +8,6 @@ public class LeaderboardInfo
 	
 	public int firstIndex = 0;
 	public FactionStat stat = FactionStat.TOTAL;
-	public FactionDisplayInfo[] mFactionInfos = new FactionDisplayInfo[NUM_LEADERBOARD_ENTRIES_PER_PAGE];
-	public FactionDisplayInfo mMyFaction = null;
+	public FactionDisplayInfo[] factionInfos = new FactionDisplayInfo[NUM_LEADERBOARD_ENTRIES_PER_PAGE];
+	public FactionDisplayInfo myFaction = null;
 }

@@ -14,8 +14,8 @@ import net.minecraft.world.IBlockAccess;
 // An unharvestable resource block that contributes to the yield of any faction that claims it
 public class BlockYieldProvider extends Block implements IItemYieldProvider
 {
-	public ItemStack mYieldToProvide = ItemStack.EMPTY;
-	public float mMultiplier = 1.0f;
+	public ItemStack yieldToProvide = ItemStack.EMPTY;
+	public float multiplier = 1.0f;
 	 
 	public BlockYieldProvider(Material material, ItemStack yieldStack, float multiplier) 
 	{
@@ -26,20 +26,20 @@ public class BlockYieldProvider extends Block implements IItemYieldProvider
 		this.setBlockUnbreakable();
 		this.setHardness(300000000F);
 		
-		mYieldToProvide = yieldStack;
-		mMultiplier = multiplier;
+		yieldToProvide = yieldStack;
+		this.multiplier = multiplier;
 	}
 
 	@Override
-	public ItemStack GetYieldToProvide() 
+	public ItemStack getYieldToProvide()
 	{
-		return mYieldToProvide;
+		return yieldToProvide;
 	}
 
 	@Override
-	public float GetMultiplier() 
+	public float getMultiplier()
 	{
-		return mMultiplier;
+		return multiplier;
 	}
 	
 	@Override

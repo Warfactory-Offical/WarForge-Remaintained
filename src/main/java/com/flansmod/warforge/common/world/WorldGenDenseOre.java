@@ -3,46 +3,43 @@ package com.flansmod.warforge.common.world;
 import java.util.Random;
 
 import com.flansmod.warforge.common.ModuloHelper;
-import com.flansmod.warforge.common.WarForgeMod;
 
-import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
-import net.minecraft.world.gen.NoiseGeneratorOctaves;
 import net.minecraft.world.gen.feature.WorldGenerator;
 
 public class WorldGenDenseOre extends WorldGenerator
 {
-	private IBlockState mBlock, mOuter;
-	private int mCellSize = 64;
-	private int mDepositRadius = 4;
-	private int mOuterShellRadius = 8;
-	private float mOuterShellProbability = 0.1f;
-	private int mMinInstancesPerCell = 1;
-	private int mMaxInstancesPerCell = 3;
-	private int mMinHeight = 110;
-	private int mMaxHeight = 120;
+	private final IBlockState blockState, outerState;
+	private int cellSize = 64;
+	private int depositRadius = 4;
+	private int outerShellRadius = 8;
+	private float outerShellProbability = 0.1f;
+	private int minInstancesPerCell = 1;
+	private int maxInstancesPerCell = 3;
+	private int minHeight = 110;
+	private int maxHeight = 120;
 	
-	public WorldGenDenseOre(IBlockState block, IBlockState outer, int cellSize, int depositRadius, int outerShellRadius, float outerShellChance,
+	public WorldGenDenseOre(IBlockState block, IBlockState outer, int cellSize, int depositRadius, int outerShellRadius, float outerShellProbability,
 			int minInstancesPerCell, int maxInstancesPerCell, int minHeight, int maxHeight)
 	{
-		mBlock = block;
-		mOuter = outer;
-		mCellSize = cellSize;
-		mDepositRadius = depositRadius;
-		mOuterShellRadius = outerShellRadius;
-		mOuterShellProbability = outerShellChance;
-		mMinInstancesPerCell = minInstancesPerCell;
-		mMaxInstancesPerCell = maxInstancesPerCell;
-		mMinHeight = minHeight;
-		mMaxHeight = maxHeight;
+		blockState = block;
+		outerState = outer;
+		this.cellSize = cellSize;
+		this.depositRadius = depositRadius;
+		this.outerShellRadius = outerShellRadius;
+		this.outerShellProbability = outerShellProbability;
+		this.minInstancesPerCell = minInstancesPerCell;
+		this.maxInstancesPerCell = maxInstancesPerCell;
+		this.minHeight = minHeight;
+		this.maxHeight = maxHeight;
 		
-		if(mDepositRadius * 2 >= mCellSize)
+		if(this.depositRadius * 2 >= this.cellSize)
 		{
-			mCellSize = mDepositRadius * 4;
+			this.cellSize = this.depositRadius * 4;
 		}
 	}
 	
@@ -50,11 +47,11 @@ public class WorldGenDenseOre extends WorldGenerator
 	public boolean generate(World world, Random rand, BlockPos cornerPos) 
 	{
 		// We generate the 8-24 area offset from pos. So +16 is our centerpoint
-		int x = cornerPos.getX() + 8;
-		int z = cornerPos.getZ() + 8;
+		final int xOffset = WorldHelpers.calculateOffset(cornerPos.getX());
+		final int zOffset = WorldHelpers.calculateOffset(cornerPos.getZ());
 		
-		int xCell = ModuloHelper.divide(x, mCellSize);
-		int zCell = ModuloHelper.divide(z, mCellSize);
+		int xCell = ModuloHelper.divide(xOffset, cellSize);
+		int zCell = ModuloHelper.divide(zOffset, cellSize);
 		
 		Random cellRNG = new Random();
 		cellRNG.setSeed(world.getSeed());
@@ -62,13 +59,13 @@ public class WorldGenDenseOre extends WorldGenerator
 		long seedB = cellRNG.nextLong() / 2L * 2L + 1L;
 		cellRNG.setSeed((long)xCell * seedA + (long)zCell * seedB ^ world.getSeed());
 		
-		int numDepositsInCell = cellRNG.nextInt(mMaxInstancesPerCell - mMinInstancesPerCell + 1) + mMinInstancesPerCell;
+		int numDepositsInCell = cellRNG.nextInt(maxInstancesPerCell - minInstancesPerCell + 1) + minInstancesPerCell;
 		for(int cellIndex = 0; cellIndex < numDepositsInCell; cellIndex++)
 		{
 			// Choose a random starting point, at least one radius from the edge of the cell
-			int depositX = xCell * mCellSize + 8 + cellRNG.nextInt(mCellSize - 4 * mDepositRadius) + mDepositRadius * 2;
-			int depositZ = zCell * mCellSize + 8 + cellRNG.nextInt(mCellSize - 4 * mDepositRadius) + mDepositRadius * 2;
-			BlockPos depositPosA = new BlockPos(depositX, mMinHeight + cellRNG.nextInt(mMaxHeight - mMinHeight), depositZ);
+			int depositX = xCell * cellSize + 8 + cellRNG.nextInt(cellSize - 4 * depositRadius) + depositRadius * 2;
+			int depositZ = zCell * cellSize + 8 + cellRNG.nextInt(cellSize - 4 * depositRadius) + depositRadius * 2;
+			BlockPos depositPosA = new BlockPos(depositX, minHeight + cellRNG.nextInt(maxHeight - minHeight), depositZ);
 			
 			// Offset by a random amount for the endpoint
 			BlockPos depositPosB = new BlockPos(
@@ -77,53 +74,53 @@ public class WorldGenDenseOre extends WorldGenerator
 					depositPosA.getZ() + cellRNG.nextInt(9) - 4);
 			Vec3i depositPosDelta = new Vec3i(cellRNG.nextInt(9) - 4, cellRNG.nextInt(7) - 3, cellRNG.nextInt(9) - 4);
 			
-			double lengthSq = depositPosB.distanceSq(depositPosA);
-			int minY = Math.min(depositPosA.getY(), depositPosB.getY()) - mDepositRadius;
-			int maxY = Math.max(depositPosA.getY(), depositPosB.getY()) + mDepositRadius;
+			final double distBetweenDepos = depositPosB.distanceSq(depositPosA);
+			int minY = Math.min(depositPosA.getY(), depositPosB.getY()) - depositRadius;
+			int maxY = Math.max(depositPosA.getY(), depositPosB.getY()) + depositRadius;
 			
-			for(int i = 8; i < 24; i++)
+			for(int x = 8; x < 24; x++)
 			{
-				for(int k = 8; k < 24; k++)
+				for(int z = 8; z < 24; z++)
 				{
 					// Create the vein
-					for(int j = minY; j < maxY; j++)
+					for(int y = minY; y < maxY; y++)
 					{
-						BlockPos p = new BlockPos(cornerPos.getX() + i, j, cornerPos.getZ() + k);
-						BlockPos delta = depositPosA.subtract(p);
-						
-						if(world.getBlockState(p).getBlock() == Blocks.WATER
-						|| world.getBlockState(p).getBlock() == Blocks.FLOWING_WATER
-						|| world.getBlockState(p).getBlock() == Blocks.BEDROCK)
+						final BlockPos p = new BlockPos(cornerPos.getX() + x, y, cornerPos.getZ() + z);
+						final BlockPos delta = depositPosA.subtract(p);
+
+						if(WorldHelpers.isAnyBlock(world, p, Blocks.WATER, Blocks.FLOWING_WATER, Blocks.BEDROCK))
 						{
 							continue;
 						}
 						
-						double distToLineSq = delta.crossProduct(depositPosDelta).distanceSq(Vec3i.NULL_VECTOR) / depositPosDelta.distanceSq(Vec3i.NULL_VECTOR);
-						double radius = mDepositRadius + rand.nextGaussian();
-						
-						if(distToLineSq <= radius * radius
-						&& p.distanceSq(depositPosA) <= (radius * radius + lengthSq)
-						&& p.distanceSq(depositPosB) <= (radius * radius + lengthSq))
-							world.setBlockState(p, mBlock);
-						
-						radius = mOuterShellRadius;
-						if(radius > 0 && rand.nextFloat() < mOuterShellProbability)
+						final double distToLineSq = delta.crossProduct(depositPosDelta).distanceSq(Vec3i.NULL_VECTOR) /
+								depositPosDelta.distanceSq(Vec3i.NULL_VECTOR);
+						final double radius = depositRadius + rand.nextGaussian();
+
+						if(WorldHelpers.withinDistance(distToLineSq, p.distanceSq(depositPosA), p.distanceSq(depositPosB),
+								radius, distBetweenDepos))
+							world.setBlockState(p, blockState);
+
+						if(radius > 0 && rand.nextFloat() < outerShellProbability)
 						{
-							if(distToLineSq <= radius * radius
-							&& p.distanceSq(depositPosA) <= (radius * radius + lengthSq)
-							&& p.distanceSq(depositPosB) <= (radius * radius + lengthSq))
-								world.setBlockState(p, mOuter);
+							// outerShellRadius
+							if(WorldHelpers.withinDistance(distToLineSq, p.distanceSq(depositPosA), p.distanceSq(depositPosB),
+									outerShellRadius, distBetweenDepos))
+								world.setBlockState(p, outerState);
 						}
 					}
 					
 					// And create surface indicators, but with high rarity
-					if(rand.nextFloat() < mOuterShellProbability * 0.25f) 
+					if(rand.nextFloat() < outerShellProbability * 0.25f)
 					{
-						BlockPos y0Pos = new BlockPos(cornerPos.getX() + i, 0, cornerPos.getZ() + k);
-						if(y0Pos.distanceSq(depositPosA.getX(), 0, depositPosA.getZ()) <= mDepositRadius * mDepositRadius
-						|| y0Pos.distanceSq(depositPosB.getX(), 0, depositPosB.getZ()) <= mDepositRadius * mDepositRadius)
+						BlockPos y0Pos = new BlockPos(cornerPos.getX() + x, 0, cornerPos.getZ() + z);
+						final double distToDepoA = y0Pos.distanceSq(depositPosA.getX(), 0, depositPosA.getZ());
+						final double distToDepoB = y0Pos.distanceSq(depositPosB.getX(), 0, depositPosB.getZ());
+
+						if(WorldHelpers.withinRadius(distToDepoA, depositRadius)
+						|| WorldHelpers.withinRadius(distToDepoB, depositRadius))
 						{
-							BlockPos topPos = world.getTopSolidOrLiquidBlock(y0Pos);
+							final BlockPos topPos = world.getTopSolidOrLiquidBlock(y0Pos);
 							world.setBlockState(topPos.down(), Blocks.GRAVEL.getDefaultState());
 						}
 					}

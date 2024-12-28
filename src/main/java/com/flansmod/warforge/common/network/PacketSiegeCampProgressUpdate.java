@@ -16,7 +16,7 @@ public class PacketSiegeCampProgressUpdate extends PacketBase
 	public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) 
 	{
 		// Attack
-		data.writeInt(info.attackingPos.mDim);
+		data.writeInt(info.attackingPos.dim);
 		data.writeInt(info.attackingPos.getX());
 		data.writeInt(info.attackingPos.getY());
 		data.writeInt(info.attackingPos.getZ());
@@ -24,16 +24,16 @@ public class PacketSiegeCampProgressUpdate extends PacketBase
 		writeUTF(data, info.attackingName);
 		
 		// Defend
-		data.writeInt(info.defendingPos.mDim);
+		data.writeInt(info.defendingPos.dim);
 		data.writeInt(info.defendingPos.getX());
 		data.writeInt(info.defendingPos.getY());
 		data.writeInt(info.defendingPos.getZ());
 		data.writeInt(info.mDefendingColour);
 		writeUTF(data, info.defendingName);
 		
-		data.writeInt(info.mProgress);
+		data.writeInt(info.progress);
 		data.writeInt(info.mPreviousProgress);
-		data.writeInt(info.mCompletionPoint);
+		data.writeInt(info.completionPoint);
 	}
 
 	@Override
@@ -59,9 +59,9 @@ public class PacketSiegeCampProgressUpdate extends PacketBase
 		info.mDefendingColour = data.readInt();
 		info.defendingName = readUTF(data);
 		
-		info.mProgress = data.readInt();
+		info.progress = data.readInt();
 		info.mPreviousProgress = data.readInt();
-		info.mCompletionPoint = data.readInt();
+		info.completionPoint = data.readInt();
 	}
 
 	@Override

@@ -77,8 +77,7 @@ public class BlockBasicClaim extends Block implements ITileEntityProvider
 				return false;
 					
 			// Can only place on a solid surface
-			if(!world.getBlockState(pos.add(0, -1, 0)).isSideSolid(world, pos.add(0, -1, 0), EnumFacing.UP))
-				return false;
+            return world.getBlockState(pos.add(0, -1, 0)).isSideSolid(world, pos.add(0, -1, 0), EnumFacing.UP);
 		}
 		
 		return true;
@@ -94,7 +93,7 @@ public class BlockBasicClaim extends Block implements ITileEntityProvider
 			{
 				TileEntityBasicClaim claim = (TileEntityBasicClaim)te;
 
-				WarForgeMod.FACTIONS.OnNonCitadelClaimPlaced(claim, placer);
+				WarForgeMod.FACTIONS.onNonCitadelClaimPlaced(claim, placer);
 			}
 		}
     }
@@ -110,13 +109,13 @@ public class BlockBasicClaim extends Block implements ITileEntityProvider
 			TileEntityBasicClaim claimTE = (TileEntityBasicClaim)world.getTileEntity(pos);
 			
 			// Any factionless players, and players who aren't in this faction get an info panel			
-			if(playerFaction == null || !playerFaction.mUUID.equals(claimTE.mFactionUUID))
+			if(playerFaction == null || !playerFaction.uuid.equals(claimTE.factionUUID))
 			{
-				Faction citadelFaction = WarForgeMod.FACTIONS.GetFaction(claimTE.mFactionUUID);
+				Faction citadelFaction = WarForgeMod.FACTIONS.getFaction(claimTE.factionUUID);
 				if(citadelFaction != null)
 				{
 					PacketFactionInfo packet = new PacketFactionInfo();
-					packet.mInfo = citadelFaction.CreateInfo();
+					packet.info = citadelFaction.createInfo();
 					WarForgeMod.INSTANCE.NETWORK.sendTo(packet, (EntityPlayerMP) player);
 				}
 				else

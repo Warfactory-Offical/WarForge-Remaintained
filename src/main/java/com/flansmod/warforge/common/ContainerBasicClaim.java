@@ -1,15 +1,12 @@
 package com.flansmod.warforge.common;
 
 import com.flansmod.warforge.common.blocks.TileEntityBasicClaim;
-import com.flansmod.warforge.common.blocks.TileEntityCitadel;
 import com.flansmod.warforge.server.Faction;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
-import net.minecraft.item.ItemBanner;
-import net.minecraft.item.ItemShield;
 import net.minecraft.item.ItemStack;
 
 public class ContainerBasicClaim extends Container
@@ -48,7 +45,7 @@ public class ContainerBasicClaim extends Container
 	@Override
 	public boolean canInteractWith(EntityPlayer player) 
 	{
-		return player.world.isRemote || claim.GetFaction().equals(Faction.NULL) || WarForgeMod.FACTIONS.IsPlayerInFaction(player.getUniqueID(), claim.GetFaction());
+		return player.world.isRemote || claim.getFaction().equals(Faction.NULL) || WarForgeMod.FACTIONS.IsPlayerInFaction(player.getUniqueID(), claim.getFaction());
 	}
 	
 	@Override

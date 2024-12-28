@@ -4,6 +4,7 @@ import java.util.Random;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.EnumSkyBlock;
@@ -13,21 +14,21 @@ import net.minecraft.world.gen.feature.WorldGenerator;
 
 public class WorldGenClayPool extends WorldGenerator
 {
-    private final Block mDense, mIndicator, mLiquid;
+    private final Block denseForm, indicator, liquidForm;
 
     public WorldGenClayPool(Block dense, Block indicator, Block liquid)
     {
-    	mDense = dense;
-    	mIndicator = indicator;
-    	mLiquid = liquid;
+    	denseForm = dense;
+    	this.indicator = indicator;
+    	liquidForm = liquid;
     }
 
     public boolean generate(World worldIn, Random rand, BlockPos position)
     {
-        for (position = position.add(-8, 0, -8); position.getY() > 5 && worldIn.isAirBlock(position); position = position.down())
-        {
-            ;
-        }
+//        for (position = position.add(-8, 0, -8); position.getY() > 5 && worldIn.isAirBlock(position); position = position.down())
+//        {
+//            ;
+//        }
 
         if (position.getY() <= 4)
         {
@@ -36,7 +37,7 @@ public class WorldGenClayPool extends WorldGenerator
         else
         {
             position = position.down(4);
-            boolean[] aboolean = new boolean[2048];
+            boolean[] bitFlags = new boolean[2048];
             int i = rand.nextInt(4) + 4;
 
             for (int j = 0; j < i; ++j)
@@ -61,7 +62,7 @@ public class WorldGenClayPool extends WorldGenerator
 
                             if (d9 < 1.0D)
                             {
-                                aboolean[(l * 16 + i1) * 8 + j1] = true;
+                                bitFlags[(l * 16 + i1) * 8 + j1] = true;
                             }
                         }
                     }
@@ -74,7 +75,7 @@ public class WorldGenClayPool extends WorldGenerator
                 {
                     for (int k = 0; k < 8; ++k)
                     {
-                        boolean flag = !aboolean[(k1 * 16 + l2) * 8 + k] && (k1 < 15 && aboolean[((k1 + 1) * 16 + l2) * 8 + k] || k1 > 0 && aboolean[((k1 - 1) * 16 + l2) * 8 + k] || l2 < 15 && aboolean[(k1 * 16 + l2 + 1) * 8 + k] || l2 > 0 && aboolean[(k1 * 16 + (l2 - 1)) * 8 + k] || k < 7 && aboolean[(k1 * 16 + l2) * 8 + k + 1] || k > 0 && aboolean[(k1 * 16 + l2) * 8 + (k - 1)]);
+                        boolean flag = !bitFlags[(k1 * 16 + l2) * 8 + k] && (k1 < 15 && bitFlags[((k1 + 1) * 16 + l2) * 8 + k] || k1 > 0 && bitFlags[((k1 - 1) * 16 + l2) * 8 + k] || l2 < 15 && bitFlags[(k1 * 16 + l2 + 1) * 8 + k] || l2 > 0 && bitFlags[(k1 * 16 + (l2 - 1)) * 8 + k] || k < 7 && bitFlags[(k1 * 16 + l2) * 8 + k + 1] || k > 0 && bitFlags[(k1 * 16 + l2) * 8 + (k - 1)]);
 
                         if (flag)
                         {
@@ -85,7 +86,7 @@ public class WorldGenClayPool extends WorldGenerator
                                 return false;
                             }
 
-                            if (k < 4 && !material.isSolid() && worldIn.getBlockState(position.add(k1, k, l2)).getBlock() != this.mLiquid)
+                            if (k < 4 && !material.isSolid() && worldIn.getBlockState(position.add(k1, k, l2)).getBlock() != this.liquidForm)
                             {
                                 return false;
                             }
@@ -100,9 +101,17 @@ public class WorldGenClayPool extends WorldGenerator
                 {
                     for (int i4 = 0; i4 < 8; ++i4)
                     {
-                        if (aboolean[(l1 * 16 + i3) * 8 + i4])
+                        if (bitFlags[(l1 * 16 + i3) * 8 + i4])
                         {
-                            worldIn.setBlockState(position.add(l1, i4, i3), i4 >= 4 ? Blocks.AIR.getDefaultState() : (i4 >= 3 ? mLiquid.getDefaultState() : mDense.getDefaultState()), 2);
+                            IBlockState state;
+                            if (i4 >= 4) {
+                                state = Blocks.AIR.getDefaultState();
+                            } else if (i4 == 3) {
+                                state = liquidForm.getDefaultState();
+                            } else {
+                                state = denseForm.getDefaultState();
+                            }
+                            worldIn.setBlockState(position.add(l1, i4, i3), state, 2);
                         }
                     }
                 }
@@ -115,7 +124,7 @@ public class WorldGenClayPool extends WorldGenerator
                     for (int j4 = 4; j4 < 8; ++j4)
                     {
                     	
-                        if (aboolean[(i2 * 16 + j3) * 8 + j4])
+                        if (bitFlags[(i2 * 16 + j3) * 8 + j4])
                         {
                            
                         	BlockPos blockpos = position.add(i2, j4 - 1, j3);
@@ -123,7 +132,7 @@ public class WorldGenClayPool extends WorldGenerator
                             {
                                 Biome biome = worldIn.getBiome(blockpos);
 
-                                worldIn.setBlockState(blockpos, mIndicator.getDefaultState(), 2);
+                                worldIn.setBlockState(blockpos, indicator.getDefaultState(), 2);
                             }
                         }
                     }
@@ -141,13 +150,11 @@ public class WorldGenClayPool extends WorldGenerator
                         {
                     		BlockPos blockpos = position.add(i2, j4 - 1, j3);
                     		if(!worldIn.isAirBlock(blockpos))
-                    			worldIn.setBlockState(blockpos, mIndicator.getDefaultState(), 2);
+                    			worldIn.setBlockState(blockpos, indicator.getDefaultState(), 2);
                         }
                     }
                 }
             }
-            
-
 
             return true;
         }

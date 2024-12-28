@@ -106,7 +106,7 @@ public class ClientTickHandler
 					{
 						if(te instanceof IClaim)
 						{
-							DimChunkPos tePos = ((IClaim) te).GetPos().toChunkPos();
+							DimChunkPos tePos = ((IClaim) te).getPos().toChunkPos();
 							if(tePos.equals(mStandingInChunk))
 								preClaim = (IClaim)te;
 							
@@ -124,8 +124,8 @@ public class ClientTickHandler
 						else
 						{
 							// We've entered a new claim
-							mAreaMessage = "Entering " + postClaim.GetDisplayName();		
-							mAreaMessageColour = postClaim.GetColour();
+							mAreaMessage = "Entering " + postClaim.getClaimDisplayName();
+							mAreaMessageColour = postClaim.getColour();
 							mShowNewAreaTicksRemaining = WarForgeConfig.SHOW_NEW_AREA_TIMER;
 						}
 					}
@@ -134,22 +134,22 @@ public class ClientTickHandler
 						if(postClaim == null) 
 						{
 							// Gone to nowhere, bye
-							mAreaMessage = "Leaving " + preClaim.GetDisplayName();		
-							mAreaMessageColour = preClaim.GetColour();
+							mAreaMessage = "Leaving " + preClaim.getClaimDisplayName();
+							mAreaMessageColour = preClaim.getColour();
 							mShowNewAreaTicksRemaining = WarForgeConfig.SHOW_NEW_AREA_TIMER;
 						}
 						else
 						{
 							// We've gone to another place. 
-							if(preClaim.GetFaction().equals(postClaim.GetFaction()))
+							if(preClaim.getFaction().equals(postClaim.getFaction()))
 							{
 								// If it's the same faction, don't mention it
 							}
 							else
 							{
 								// Otherwise, we've switched faction
-								mAreaMessage = "Leaving " + preClaim.GetDisplayName() + ", Entering " + postClaim.GetDisplayName();			
-								mAreaMessageColour = postClaim.GetColour();
+								mAreaMessage = "Leaving " + preClaim.getClaimDisplayName() + ", Entering " + postClaim.getClaimDisplayName();
+								mAreaMessageColour = postClaim.getColour();
 								mShowNewAreaTicksRemaining = WarForgeConfig.SHOW_NEW_AREA_TIMER;
 							}
 						}
@@ -215,7 +215,7 @@ public class ClientTickHandler
 				for(SiegeCampProgressInfo info : ClientProxy.sSiegeInfo.values())
 				{
 					double distSq = info.defendingPos.distanceSq(player.posX, player.posY, player.posZ);
-					if(info.defendingPos.mDim == player.dimension
+					if(info.defendingPos.dim == player.dimension
 					&& distSq < WarForgeConfig.SIEGE_INFO_RADIUS * WarForgeConfig.SIEGE_INFO_RADIUS)
 					{
 						if(distSq < bestDistanceSq)
@@ -255,23 +255,23 @@ public class ClientTickHandler
 					GlStateManager.color(1f, 1f, 1f, 1f);
 					drawTexturedModalRect(j, k, 0, 0, xSize, ySize);
 					
-					float siegeLength = infoToRender.mCompletionPoint + 5;
+					float siegeLength = infoToRender.completionPoint + 5;
 					float barLengthPx = 224;
 					float notchDistance = barLengthPx / siegeLength;
 					
 					// Draw filled bar
 					int firstPx = 0;
 					int lastPx = 0;
-					boolean isIncreasing = infoToRender.mProgress > infoToRender.mPreviousProgress;
+					boolean isIncreasing = infoToRender.progress > infoToRender.mPreviousProgress;
 					
-					if(infoToRender.mProgress > 0)
+					if(infoToRender.progress > 0)
 					{
 						firstPx = (int)(notchDistance * 5);
-						lastPx = (int)(notchDistance * (infoToRender.mProgress + 5));
+						lastPx = (int)(notchDistance * (infoToRender.progress + 5));
 					}
 					else
 					{
-						firstPx = (int)(notchDistance * (5 + infoToRender.mProgress));
+						firstPx = (int)(notchDistance * (5 + infoToRender.progress));
 						lastPx = (int)(notchDistance * 5);
 					}
 						
@@ -298,7 +298,7 @@ public class ClientTickHandler
 					
 					GlStateManager.color(1f, 1f, 1f, 1f);
 					// Draw notches at each integer interval
-					for(int i = -4; i < infoToRender.mCompletionPoint; i++)
+					for(int i = -4; i < infoToRender.completionPoint; i++)
 					{
 						int x = (int)((i + 5) * notchDistance + 16);
 						if(i == 0)
@@ -312,8 +312,8 @@ public class ClientTickHandler
 					mc.fontRenderer.drawStringWithShadow("VS", j + xSize / 2 - mc.fontRenderer.getStringWidth("VS") / 2, k + 6, 0xffffff);
 					mc.fontRenderer.drawStringWithShadow(infoToRender.attackingName, j + xSize - 6 - mc.fontRenderer.getStringWidth(infoToRender.attackingName), k + 6, infoToRender.mAttackingColour);
 					
-					String toWin = (infoToRender.mProgress < infoToRender.mCompletionPoint) ? (infoToRender.mCompletionPoint - infoToRender.mProgress) + " to win" : "Station siege to win";
-					String toDefend = (infoToRender.mProgress + 5) + " to defend";
+					String toWin = (infoToRender.progress < infoToRender.completionPoint) ? (infoToRender.completionPoint - infoToRender.progress) + " to win" : "Station siege to win";
+					String toDefend = (infoToRender.progress + 5) + " to defend";
 					mc.fontRenderer.drawStringWithShadow(toWin, j + xSize - 8 - mc.fontRenderer.getStringWidth(toWin), k + 32, infoToRender.mAttackingColour);
 					mc.fontRenderer.drawStringWithShadow(toDefend, j + 8, k + 32, infoToRender.mAttackingColour);
 				}
@@ -409,7 +409,7 @@ public class ClientTickHandler
 		{
 			if(te instanceof IClaim)
 			{
-				DimBlockPos blockPos = ((IClaim) te).GetPos();
+				DimBlockPos blockPos = ((IClaim) te).getPos();
 				DimChunkPos chunkPos = blockPos.toChunkPos();
 			
 				if(mRenderData.containsKey(chunkPos))
@@ -453,13 +453,13 @@ public class ClientTickHandler
 	        
 	        boolean renderNorth = true, renderEast = true, renderWest = true, renderSouth = true;
 	        if(mRenderData.containsKey(pos.North()))
-	        	renderNorth = !mRenderData.get(pos.North()).claim.GetFaction().equals(data.claim.GetFaction());
+	        	renderNorth = !mRenderData.get(pos.North()).claim.getFaction().equals(data.claim.getFaction());
 	        if(mRenderData.containsKey(pos.East()))
-	        	renderEast = !mRenderData.get(pos.East()).claim.GetFaction().equals(data.claim.GetFaction());
+	        	renderEast = !mRenderData.get(pos.East()).claim.getFaction().equals(data.claim.getFaction());
 	        if(mRenderData.containsKey(pos.South()))
-	        	renderSouth = !mRenderData.get(pos.South()).claim.GetFaction().equals(data.claim.GetFaction());
+	        	renderSouth = !mRenderData.get(pos.South()).claim.getFaction().equals(data.claim.getFaction());
 	        if(mRenderData.containsKey(pos.West()))
-	        	renderWest = !mRenderData.get(pos.West()).claim.GetFaction().equals(data.claim.GetFaction());
+	        	renderWest = !mRenderData.get(pos.West()).claim.getFaction().equals(data.claim.getFaction());
 
 	        // North edge, [0,0] -> [16,0] wall
     		if(renderNorth)
@@ -737,7 +737,7 @@ public class ClientTickHandler
 				{
 					GlStateManager.pushMatrix();
 					
-					int colour = data.claim.GetColour();
+					int colour = data.claim.getColour();
 		            float f = (float)(colour >> 16 & 255) / 255.0F;
 		            float f1 = (float)(colour >> 8 & 255) / 255.0F;
 		            float f2 = (float)(colour & 255) / 255.0F;
@@ -774,14 +774,14 @@ public class ClientTickHandler
 				{
 					if(te instanceof IClaim)
 					{
-						DimBlockPos blockPos = ((IClaim) te).GetPos();
+						DimBlockPos blockPos = ((IClaim) te).getPos();
 						DimChunkPos chunkPos = blockPos.toChunkPos();
 						
 						if(playerPos.x == chunkPos.x && playerPos.z == chunkPos.z)
 						{
 							canPlace = false;
 						}
-						if(((IClaim)te).CanBeSieged())	
+						if(((IClaim)te).canBeSieged())
 							siegeablePositions.add(chunkPos);
 					}
 				}
@@ -850,7 +850,7 @@ public class ClientTickHandler
 				if(te instanceof TileEntityCitadel)
 				{
 					TileEntityCitadel citadel = (TileEntityCitadel)te;
-					DimBlockPos blockPos = ((IClaim) te).GetPos();
+					DimBlockPos blockPos = ((IClaim) te).getPos();
 					
 					double distance = Math.sqrt((blockPos.getX() - x)*(blockPos.getX() - x)+(blockPos.getY() - y)*(blockPos.getY() - y)+(blockPos.getZ() - z)*(blockPos.getZ() - z));					
 					double groundLevelBlend = (skyRenderDistance - distance) / (skyRenderDistance - groundRenderDistance);

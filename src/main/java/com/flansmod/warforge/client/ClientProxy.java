@@ -90,8 +90,8 @@ public class ClientProxy extends CommonProxy
 	@Override 	
 	public TileEntity GetTile(DimBlockPos pos)
 	{
-		if(Minecraft.getMinecraft().world.provider.getDimension() == pos.mDim)	
-			return Minecraft.getMinecraft().world.getTileEntity(pos.ToRegularPos());
+		if(Minecraft.getMinecraft().world.provider.getDimension() == pos.dim)
+			return Minecraft.getMinecraft().world.getTileEntity(pos.toRegularPos());
 		
 		WarForgeMod.LOGGER.error("Can't get info about a tile entity in a different dimension on client");
 		return null;
@@ -144,7 +144,7 @@ public class ClientProxy extends CommonProxy
 		sSiegeInfo.put(info.attackingPos, info);
 	}
 	
-	public static void RequestFactionInfo(UUID factionID)
+	public static void requestFactionInfo(UUID factionID)
 	{
 		PacketRequestFactionInfo request = new PacketRequestFactionInfo();
 		request.mFactionIDRequest = factionID;

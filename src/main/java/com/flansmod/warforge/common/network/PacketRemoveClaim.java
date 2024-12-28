@@ -15,7 +15,7 @@ public class PacketRemoveClaim extends PacketBase
 	@Override
 	public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) 
 	{
-		data.writeInt(pos.mDim);
+		data.writeInt(pos.dim);
 		data.writeInt(pos.getX());
 		data.writeInt(pos.getY());
 		data.writeInt(pos.getZ());

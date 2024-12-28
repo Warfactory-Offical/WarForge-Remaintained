@@ -328,12 +328,12 @@ public class WarForgeMod implements ILateMixinLoader
 			UUID factionID = FACTIONS.getClaim(chunkPos);
 			if(!factionID.equals(Faction.NULL)) 
 			{
-				Faction faction = FACTIONS.GetFaction(factionID);
+				Faction faction = FACTIONS.getFaction(factionID);
 				if(faction != null)
 				{
-					if(faction.mCitadelPos.toChunkPos().equals(chunkPos))
+					if(faction.citadelPos.toChunkPos().equals(chunkPos))
 					{
-						faction.EvaluateVault();
+						faction.evaluateVault();
 					}
 				}
 			}
@@ -409,15 +409,15 @@ public class WarForgeMod implements ILateMixinLoader
 		if(!FACTIONS.getClaim(pos).equals(Faction.NULL))
 		{
 			// check if claim chunk has actual claim pos, and if not then remove it
-			Faction claimingFaction = FACTIONS.GetFaction(FACTIONS.getClaim(pos));
-			DimBlockPos claimPos = claimingFaction.GetSpecificPosForClaim(pos);
+			Faction claimingFaction = FACTIONS.getFaction(FACTIONS.getClaim(pos));
+			DimBlockPos claimPos = claimingFaction.getSpecificPosForClaim(pos);
 			if (claimPos == null) {
 				FACTIONS.getClaims().remove(pos);
 			} else {
 				// check if block is not claim, and if it is marked as claim, but no claim block can be found, then remove phantom claim
-				if (!isClaim(event.getWorld().getBlockState(claimPos.ToRegularPos()).getBlock())) {
-					FACTIONS.getClaims().remove(claimingFaction.mUUID);
-					claimingFaction.OnClaimLost(claimPos);
+				if (!isClaim(event.getWorld().getBlockState(claimPos.toRegularPos()).getBlock())) {
+					FACTIONS.getClaims().remove(claimingFaction.uuid);
+					claimingFaction.onClaimLost(claimPos);
 				} else {
 					player.sendMessage(new TextComponentString("This chunk already has a claim"));
 					event.setCanceled(true);
@@ -429,12 +429,12 @@ public class WarForgeMod implements ILateMixinLoader
 		ObjectIntPair<UUID> conqueredChunkInfo = FACTIONS.conqueredChunks.get(pos);
 		if (conqueredChunkInfo != null) {
 			// remove invalid entries if necessary, and if not then do actual comparison
-			if (conqueredChunkInfo.getLeft() == null || conqueredChunkInfo.getLeft().equals(Faction.NULL) || FACTIONS.GetFaction(conqueredChunkInfo.getLeft()) == null) {
+			if (conqueredChunkInfo.getLeft() == null || conqueredChunkInfo.getLeft().equals(Faction.NULL) || FACTIONS.getFaction(conqueredChunkInfo.getLeft()) == null) {
 				WarForgeMod.LOGGER.atError().log("Found invalid conquered chunk at " + pos + "; removing and permitting placement.");
 				FACTIONS.conqueredChunks.remove(pos);
-			} else if (!conqueredChunkInfo.getLeft().equals(playerFaction.mUUID)) {
+			} else if (!conqueredChunkInfo.getLeft().equals(playerFaction.uuid)) {
 				player.sendMessage(new TextComponentTranslation("warforge.info.chunk_is_conquered",
-						WarForgeMod.FACTIONS.GetFaction(FACTIONS.conqueredChunks.get(pos).getLeft()).mName,
+						WarForgeMod.FACTIONS.getFaction(FACTIONS.conqueredChunks.get(pos).getLeft()).name,
 						formatTime(FACTIONS.conqueredChunks.get(pos).getRight())));
 				event.setCanceled(true);
 				return;
@@ -467,7 +467,7 @@ public class WarForgeMod implements ILateMixinLoader
     			return;
     		}
 
-    		if(!playerFaction.IsPlayerRoleInFaction(player.getUniqueID(), Role.OFFICER))
+    		if(!playerFaction.isPlayerRoleInFaction(player.getUniqueID(), Role.OFFICER))
     		{
     			player.sendMessage(new TextComponentString("You are not an officer of your faction"));
     			event.setCanceled(true);
@@ -483,7 +483,7 @@ public class WarForgeMod implements ILateMixinLoader
     			return;
     		}
 
-    		if(!playerFaction.IsPlayerRoleInFaction(player.getUniqueID(), Role.OFFICER))
+    		if(!playerFaction.isPlayerRoleInFaction(player.getUniqueID(), Role.OFFICER))
     		{
     			player.sendMessage(new TextComponentString("You are not an officer of your faction"));
     			event.setCanceled(true);
@@ -506,7 +506,7 @@ public class WarForgeMod implements ILateMixinLoader
 			}
 
     		ArrayList<DimChunkPos> validTargets = new ArrayList<>(Arrays.asList(new DimChunkPos[4]));
-    		int numTargets = FACTIONS.GetAdjacentClaims(playerFaction.mUUID, new DimBlockPos(event.getWorld().provider.getDimension(), event.getPos()), validTargets);
+    		int numTargets = FACTIONS.GetAdjacentClaims(playerFaction.uuid, new DimBlockPos(event.getWorld().provider.getDimension(), event.getPos()), validTargets);
     		if(numTargets == 0)
     		{
     			player.sendMessage(new TextComponentString("There are no adjacent claims to siege; Siege camp Y level must be w/in " + WarForgeConfig.VERTICAL_SIEGE_DIST + " of target."));

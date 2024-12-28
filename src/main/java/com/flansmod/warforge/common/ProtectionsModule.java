@@ -81,12 +81,12 @@ public class ProtectionsModule
 		if(factionID.equals(FactionStorage.WAR_ZONE_ID))
 			return WarForgeConfig.WAR_ZONE;
 		
-		Faction faction = WarForgeMod.FACTIONS.GetFaction(factionID);
+		Faction faction = WarForgeMod.FACTIONS.getFaction(factionID);
 		if(faction != null)
 		{
-			boolean playerIsInFaction = playerID != null && !playerID.equals(Faction.NULL) && faction.IsPlayerInFaction(playerID);
+			boolean playerIsInFaction = playerID != null && !playerID.equals(Faction.NULL) && faction.isPlayerInFaction(playerID);
 			
-			if(faction.mCitadelPos.toChunkPos().equals(pos))
+			if(faction.citadelPos.toChunkPos().equals(pos))
 				return playerIsInFaction ? WarForgeConfig.CITADEL_FRIEND : WarForgeConfig.CITADEL_FOE;
 
 			return playerIsInFaction ? WarForgeConfig.CLAIM_FRIEND : WarForgeConfig.CLAIM_FOE;

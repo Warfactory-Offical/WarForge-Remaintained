@@ -35,11 +35,11 @@ public class PacketRequestFactionInfo extends PacketBase
 		Faction faction = null;
 		if(!mFactionIDRequest.equals(Faction.NULL))
 		{
-			faction = WarForgeMod.FACTIONS.GetFaction(mFactionIDRequest);
+			faction = WarForgeMod.FACTIONS.getFaction(mFactionIDRequest);
 		}
 		else if(!mFactionNameRequest.isEmpty())
 		{
-			faction = WarForgeMod.FACTIONS.GetFaction(mFactionNameRequest);
+			faction = WarForgeMod.FACTIONS.getFaction(mFactionNameRequest);
 		}
 		else
 		{
@@ -49,7 +49,7 @@ public class PacketRequestFactionInfo extends PacketBase
 		if(faction != null)
 		{
 			PacketFactionInfo packet = new PacketFactionInfo();
-			packet.mInfo = faction.CreateInfo();
+			packet.info = faction.createInfo();
 			WarForgeMod.INSTANCE.NETWORK.sendTo(packet, playerEntity);
 		}
 		else

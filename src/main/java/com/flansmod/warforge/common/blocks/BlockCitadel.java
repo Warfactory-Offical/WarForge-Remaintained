@@ -72,11 +72,8 @@ public class BlockCitadel extends Block implements ITileEntityProvider
 			return false;
 		
 		// Can only place on a solid surface
-		if(!world.getBlockState(pos.add(0, -1, 0)).isSideSolid(world, pos.add(0, -1, 0), EnumFacing.UP))
-			return false;
-		
-		return true;
-	}
+        return world.getBlockState(pos.add(0, -1, 0)).isSideSolid(world, pos.add(0, -1, 0), EnumFacing.UP);
+    }
 	
 	@Override
     public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack)
@@ -85,7 +82,7 @@ public class BlockCitadel extends Block implements ITileEntityProvider
 		if(te != null)
 		{
 			TileEntityCitadel citadel = (TileEntityCitadel)te;
-			citadel.OnPlacedBy(placer);
+			citadel.onPlacedBy(placer);
 		}
     }
 	
@@ -106,24 +103,24 @@ public class BlockCitadel extends Block implements ITileEntityProvider
 			TileEntityCitadel citadel = (TileEntityCitadel)world.getTileEntity(pos);
 			
 			// If the player has no faction and is the placer, they can open the UI
-			if(playerFaction == null && player.getUniqueID().equals(citadel.GetPlacer()))
+			if(playerFaction == null && player.getUniqueID().equals(citadel.placer))
 			{
 				player.openGui(WarForgeMod.INSTANCE, CommonProxy.GUI_TYPE_CITADEL, world, pos.getX(), pos.getY(), pos.getZ());
 			}
 			// Any other factionless players, and players who aren't in this faction get an info panel			
-			else if(playerFaction == null || !playerFaction.mUUID.equals(citadel.mFactionUUID))
+			else if(playerFaction == null || !playerFaction.uuid.equals(citadel.factionUUID))
 			{
-				Faction citadelFaction = WarForgeMod.FACTIONS.GetFaction(citadel.mFactionUUID);
+				Faction citadelFaction = WarForgeMod.FACTIONS.getFaction(citadel.factionUUID);
 				if(citadelFaction != null)
 				{
 					PacketFactionInfo packet = new PacketFactionInfo();
-					packet.mInfo = citadelFaction.CreateInfo();
-					WarForgeMod.INSTANCE.NETWORK.sendTo(packet, (EntityPlayerMP) player);
+					packet.info = citadelFaction.createInfo();
+					WarForgeMod.NETWORK.sendTo(packet, (EntityPlayerMP) player);
 				}
 				else
 				{
 					DimBlockPos citadelPos = new DimBlockPos(world.provider.getDimension(), pos);
-					Faction chunkFaction = WarForgeMod.FACTIONS.GetFaction(WarForgeMod.FACTIONS.getClaim(citadelPos.toChunkPos()));
+					Faction chunkFaction = WarForgeMod.FACTIONS.getFaction(WarForgeMod.FACTIONS.getClaim(citadelPos.toChunkPos()));
 					// if ghost citadel exists in chunk claimed by faction, delete it
 					if (FactionStorage.isValidFaction(chunkFaction)) {
 						world.destroyBlock(pos, false);

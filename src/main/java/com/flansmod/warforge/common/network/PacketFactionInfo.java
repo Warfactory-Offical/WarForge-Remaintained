@@ -13,44 +13,44 @@ import net.minecraft.entity.player.EntityPlayerMP;
 public class PacketFactionInfo extends PacketBase 
 {
 	// Cheeky hack to make it available to the GUI
-	public static FactionDisplayInfo sLatestInfo = null;
+	public static FactionDisplayInfo latestInfo = null;
 	
-	public FactionDisplayInfo mInfo;
+	public FactionDisplayInfo info;
 	
 	@Override
 	public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) 
 	{
-		if(mInfo != null)
+		if(info != null)
 		{
 			data.writeBoolean(true);
-			writeUUID(data, mInfo.mFactionID);
-			writeUTF(data, mInfo.mFactionName);
+			writeUUID(data, info.factionId);
+			writeUTF(data, info.mFactionName);
 			
-			data.writeInt(mInfo.mNotoriety);
-			data.writeInt(mInfo.mWealth);
-			data.writeInt(mInfo.mLegacy);
+			data.writeInt(info.notoriety);
+			data.writeInt(info.wealth);
+			data.writeInt(info.legacy);
 			
-			data.writeInt(mInfo.mNotorietyRank);
-			data.writeInt(mInfo.mWealthRank);
-			data.writeInt(mInfo.mLegacyRank);
-			data.writeInt(mInfo.mTotalRank);
+			data.writeInt(info.notorietyRank);
+			data.writeInt(info.wealthRank);
+			data.writeInt(info.legacyRank);
+			data.writeInt(info.totalRank);
 			
-			data.writeInt(mInfo.mNumClaims);
+			data.writeInt(info.mNumClaims);
 			
-			data.writeInt(mInfo.mCitadelPos.mDim);
-			data.writeInt(mInfo.mCitadelPos.getX());
-			data.writeInt(mInfo.mCitadelPos.getY());
-			data.writeInt(mInfo.mCitadelPos.getZ());
+			data.writeInt(info.mCitadelPos.dim);
+			data.writeInt(info.mCitadelPos.getX());
+			data.writeInt(info.mCitadelPos.getY());
+			data.writeInt(info.mCitadelPos.getZ());
 			
 			// Member list
-			data.writeInt(mInfo.mMembers.size());
-			for(int i = 0; i < mInfo.mMembers.size(); i++) 
+			data.writeInt(info.members.size());
+			for(int i = 0; i < info.members.size(); i++)
 			{
-				writeUUID(data, mInfo.mMembers.get(i).mPlayerUUID);
-				writeUTF(data, mInfo.mMembers.get(i).mPlayerName);
-				data.writeInt(mInfo.mMembers.get(i).mRole.ordinal());
+				writeUUID(data, info.members.get(i).playerUuid);
+				writeUTF(data, info.members.get(i).mPlayerName);
+				data.writeInt(info.members.get(i).role.ordinal());
 			}
-			writeUUID(data, mInfo.mLeaderID);
+			writeUUID(data, info.mLeaderID);
 		}
 		else
 		{
@@ -66,42 +66,42 @@ public class PacketFactionInfo extends PacketBase
 		
 		if(hasInfo)
 		{
-			mInfo = new FactionDisplayInfo();
+			info = new FactionDisplayInfo();
 			
-			mInfo.mFactionID = readUUID(data);
-			mInfo.mFactionName = readUTF(data);
+			info.factionId = readUUID(data);
+			info.mFactionName = readUTF(data);
 			
-			mInfo.mNotoriety = data.readInt();
-			mInfo.mWealth = data.readInt();
-			mInfo.mLegacy = data.readInt();
+			info.notoriety = data.readInt();
+			info.wealth = data.readInt();
+			info.legacy = data.readInt();
 			
-			mInfo.mNotorietyRank = data.readInt();
-			mInfo.mWealthRank = data.readInt();
-			mInfo.mLegacyRank = data.readInt();
-			mInfo.mTotalRank = data.readInt();
+			info.notorietyRank = data.readInt();
+			info.wealthRank = data.readInt();
+			info.legacyRank = data.readInt();
+			info.totalRank = data.readInt();
 			
-			mInfo.mNumClaims = data.readInt();
+			info.mNumClaims = data.readInt();
 			
 			int dim =	data.readInt();
 			int x =	data.readInt();
 			int y =	data.readInt();
 			int z =	data.readInt();
-			mInfo.mCitadelPos = new DimBlockPos(dim, x, y, z);
+			info.mCitadelPos = new DimBlockPos(dim, x, y, z);
 			
 			// Member list
 			int count = data.readInt();
 			for(int i = 0; i < count; i++)
 			{
 				PlayerDisplayInfo playerInfo = new PlayerDisplayInfo();
-				playerInfo.mPlayerUUID = readUUID(data);
+				playerInfo.playerUuid = readUUID(data);
 				playerInfo.mPlayerName = readUTF(data);
-				playerInfo.mRole = Role.values()[data.readInt()];
-				mInfo.mMembers.add(playerInfo);
+				playerInfo.role = Role.values()[data.readInt()];
+				info.members.add(playerInfo);
 			}
-			mInfo.mLeaderID = readUUID(data);
+			info.mLeaderID = readUUID(data);
 		}
 		else
-			mInfo = null;
+			info = null;
 	}
 
 	@Override
@@ -113,7 +113,7 @@ public class PacketFactionInfo extends PacketBase
 	@Override
 	public void handleClientSide(EntityPlayer clientPlayer) 
 	{
-		sLatestInfo = mInfo;
+		latestInfo = info;
 		clientPlayer.openGui(
 				WarForgeMod.INSTANCE, 
 				CommonProxy.GUI_TYPE_FACTION_INFO, 

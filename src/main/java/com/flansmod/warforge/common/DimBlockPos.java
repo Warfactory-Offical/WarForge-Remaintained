@@ -13,50 +13,50 @@ public class DimBlockPos extends BlockPos
 {
 	public static final DimBlockPos ZERO = new DimBlockPos(0, 0, 0, 0);
 	
-	public int mDim;
+	public int dim;
 	
 	public DimBlockPos(int dim, int x, int y, int z)
     {
         super(x, y, z);
-        mDim = dim;
+        this.dim = dim;
     }
 
     public DimBlockPos(int dim, double x, double y, double z)
     {
         super(x, y, z);
-        mDim = dim;
+        this.dim = dim;
     }
 
     public DimBlockPos(Entity source)
     {
         super(source);
-        mDim = source.dimension;
+        dim = source.dimension;
     }
     
     public DimBlockPos(TileEntity source)
     {
         super(source.getPos().getX(), source.getPos().getY(), source.getPos().getZ());
-        mDim = source.getWorld().provider.getDimension();
+        dim = source.getWorld().provider.getDimension();
     }
 
     public DimBlockPos(int dim, Vec3d vec)
     {
         super(vec);
-        mDim = dim;       
+        this.dim = dim;
     }
 
     public DimBlockPos(int dim, Vec3i source)
     {
     	super(source);
-    	mDim = dim;
+    	this.dim = dim;
     }
     
     public DimChunkPos toChunkPos()
     {
-    	return new DimChunkPos(mDim, getX() >> 4, getZ() >> 4);
+    	return new DimChunkPos(dim, getX() >> 4, getZ() >> 4);
     }
     
-    public BlockPos ToRegularPos()
+    public BlockPos toRegularPos()
     {
     	return new BlockPos(getX(), getY(), getZ());
     }
@@ -64,7 +64,7 @@ public class DimBlockPos extends BlockPos
     @Override
     public BlockPos offset(EnumFacing facing, int n)
     {
-        return n == 0 ? this : new DimBlockPos(this.mDim, this.getX() + facing.getXOffset() * n, this.getY() + facing.getYOffset() * n, this.getZ() + facing.getZOffset() * n);
+        return n == 0 ? this : new DimBlockPos(this.dim, this.getX() + facing.getXOffset() * n, this.getY() + facing.getYOffset() * n, this.getZ() + facing.getZOffset() * n);
     }
 
 	// HASHING INTO A MAP DEPENDENT ON BLOCKPOS (VANILLA METHODS) WILL RETURN NULL DUE TO THIS CUSTOM IMPL HAVING A DIFFERENT VALUE
@@ -72,7 +72,7 @@ public class DimBlockPos extends BlockPos
 	@Override
 	public int hashCode()
     {
-		return super.hashCode() ^ (155225 * this.mDim + 140501023);
+		return super.hashCode() ^ (155225 * this.dim + 140501023);
     }
 
 	@Override
@@ -81,11 +81,10 @@ public class DimBlockPos extends BlockPos
         if (this == other)
             return true;
 
-        if (!(other instanceof DimBlockPos))
+        if (!(other instanceof DimBlockPos dcpos))
             return false;
 
-        DimBlockPos dcpos = (DimBlockPos)other;
-        return this.mDim == dcpos.mDim 
+        return this.dim == dcpos.dim
         		&& this.getX() == dcpos.getX()
         		&& this.getY() == dcpos.getY()
         		&& this.getZ() == dcpos.getZ();
@@ -94,37 +93,35 @@ public class DimBlockPos extends BlockPos
 	@Override
     public String toString()
     {
-        return "[" + this.mDim + ": " + this.getX() + ", " + this.getY() + ", " + this.getZ() + "]";
+        return "[" + this.dim + ": " + this.getX() + ", " + this.getY() + ", " + this.getZ() + "]";
     }
 	
-	public String ToFancyString()
+	public String toFancyString()
 	{
-		return "[" + getX() + ", " + getY() + ", " + getZ() + "] in " + GetDimensionName();
+		return "[" + getX() + ", " + getY() + ", " + getZ() + "] in " + getDimensionName();
 	}
 	
-	public String GetDimensionName()
+	public String getDimensionName()
 	{
-		switch(mDim)
-		{
-			case -1: return "The Nether";
-			case 0: return "The Overworld";
-			case 1: return "The End";
-			
-			default: return "Dimension #" + mDim;
-		}
+        return switch (dim) {
+            case -1 -> "The Nether";
+            case 0 -> "The Overworld";
+            case 1 -> "The End";
+            default -> "Dimension #" + dim;
+        };
 	}
 	
-	public NBTTagIntArray WriteToNBT()
+	public NBTTagIntArray writeToNBT()
 	{
-		return new NBTTagIntArray(new int[] {mDim, getX(), getY(), getZ()});
+		return new NBTTagIntArray(new int[] {dim, getX(), getY(), getZ()});
 	}
 	
-	public void WriteToNBT(NBTTagCompound tags, String prefix)
+	public void writeToNBT(NBTTagCompound tags, String prefix)
 	{
-		tags.setIntArray(prefix, new int[] { mDim, getX(), getY(), getZ() });
+		tags.setIntArray(prefix, new int[] {dim, getX(), getY(), getZ() });
 	}
 	
-	public static DimBlockPos ReadFromNBT(NBTTagCompound tags, String prefix)
+	public static DimBlockPos readFromNBT(NBTTagCompound tags, String prefix)
 	{
 		int[] data = tags.getIntArray(prefix);
 		if(data.length == 4)
@@ -133,7 +130,7 @@ public class DimBlockPos extends BlockPos
 			return DimBlockPos.ZERO;
 	}
 	
-	public static DimBlockPos ReadFromNBT(NBTTagIntArray tag)
+	public static DimBlockPos readFromNBT(NBTTagIntArray tag)
 	{
 		if(tag != null)
 		{

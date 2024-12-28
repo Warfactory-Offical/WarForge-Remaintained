@@ -4,11 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import com.flansmod.warforge.common.CommonProxy;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.FactionDisplayInfo;
 import com.flansmod.warforge.common.network.PacketFactionInfo;
-import com.flansmod.warforge.common.network.PacketRequestFactionInfo;
 import com.flansmod.warforge.common.network.PlayerDisplayInfo;
 import com.flansmod.warforge.server.Faction;
 import com.flansmod.warforge.server.Faction.Role;
@@ -28,7 +26,7 @@ import net.minecraft.util.ResourceLocation;
 public class GuiFactionInfo extends GuiScreen
 {
 	private static final ResourceLocation texture = new ResourceLocation(WarForgeMod.MODID, "gui/factioninfo.png");
-	public static HashMap<String, ResourceLocation> sSkinCache = new HashMap<String, ResourceLocation>();
+	public static HashMap<String, ResourceLocation> skinCache = new HashMap<String, ResourceLocation>();
 
 	private enum EnumTab
 	{
@@ -52,8 +50,9 @@ public class GuiFactionInfo extends GuiScreen
 	private static final int BUTTON_PLAYER_FIRST = 100;
 	
 	private EnumTab currentTab = EnumTab.STATS;
-	private int xSize, ySize;
-	private FactionDisplayInfo info;
+	private final int xSize;
+    private final int ySize;
+	private final FactionDisplayInfo info;
 	private PlayerDisplayInfo lookingAt = null;
 	
 	private GuiButton stats, allies, sieges,
@@ -61,7 +60,7 @@ public class GuiFactionInfo extends GuiScreen
 	
 	public GuiFactionInfo()
 	{
-		info = PacketFactionInfo.sLatestInfo;
+		info = PacketFactionInfo.latestInfo;
     	xSize = 176;
     	ySize = 256;
 	}
@@ -111,21 +110,21 @@ public class GuiFactionInfo extends GuiScreen
 					index++;
 				}
 				
-				if(index < info.mMembers.size())
+				if(index < info.members.size())
 				{
-					PlayerDisplayInfo playerInfo = info.mMembers.get(index);
+					PlayerDisplayInfo playerInfo = info.members.get(index);
 					// If this is the leader, skip them and cache to put at top
 					if(leaderInfoIndex == -1)
 					{
-						if(playerInfo.mRole == Faction.Role.LEADER || playerInfo.mPlayerUUID.equals(info.mLeaderID))
+						if(playerInfo.role == Faction.Role.LEADER || playerInfo.playerUuid.equals(info.mLeaderID))
 						{
 							// Cache them
 							leaderInfoIndex = index;
 							
 							// Then render the next one
-							if(index + 1 < info.mMembers.size())
+							if(index + 1 < info.members.size())
 							{
-								playerInfo = info.mMembers.get(index + 1);
+								playerInfo = info.members.get(index + 1);
 								index++;
 							}
 							else continue;
@@ -144,7 +143,7 @@ public class GuiFactionInfo extends GuiScreen
 			buttonList.add(button);
 		}
 		
-		SelectTab(EnumTab.STATS, null);
+		selectTab(EnumTab.STATS, null);
 	}
 	
 	@Override
@@ -155,20 +154,15 @@ public class GuiFactionInfo extends GuiScreen
 			// Tab selections
 			case BUTTON_STATS:
 			{
-				SelectTab(EnumTab.STATS, null);
+				selectTab(EnumTab.STATS, null);
 				break;
 			}
-			case BUTTON_ALLIES:
+			case BUTTON_ALLIES, BUTTON_SIEGES:
 			{
-				SelectTab(EnumTab.ALLIES, null);
+				selectTab(EnumTab.ALLIES, null);
 				break;
 			}
-			case BUTTON_SIEGES:
-			{
-				SelectTab(EnumTab.ALLIES, null);
-				break;
-			}
-			// Player actions
+            // Player actions
 			case BUTTON_PROMOTE:
 			{
 				if(lookingAt != null)
@@ -177,7 +171,7 @@ public class GuiFactionInfo extends GuiScreen
 					Minecraft.getMinecraft().player.sendChatMessage("/f promote " + lookingAt.mPlayerName);
 					
 					// Re-request updated data
-					ClientProxy.RequestFactionInfo(info.mFactionID);
+					ClientProxy.requestFactionInfo(info.factionId);
 				}
 				break;
 			}
@@ -189,7 +183,7 @@ public class GuiFactionInfo extends GuiScreen
 					Minecraft.getMinecraft().player.sendChatMessage("/f demote " + lookingAt.mPlayerName);
 					
 					// Re-request updated data
-					ClientProxy.RequestFactionInfo(info.mFactionID);
+					ClientProxy.requestFactionInfo(info.factionId);
 				}
 				break;
 			}
@@ -201,7 +195,7 @@ public class GuiFactionInfo extends GuiScreen
 					Minecraft.getMinecraft().player.sendChatMessage("/f kick " + lookingAt.mPlayerName);
 					
 					// Re-request updated data
-					ClientProxy.RequestFactionInfo(info.mFactionID);
+					ClientProxy.requestFactionInfo(info.factionId);
 				}
 				break;
 			}
@@ -210,9 +204,9 @@ public class GuiFactionInfo extends GuiScreen
 			default:
 			{
 				int index = button.id - BUTTON_PLAYER_FIRST;
-				if(index >= 0 && index < info.mMembers.size())
+				if(index >= 0 && index < info.members.size())
 				{
-					SelectTab(EnumTab.PLAYER, info.mMembers.get(index).mPlayerUUID);
+					selectTab(EnumTab.PLAYER, info.members.get(index).playerUuid);
 				}
 				else
 				{
@@ -223,10 +217,10 @@ public class GuiFactionInfo extends GuiScreen
 		}	
 	}
 	
-	private void SelectTab(EnumTab tab, UUID playerID)
+	private void selectTab(EnumTab tab, UUID playerID)
 	{
 		UUID myID = Minecraft.getMinecraft().player.getUniqueID();
-		PlayerDisplayInfo myInfo = info.GetPlayerInfo(myID);
+		PlayerDisplayInfo myInfo = info.getPlayerInfo(myID);
 		boolean isMyFaction = myInfo != null;
 		
 		promote.visible = tab == EnumTab.PLAYER && isMyFaction;
@@ -235,12 +229,12 @@ public class GuiFactionInfo extends GuiScreen
 		
 		if(tab == EnumTab.PLAYER)
 		{
-			lookingAt = info.GetPlayerInfo(playerID);
+			lookingAt = info.getPlayerInfo(playerID);
 			if(lookingAt != null)
 			{
-				promote.enabled = isMyFaction && myInfo.mRole == Role.LEADER && lookingAt.mRole == Role.MEMBER;
-				demote.enabled = isMyFaction && myInfo.mRole == Role.LEADER && lookingAt.mRole == Role.OFFICER;
-				kick.enabled = isMyFaction && lookingAt.mRole.ordinal() < myInfo.mRole.ordinal();
+				promote.enabled = isMyFaction && myInfo.role == Role.LEADER && lookingAt.role == Role.MEMBER;
+				demote.enabled = isMyFaction && myInfo.role == Role.LEADER && lookingAt.role == Role.OFFICER;
+				kick.enabled = isMyFaction && lookingAt.role.ordinal() < myInfo.role.ordinal();
 			}
 		}
 		
@@ -289,27 +283,27 @@ public class GuiFactionInfo extends GuiScreen
 					index++;
 				}
 				
-				if(index < info.mMembers.size())
+				if(index < info.members.size())
 				{
-					PlayerDisplayInfo playerInfo = info.mMembers.get(index);
+					PlayerDisplayInfo playerInfo = info.members.get(index);
 					// If this is the leader, skip them and cache to put at top
 					if(leaderInfo == null)
 					{
-						if(playerInfo.mRole == Faction.Role.LEADER || playerInfo.mPlayerUUID.equals(info.mLeaderID))
+						if(playerInfo.role == Faction.Role.LEADER || playerInfo.playerUuid.equals(info.mLeaderID))
 						{
 							// Cache
 							leaderInfo = playerInfo;
 							
 							// Then render the next one
-							if(index + 1 < info.mMembers.size())
-								playerInfo = info.mMembers.get(index + 1);
+							if(index + 1 < info.members.size())
+								playerInfo = info.members.get(index + 1);
 							else continue;
 						}
 					}
 					
 					// Bind our texture, render a background
 					mc.renderEngine.bindTexture(texture);
-					drawTexturedModalRect(j + 5 + 24 * x, k + 79 + 24 * y, playerInfo.mRole == Faction.Role.OFFICER ? 176 : 198, 0, 22, 22);
+					drawTexturedModalRect(j + 5 + 24 * x, k + 79 + 24 * y, playerInfo.role == Faction.Role.OFFICER ? 176 : 198, 0, 22, 22);
 					
 					// Then bind their face and render that
 					RenderPlayerFace(j + 8 + 24 * x, k + 82 + 24 * y, playerInfo.mPlayerName);
@@ -339,22 +333,22 @@ public class GuiFactionInfo extends GuiScreen
 				
 				// Second column - numbers
 				int column1X = 120;
-				fontRenderer.drawStringWithShadow("" + info.mNotoriety, j + column1X, k + 152, 0xffffff);
-				fontRenderer.drawStringWithShadow("" + info.mWealth, j + column1X, k + 162, 0xffffff);
-				fontRenderer.drawStringWithShadow("" + info.mLegacy, j + column1X, k + 172, 0xffffff);
-				fontRenderer.drawStringWithShadow("" + (info.mNotoriety + info.mWealth + info.mLegacy), j + column1X, k + 182, 0xffffff);
-				fontRenderer.drawStringWithShadow("" + info.mMembers.size(), j + column1X, k + 192, 0xffffff);
+				fontRenderer.drawStringWithShadow("" + info.notoriety, j + column1X, k + 152, 0xffffff);
+				fontRenderer.drawStringWithShadow("" + info.wealth, j + column1X, k + 162, 0xffffff);
+				fontRenderer.drawStringWithShadow("" + info.legacy, j + column1X, k + 172, 0xffffff);
+				fontRenderer.drawStringWithShadow("" + (info.notoriety + info.wealth + info.legacy), j + column1X, k + 182, 0xffffff);
+				fontRenderer.drawStringWithShadow("" + info.members.size(), j + column1X, k + 192, 0xffffff);
 				
 				// Third column - server positioning
 				int column2X = 150;
-				fontRenderer.drawStringWithShadow("#" + info.mNotorietyRank, j + column2X, k + 152, 0xffffff);
-				fontRenderer.drawStringWithShadow("#" + info.mWealthRank, j + column2X, k + 162, 0xffffff);
-				fontRenderer.drawStringWithShadow("#" + info.mLegacyRank, j + column2X, k + 172, 0xffffff);
-				fontRenderer.drawStringWithShadow("#" + info.mTotalRank, j + column2X, k + 182, 0xffffff);
+				fontRenderer.drawStringWithShadow("#" + info.notorietyRank, j + column2X, k + 152, 0xffffff);
+				fontRenderer.drawStringWithShadow("#" + info.wealthRank, j + column2X, k + 162, 0xffffff);
+				fontRenderer.drawStringWithShadow("#" + info.legacyRank, j + column2X, k + 172, 0xffffff);
+				fontRenderer.drawStringWithShadow("#" + info.totalRank, j + column2X, k + 182, 0xffffff);
 				
 				break;
 			}
-			case ALLIES:
+			case ALLIES, SIEGES:
 			{
 				// TODO:
 				break;
@@ -364,7 +358,7 @@ public class GuiFactionInfo extends GuiScreen
 				if(lookingAt != null)
 				{
 					fontRenderer.drawStringWithShadow(lookingAt.mPlayerName, j + 8, k + 152, 0xffffff);
-					switch(lookingAt.mRole) 
+					switch(lookingAt.role)
 					{
 						case GUEST: fontRenderer.drawStringWithShadow("Guest", j + 8, k + 162, 0xffffff); break;
 						case LEADER: fontRenderer.drawStringWithShadow("Leader", j + 8, k + 162, 0xffffff); break;
@@ -375,12 +369,7 @@ public class GuiFactionInfo extends GuiScreen
 				}
 				break;
 			}
-			case SIEGES:
-			{
-				// TODO:
-				break;
-			}
-		}
+        }
 		
 	}
 	
@@ -393,31 +382,28 @@ public class GuiFactionInfo extends GuiScreen
 		
 	public static ResourceLocation GetSkin(String username)
 	{
-		if(!sSkinCache.containsKey(username))
+		if(!skinCache.containsKey(username))
 		{
 			// Then bind their face and render that
 			ResourceLocation skin = DefaultPlayerSkin.getDefaultSkinLegacy();
 			GameProfile profile = TileEntitySkull.updateGameProfile(new GameProfile((UUID)null, username));
-	        if (profile != null)
-	        {
-	            Minecraft minecraft = Minecraft.getMinecraft();
-	            Map<Type, MinecraftProfileTexture> map = minecraft.getSkinManager().loadSkinFromCache(profile);
-	
-	            if (map.containsKey(Type.SKIN))
-	            {
-	            	skin = minecraft.getSkinManager().loadSkin(map.get(Type.SKIN), Type.SKIN);
-	            }
-	            else
-	            {
-	                UUID uuid = EntityPlayer.getUUID(profile);
-	                skin = DefaultPlayerSkin.getDefaultSkin(uuid);
-	            }
-	        }
-	        sSkinCache.put(username, skin);
+            Minecraft minecraft = Minecraft.getMinecraft();
+            Map<Type, MinecraftProfileTexture> map = minecraft.getSkinManager().loadSkinFromCache(profile);
+
+            if (map.containsKey(Type.SKIN))
+            {
+                skin = minecraft.getSkinManager().loadSkin(map.get(Type.SKIN), Type.SKIN);
+            }
+            else
+            {
+                UUID uuid = EntityPlayer.getUUID(profile);
+                skin = DefaultPlayerSkin.getDefaultSkin(uuid);
+            }
+            skinCache.put(username, skin);
 	        return skin;
 		}
 		
-		return sSkinCache.get(username);
+		return skinCache.get(username);
 	}
 	
 	@Override

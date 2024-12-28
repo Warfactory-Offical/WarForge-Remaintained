@@ -17,7 +17,7 @@ public class PacketStartSiege extends PacketBase
 	@Override
 	public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) 
 	{
-		data.writeInt(mSiegeCampPos.mDim);
+		data.writeInt(mSiegeCampPos.dim);
 		data.writeInt(mSiegeCampPos.getX());
 		data.writeInt(mSiegeCampPos.getY());
 		data.writeInt(mSiegeCampPos.getZ());
@@ -40,7 +40,7 @@ public class PacketStartSiege extends PacketBase
 	@Override
 	public void handleServerSide(EntityPlayerMP playerEntity) 
 	{
-		WarForgeMod.FACTIONS.RequestStartSiege(playerEntity, mSiegeCampPos, mDirection);
+		WarForgeMod.FACTIONS.requestStartSiege(playerEntity, mSiegeCampPos, mDirection);
 	}
 
 	@Override

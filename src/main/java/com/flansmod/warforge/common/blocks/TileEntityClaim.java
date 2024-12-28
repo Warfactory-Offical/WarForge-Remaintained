@@ -11,7 +11,6 @@ import com.flansmod.warforge.server.Faction;
 import com.flansmod.warforge.server.Faction.PlayerData;
 import com.mojang.authlib.GameProfile;
 
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -27,23 +26,23 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public abstract class TileEntityClaim extends TileEntity implements IClaim
 {
-	protected UUID mFactionUUID = Faction.NULL;
-	public int mColour = 0xffffff;
-	public String mFactionName = "";
+	protected UUID factionUUID = Faction.NULL;
+	public int colour = 0xFF_FF_FF;
+	public String factionName = "";
 	
-	public ArrayList<String> mPlayerFlags = new ArrayList<String>();
+	public ArrayList<String> playerFlags = new ArrayList<String>();
 	
 	// IClaim
 	@Override
-	public UUID GetFaction() { return mFactionUUID; }
+	public UUID getFaction() { return factionUUID; }
 	@Override 
-	public void UpdateColour(int colour) { mColour = colour; }
+	public void updateColour(int colour) { this.colour = colour; }
 	@Override
-	public int GetColour() { return mColour; }
+	public int getColour() { return colour; }
 	@Override
-	public TileEntity GetAsTileEntity() { return this; }
+	public TileEntity getAsTileEntity() { return this; }
 	@Override
-	public DimBlockPos GetPos() 
+	public DimBlockPos getPos()
 	{ 
 		if(world == null)
 		{
@@ -55,18 +54,18 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 		return new DimBlockPos(world.provider.getDimension(), getPos()); 
 	}
 	@Override 
-	public boolean CanBeSieged() { return true; }
+	public boolean canBeSieged() { return true; }
 	@Override
-	public String GetDisplayName() { return mFactionName; }
+	public String getClaimDisplayName() { return factionName; }
 	@Override
-	public List<String> GetPlayerFlags() { return mPlayerFlags; }
+	public List<String> getPlayerFlags() { return playerFlags; }
 	//-----------
 	
 	
 	@Override
-	public void OnServerSetPlayerFlag(String playerName)
+	public void onServerSetPlayerFlag(String playerName)
 	{
-		mPlayerFlags.add(playerName);
+		playerFlags.add(playerName);
 		
 		world.markBlockRangeForRenderUpdate(pos, pos);
 		world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 3);
@@ -75,9 +74,9 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 	}
 	
 	@Override
-	public void OnServerRemovePlayerFlag(String playerName)
+	public void onServerRemovePlayerFlag(String playerName)
 	{
-		mPlayerFlags.remove(playerName);
+		playerFlags.remove(playerName);
 		
 		world.markBlockRangeForRenderUpdate(pos, pos);
 		world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 3);
@@ -86,17 +85,17 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 	}
 	
 	@Override
-	public void OnServerSetFaction(Faction faction)
+	public void onServerSetFaction(Faction faction)
 	{
 		if(faction == null)
 		{
-			mFactionUUID = Faction.NULL;
+			factionUUID = Faction.NULL;
 		}
 		else
 		{
-			mFactionUUID = faction.mUUID;
-			mColour = faction.mColour;
-			mFactionName = faction.mName;
+			factionUUID = faction.uuid;
+			colour = faction.colour;
+			factionName = faction.name;
 		}
 		
 		world.markBlockRangeForRenderUpdate(pos, pos);
@@ -119,7 +118,7 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 	{
 		super.writeToNBT(nbt);
 		
-		nbt.setUniqueId("faction", mFactionUUID);
+		nbt.setUniqueId("faction", factionUUID);
 				
 		/*
 		NBTTagList list = new NBTTagList();
@@ -138,10 +137,10 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 	{
 		super.readFromNBT(nbt);
 	
-		mFactionUUID = nbt.getUniqueId("faction");
+		factionUUID = nbt.getUniqueId("faction");
 
 		// Read player flags
-		mPlayerFlags.clear();
+		playerFlags.clear();
 		/*
 		NBTTagList list = nbt.getTagList("flags", 8); // String
 		if(list != null)
@@ -155,23 +154,23 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 		// Verifications
 		if(FMLCommonHandler.instance().getEffectiveSide() == Side.SERVER)
 		{
-			Faction faction = WarForgeMod.FACTIONS.GetFaction(mFactionUUID);
-			if(!mFactionUUID.equals(Faction.NULL) && faction == null)
+			Faction faction = WarForgeMod.FACTIONS.getFaction(factionUUID);
+			if(!factionUUID.equals(Faction.NULL) && faction == null)
 			{
-				WarForgeMod.LOGGER.error("Faction " + mFactionUUID + " could not be found for citadel at " + pos);
+				WarForgeMod.LOGGER.error("Faction " + factionUUID + " could not be found for citadel at " + pos);
 				//world.setBlockState(getPos(), Blocks.AIR.getDefaultState());
 			}
 			if(faction != null)
 			{
-				mColour = faction.mColour;
-				mFactionName = faction.mName;
-				for(HashMap.Entry<UUID, PlayerData> kvp : faction.mMembers.entrySet())
+				colour = faction.colour;
+				factionName = faction.name;
+				for(HashMap.Entry<UUID, PlayerData> kvp : faction.members.entrySet())
 				{
-					if(kvp.getValue().mFlagPosition.equals(GetPos()))
+					if(kvp.getValue().flagPosition.equals(this.getPos()))
 					{
 						GameProfile profile = WarForgeMod.MC_SERVER.getPlayerProfileCache().getProfileByUUID(kvp.getKey());
 						if(profile != null)
-							mPlayerFlags.add(profile.getName());
+							playerFlags.add(profile.getName());
 					}
 				}
 			}
@@ -204,15 +203,14 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 		NBTTagCompound tags = super.getUpdateTag();
 
 		// Custom partial nbt write method
-		tags.setUniqueId("faction", mFactionUUID);
-		tags.setInteger("colour", mColour);
-		tags.setString("name", mFactionName);
+		tags.setUniqueId("faction", factionUUID);
+		tags.setInteger("colour", colour);
+		tags.setString("name", factionName);
 		
 		NBTTagList list = new NBTTagList();
-		for(int i = 0; i < mPlayerFlags.size(); i++)
-		{
-			list.appendTag(new NBTTagString(mPlayerFlags.get(i)));
-		}
+        for (String playerFlag : playerFlags) {
+            list.appendTag(new NBTTagString(playerFlag));
+        }
 		tags.setTag("flags", list);
 		
 		return tags;
@@ -221,17 +219,17 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 	@Override
 	public void handleUpdateTag(NBTTagCompound tags)
 	{
-		mFactionUUID = tags.getUniqueId("faction");
-		mColour = tags.getInteger("colour");
-		mFactionName = tags.getString("name");
+		factionUUID = tags.getUniqueId("faction");
+		colour = tags.getInteger("colour");
+		factionName = tags.getString("name");
 		
 		
 		// Read player flags
-		mPlayerFlags.clear();
+		playerFlags.clear();
 		NBTTagList list = tags.getTagList("flags", 8); // String
 		for(NBTBase base : list)
 		{
-			mPlayerFlags.add(((NBTTagString)base).getString());
+			playerFlags.add(((NBTTagString)base).getString());
 		}
 	}
 	
