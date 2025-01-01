@@ -24,7 +24,7 @@ public class PacketFactionInfo extends PacketBase
 		{
 			data.writeBoolean(true);
 			writeUUID(data, info.factionId);
-			writeUTF(data, info.mFactionName);
+			writeUTF(data, info.factionName);
 			
 			data.writeInt(info.notoriety);
 			data.writeInt(info.wealth);
@@ -47,7 +47,7 @@ public class PacketFactionInfo extends PacketBase
 			for(int i = 0; i < info.members.size(); i++)
 			{
 				writeUUID(data, info.members.get(i).playerUuid);
-				writeUTF(data, info.members.get(i).mPlayerName);
+				writeUTF(data, info.members.get(i).username);
 				data.writeInt(info.members.get(i).role.ordinal());
 			}
 			writeUUID(data, info.mLeaderID);
@@ -69,7 +69,7 @@ public class PacketFactionInfo extends PacketBase
 			info = new FactionDisplayInfo();
 			
 			info.factionId = readUUID(data);
-			info.mFactionName = readUTF(data);
+			info.factionName = readUTF(data);
 			
 			info.notoriety = data.readInt();
 			info.wealth = data.readInt();
@@ -94,7 +94,7 @@ public class PacketFactionInfo extends PacketBase
 			{
 				PlayerDisplayInfo playerInfo = new PlayerDisplayInfo();
 				playerInfo.playerUuid = readUUID(data);
-				playerInfo.mPlayerName = readUTF(data);
+				playerInfo.username = readUTF(data);
 				playerInfo.role = Role.values()[data.readInt()];
 				info.members.add(playerInfo);
 			}

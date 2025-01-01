@@ -45,28 +45,35 @@ import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 
 public class ClientTickHandler 
 {
-	private Tessellator tess;
+	// FIXME: use something other than a tessellator
+	private final Tessellator tess;
 	private static final ResourceLocation texture = new ResourceLocation(WarForgeMod.MODID, "world/borders.png");
 	private static final ResourceLocation fastTexture = new ResourceLocation(WarForgeMod.MODID, "world/borders_fast.png");
 	private static final ResourceLocation overlayTex = new ResourceLocation(WarForgeMod.MODID, "world/overlay.png");
 	private static final ResourceLocation siegeprogress = new ResourceLocation(WarForgeMod.MODID, "gui/siegeprogressslim.png");
 	private final ModelBanner bannerModel = new ModelBanner();
-	private DimChunkPos mStandingInChunk = new DimChunkPos(0,0,0);
-	private float mShowNewAreaTicksRemaining = 0;
-	private String mAreaMessage = "";
-	private int mAreaMessageColour = 0xffffff;
-	public static long msOfNextSiegeDay = 0L;
-	public static long msOfNextYieldDay = 0L;
-	
+	private DimChunkPos playerChunkPos = new DimChunkPos(0,0,0);
+	private float newAreaToastTime = 0;
+	private String areaMessage = "";
+	private int areaMessageColour = 0xFF_FF_FF_FF;
+	public static long nextSiegeDayMs = 0L;
+	public static long nextYieldDayMs = 0L;
+
+	private final HashMap<ItemStack, ResourceLocation> bannerTextures = new HashMap<ItemStack, ResourceLocation>();
+
+	public static boolean CLAIMS_DIRTY = false;
+	private HashMap<DimChunkPos, BorderRenderData> renderData = new HashMap<DimChunkPos, BorderRenderData>();
+	private final int renderList = GLAllocation.generateDisplayLists(1);
+
 	public ClientTickHandler()
 	{
 		tess = Tessellator.getInstance();
 	}
 	
 	@SubscribeEvent
-	public void OnTick(ClientTickEvent tick)
+	public void onTick(ClientTickEvent tick)
 	{
-		WarForgeMod.INSTANCE.NETWORK.handleClientPackets();
+		WarForgeMod.NETWORK.handleClientPackets();
 		WarForgeMod.proxy.TickClient();
 		ArrayList<DimBlockPos> expired = new ArrayList<DimBlockPos>();
 		for(HashMap.Entry<DimBlockPos, SiegeCampProgressInfo> kvp : ClientProxy.sSiegeInfo.entrySet())
@@ -83,8 +90,8 @@ public class ClientTickHandler
 			ClientProxy.sSiegeInfo.remove(pos);
 		}
 		
-		if(mShowNewAreaTicksRemaining > 0.0f)
-			mShowNewAreaTicksRemaining--;
+		if(newAreaToastTime > 0.0f)
+			newAreaToastTime--;
 		
 		if(Minecraft.getMinecraft().player != null && Minecraft.getMinecraft().player.ticksExisted % 200 == 0)
 			CLAIMS_DIRTY = true;
@@ -96,7 +103,7 @@ public class ClientTickHandler
 			{
 				DimChunkPos standing = new DimChunkPos(player.dimension, player.getPosition());
 				
-				if(!standing.equals(mStandingInChunk))
+				if(!standing.equals(playerChunkPos))
 				{
 					IClaim preClaim = null;
 					IClaim postClaim = null;
@@ -107,7 +114,7 @@ public class ClientTickHandler
 						if(te instanceof IClaim)
 						{
 							DimChunkPos tePos = ((IClaim) te).getPos().toChunkPos();
-							if(tePos.equals(mStandingInChunk))
+							if(tePos.equals(playerChunkPos))
 								preClaim = (IClaim)te;
 							
 							if(tePos.equals(standing))
@@ -117,52 +124,41 @@ public class ClientTickHandler
 					
 					if(preClaim == null)
 					{
-						if(postClaim == null)
-						{
-							// From nowhere to nowhere, nothing doing
-						}
-						else
-						{
-							// We've entered a new claim
-							mAreaMessage = "Entering " + postClaim.getClaimDisplayName();
-							mAreaMessageColour = postClaim.getColour();
-							mShowNewAreaTicksRemaining = WarForgeConfig.SHOW_NEW_AREA_TIMER;
-						}
-					}
+                        if (postClaim != null) {
+                            // We've entered a new claim
+                            areaMessage = "Entering " + postClaim.getClaimDisplayName();
+                            areaMessageColour = postClaim.getColour();
+                            newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
+                        }
+                    }
 					else // We've left somewhere 
 					{
 						if(postClaim == null) 
 						{
 							// Gone to nowhere, bye
-							mAreaMessage = "Leaving " + preClaim.getClaimDisplayName();
-							mAreaMessageColour = preClaim.getColour();
-							mShowNewAreaTicksRemaining = WarForgeConfig.SHOW_NEW_AREA_TIMER;
+							areaMessage = "Leaving " + preClaim.getClaimDisplayName();
+							areaMessageColour = preClaim.getColour();
+							newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
 						}
 						else
 						{
 							// We've gone to another place. 
-							if(preClaim.getFaction().equals(postClaim.getFaction()))
-							{
-								// If it's the same faction, don't mention it
-							}
-							else
-							{
-								// Otherwise, we've switched faction
-								mAreaMessage = "Leaving " + preClaim.getClaimDisplayName() + ", Entering " + postClaim.getClaimDisplayName();
-								mAreaMessageColour = postClaim.getColour();
-								mShowNewAreaTicksRemaining = WarForgeConfig.SHOW_NEW_AREA_TIMER;
-							}
-						}
+                            if (!preClaim.getFaction().equals(postClaim.getFaction())) {
+                                areaMessage = "Leaving " + preClaim.getClaimDisplayName() + ", Entering " + postClaim.getClaimDisplayName();
+                                areaMessageColour = postClaim.getColour();
+                                newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
+                            }
+                        }
 					}
 					
-					mStandingInChunk = standing;
+					playerChunkPos = standing;
 				}
 			}
 		}
 	}
 	
 	@SubscribeEvent
-	public void OnRenderHUD(RenderGameOverlayEvent event)
+	public void onRenderHUD(RenderGameOverlayEvent event)
 	{
 		if(event.getType() == ElementType.BOSSHEALTH)
 		{
@@ -177,7 +173,7 @@ public class ClientTickHandler
 					int j = 0;
 					int k = 0;
 					
-					long msRemaining = msOfNextSiegeDay - System.currentTimeMillis();
+					long msRemaining = nextSiegeDayMs - System.currentTimeMillis();
 					long s = msRemaining / 1000;
 					long m = s / 60;
 					long h = m / 60;
@@ -192,7 +188,7 @@ public class ClientTickHandler
 					k + 4,
 					0xffffff);
 					
-					msRemaining = msOfNextYieldDay - System.currentTimeMillis();
+					msRemaining = nextYieldDayMs - System.currentTimeMillis();
 					s = msRemaining / 1000;
 					m = s / 60;
 					h = m / 60;
@@ -232,28 +228,28 @@ public class ClientTickHandler
 					GlStateManager.enableAlpha();
 					GlStateManager.enableBlend();
 					
-	                float attackR = (float)(infoToRender.mAttackingColour >> 16 & 255) / 255.0F;
-	                float attackG = (float)(infoToRender.mAttackingColour >> 8 & 255) / 255.0F;
-	                float attackB = (float)(infoToRender.mAttackingColour & 255) / 255.0F;
-	                float defendR = (float)(infoToRender.mDefendingColour >> 16 & 255) / 255.0F;
-	                float defendG = (float)(infoToRender.mDefendingColour >> 8 & 255) / 255.0F;
-	                float defendB = (float)(infoToRender.mDefendingColour & 255) / 255.0F;
+	                float attackR = (float)(infoToRender.attackingColour >> 16 & 255) / 255.0F;
+	                float attackG = (float)(infoToRender.attackingColour >> 8 & 255) / 255.0F;
+	                float attackB = (float)(infoToRender.attackingColour & 255) / 255.0F;
+	                float defendR = (float)(infoToRender.defendingColour >> 16 & 255) / 255.0F;
+	                float defendG = (float)(infoToRender.defendingColour >> 8 & 255) / 255.0F;
+	                float defendB = (float)(infoToRender.defendingColour & 255) / 255.0F;
 					
 					// Render background, bars etc
 					int xSize = 256;
 					int ySize = 30;
 					
 					// Anchor point = top middle of screen
-					int j = event.getResolution().getScaledWidth() / 2 - xSize / 2;
-					int k = 0;
-					
+					int xText = event.getResolution().getScaledWidth() / 2 - xSize / 2;
+					int yText = 0;
+
 					float scroll = mc.getFrameTimer().getIndex() +  + event.getPartialTicks();
 					scroll *= 0.25f;
 					scroll = scroll % 10;
 
 					mc.renderEngine.bindTexture(siegeprogress);
 					GlStateManager.color(1f, 1f, 1f, 1f);
-					drawTexturedModalRect(j, k, 0, 0, xSize, ySize);
+					drawTexturedModalRect(xText, yText, 0, 0, xSize, ySize);
 					
 					float siegeLength = infoToRender.completionPoint + 5;
 					float barLengthPx = 224;
@@ -278,23 +274,23 @@ public class ClientTickHandler
 					if(isIncreasing)
 					{
 						GlStateManager.color(attackR, attackG, attackB, 1.0F);
-						drawTexturedModalRect(j + 16 + firstPx, k + 17, 16 + (10 - scroll), 44, lastPx - firstPx, 8);
+						drawTexturedModalRect(xText + 16 + firstPx, yText + 17, 16 + (10 - scroll), 44, lastPx - firstPx, 8);
 					}
 					else 
 					{
 						GlStateManager.color(defendR, defendG, defendB, 1.0F);
-						drawTexturedModalRect(j + 16 + firstPx, k + 17, 16 + scroll, 54, lastPx - firstPx, 8);
+						drawTexturedModalRect(xText + 16 + firstPx, yText + 17, 16 + scroll, 54, lastPx - firstPx, 8);
 					}
 					
 					
 					
 					// Draw shield at -5 (successful defence)
 					GlStateManager.color(defendR, defendG, defendB, 1.0F);
-					drawTexturedModalRect(j + 4, k + 16, 4, 31, 10, 11);
+					drawTexturedModalRect(xText + 4, yText + 16, 4, 31, 10, 11);
 					
 					// Draw sword at +CompletionPoint (successful attack)
 					GlStateManager.color(attackR, attackG, attackB, 1.0F);
-					drawTexturedModalRect(j + 241, k + 15, 241, 31, 12, 11);
+					drawTexturedModalRect(xText + 241, yText + 15, 241, 31, 12, 11);
 					
 					GlStateManager.color(1f, 1f, 1f, 1f);
 					// Draw notches at each integer interval
@@ -302,47 +298,47 @@ public class ClientTickHandler
 					{
 						int x = (int)((i + 5) * notchDistance + 16);
 						if(i == 0)
-							drawTexturedModalRect(j + x - 2, k + 17, 6, 43, 5, 8);
+							drawTexturedModalRect(xText + x - 2, yText + 17, 6, 43, 5, 8);
 						else 
-							drawTexturedModalRect(j + x - 2, k + 17, 1, 43, 4, 8);
+							drawTexturedModalRect(xText + x - 2, yText + 17, 1, 43, 4, 8);
 					}
 					
 					// Draw text
-					mc.fontRenderer.drawStringWithShadow(infoToRender.defendingName, j + 6, k + 6, infoToRender.mDefendingColour);
-					mc.fontRenderer.drawStringWithShadow("VS", j + xSize / 2 - mc.fontRenderer.getStringWidth("VS") / 2, k + 6, 0xffffff);
-					mc.fontRenderer.drawStringWithShadow(infoToRender.attackingName, j + xSize - 6 - mc.fontRenderer.getStringWidth(infoToRender.attackingName), k + 6, infoToRender.mAttackingColour);
+					mc.fontRenderer.drawStringWithShadow(infoToRender.defendingName, xText + 6, yText + 6, infoToRender.defendingColour);
+					mc.fontRenderer.drawStringWithShadow("VS", xText + xSize / 2 - mc.fontRenderer.getStringWidth("VS") / 2, yText + 6, 0xffffff);
+					mc.fontRenderer.drawStringWithShadow(infoToRender.attackingName, xText + xSize - 6 - mc.fontRenderer.getStringWidth(infoToRender.attackingName), yText + 6, infoToRender.attackingColour);
 					
 					String toWin = (infoToRender.progress < infoToRender.completionPoint) ? (infoToRender.completionPoint - infoToRender.progress) + " to win" : "Station siege to win";
 					String toDefend = (infoToRender.progress + 5) + " to defend";
-					mc.fontRenderer.drawStringWithShadow(toWin, j + xSize - 8 - mc.fontRenderer.getStringWidth(toWin), k + 32, infoToRender.mAttackingColour);
-					mc.fontRenderer.drawStringWithShadow(toDefend, j + 8, k + 32, infoToRender.mAttackingColour);
+					mc.fontRenderer.drawStringWithShadow(toWin, xText + xSize - 8 - mc.fontRenderer.getStringWidth(toWin), yText + 32, infoToRender.attackingColour);
+					mc.fontRenderer.drawStringWithShadow(toDefend, xText + 8, yText + 32, infoToRender.attackingColour);
 				}
 				
-				if(mShowNewAreaTicksRemaining > 0.0f)
+				if(newAreaToastTime > 0.0f)
 				{
 					//mShowNewAreaTicksRemaining -= event.getPartialTicks();
 					
 					// Anchor point = top middle of screen
-					int j = event.getResolution().getScaledWidth() / 2;
-					int k = 0;
+					int xText = event.getResolution().getScaledWidth() / 2;
+					int yText = 0;
 					
-					int stringWidth = mc.fontRenderer.getStringWidth(mAreaMessage);
+					int stringWidth = mc.fontRenderer.getStringWidth(areaMessage);
 					
-					float fadeOut = 2.0f * mShowNewAreaTicksRemaining / WarForgeConfig.SHOW_NEW_AREA_TIMER;
+					float fadeOut = 2.0f * newAreaToastTime / WarForgeConfig.SHOW_NEW_AREA_TIMER;
 					if(fadeOut > 1.0f)
 						fadeOut = 1.0f;
 					
-					int colour = mAreaMessageColour | ((int)(fadeOut * 255f) << 24);
+					int colour = areaMessageColour | ((int)(fadeOut * 255f) << 24);
 					
 					GlStateManager.enableAlpha();
 					GlStateManager.enableBlend();
 					GlStateManager.color(1f, 1f, 1f, fadeOut);
 					GlStateManager.disableTexture2D();
-					drawTexturedModalRect(j - stringWidth / 2 - 50, k + 42, 0, 0, stringWidth + 100, 1);
-					drawTexturedModalRect(j - stringWidth / 2 - 25, k + 65, 0, 0, stringWidth + 50, 1);
+					drawTexturedModalRect(xText - stringWidth / 2 - 50, yText + 42, 0, 0, stringWidth + 100, 1);
+					drawTexturedModalRect(xText - stringWidth / 2 - 25, yText + 65, 0, 0, stringWidth + 50, 1);
 					GlStateManager.enableTexture2D();
 					
-					mc.fontRenderer.drawStringWithShadow(mAreaMessage, j - stringWidth / 2, k + 50, colour);
+					mc.fontRenderer.drawStringWithShadow(areaMessage, xText - stringWidth / 2, yText + 50, colour);
 					GlStateManager.disableBlend();
 					GlStateManager.disableAlpha();
 				}
@@ -365,17 +361,13 @@ public class ClientTickHandler
 		tess.draw();
 	}
 	
-	private class BorderRenderData
+	private static class BorderRenderData
 	{
 		public IClaim claim;
 		public int renderList = -1;
 	}
-	
-	public static boolean CLAIMS_DIRTY = false;
-	private HashMap<DimChunkPos, BorderRenderData> mRenderData = new HashMap<DimChunkPos, BorderRenderData>();
-    private final int renderList = GLAllocation.generateDisplayLists(1);
-    
-    private void RenderZAlignedSquare(int x, int y, double z, int ori)
+
+    private void renderZAlignedSquare(int x, int y, double z, int ori)
     {
 		tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 		tess.getBuffer().pos(x + 0, y + 0, z).tex(((ori + 0) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
@@ -385,7 +377,7 @@ public class ClientTickHandler
 		tess.draw();
     }
     
-    private void RenderXAlignedSquare(double x, int y, int z, int ori)
+    private void renderXAlignedSquare(double x, int y, int z, int ori)
     {
 		tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 		tess.getBuffer().pos(x, y + 0, z + 0).tex(((ori + 0) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
@@ -395,7 +387,7 @@ public class ClientTickHandler
 		tess.draw();
     }
     
-	private void UpdateRenderData()
+	private void updateRenderData()
 	{
 		World world = Minecraft.getMinecraft().world;
 		if(world == null)
@@ -412,9 +404,9 @@ public class ClientTickHandler
 				DimBlockPos blockPos = ((IClaim) te).getPos();
 				DimChunkPos chunkPos = blockPos.toChunkPos();
 			
-				if(mRenderData.containsKey(chunkPos))
+				if(renderData.containsKey(chunkPos))
 				{
-					tempData.put(chunkPos, mRenderData.get(chunkPos));
+					tempData.put(chunkPos, renderData.get(chunkPos));
 				}
 				else
 				{
@@ -425,19 +417,19 @@ public class ClientTickHandler
 			}
 		}
 		
-		mRenderData = tempData;
+		renderData = tempData;
 		
 	}
 	
-	private void UpdateRandomMesh()
+	private void updateRandomMesh()
 	{	
 		World world = Minecraft.getMinecraft().world;
-		if(world == null || world.rand == null || mRenderData.size() == 0)
+		if(world == null || renderData.isEmpty())
 			return;
-		int index = world.rand.nextInt(mRenderData.size());
+		int index = world.rand.nextInt(renderData.size());
 				
 		// Then construct the mesh for one random entry
-		for(HashMap.Entry<DimChunkPos, BorderRenderData> kvp : mRenderData.entrySet())
+		for(HashMap.Entry<DimChunkPos, BorderRenderData> kvp : renderData.entrySet())
 		{
 			if(index > 0)
 			{
@@ -452,14 +444,14 @@ public class ClientTickHandler
 	        GlStateManager.glNewList(data.renderList, 4864);
 	        
 	        boolean renderNorth = true, renderEast = true, renderWest = true, renderSouth = true;
-	        if(mRenderData.containsKey(pos.North()))
-	        	renderNorth = !mRenderData.get(pos.North()).claim.getFaction().equals(data.claim.getFaction());
-	        if(mRenderData.containsKey(pos.East()))
-	        	renderEast = !mRenderData.get(pos.East()).claim.getFaction().equals(data.claim.getFaction());
-	        if(mRenderData.containsKey(pos.South()))
-	        	renderSouth = !mRenderData.get(pos.South()).claim.getFaction().equals(data.claim.getFaction());
-	        if(mRenderData.containsKey(pos.West()))
-	        	renderWest = !mRenderData.get(pos.West()).claim.getFaction().equals(data.claim.getFaction());
+	        if(renderData.containsKey(pos.North()))
+	        	renderNorth = !renderData.get(pos.North()).claim.getFaction().equals(data.claim.getFaction());
+	        if(renderData.containsKey(pos.East()))
+	        	renderEast = !renderData.get(pos.East()).claim.getFaction().equals(data.claim.getFaction());
+	        if(renderData.containsKey(pos.South()))
+	        	renderSouth = !renderData.get(pos.South()).claim.getFaction().equals(data.claim.getFaction());
+	        if(renderData.containsKey(pos.West()))
+	        	renderWest = !renderData.get(pos.West()).claim.getFaction().equals(data.claim.getFaction());
 
 	        // North edge, [0,0] -> [16,0] wall
     		if(renderNorth)
@@ -576,9 +568,9 @@ public class ClientTickHandler
 	       					airX1 = world.isAirBlock(new BlockPos(pos.getXStart() + x + 1, y, pos.getZStart()));
     			
 	       					if(!airX0 && airX1)
-	       						RenderZAlignedSquare(x + 1, y + 0, 0.125d, 0);
+	       						renderZAlignedSquare(x + 1, y + 0, 0.125d, 0);
 	       					if(airX0 && !airX1)
-	       						RenderZAlignedSquare(x + 0, y + 0, 0.125d, 2);
+	       						renderZAlignedSquare(x + 0, y + 0, 0.125d, 2);
        		    		}
        					// Render x + 1 edge on south side
        		    		if(x < 15 && renderSouth)
@@ -587,9 +579,9 @@ public class ClientTickHandler
 	       					airX1 = world.isAirBlock(new BlockPos(pos.getXStart() + x + 1, y, pos.getZEnd()));
 	       					
 	       					if(!airX0 && airX1)
-	       						RenderZAlignedSquare(x + 1, y + 0, 16d - 0.125d, 0);
+	       						renderZAlignedSquare(x + 1, y + 0, 16d - 0.125d, 0);
 	       					if(airX0 && !airX1)
-	       						RenderZAlignedSquare(x + 0, y + 0, 16d - 0.125d, 2);
+	       						renderZAlignedSquare(x + 0, y + 0, 16d - 0.125d, 2);
        		    		}
        		    		// Render y + 1 edge on north side
        		    		if(y < 255 && renderNorth)
@@ -597,9 +589,9 @@ public class ClientTickHandler
        		    			airY0 = world.isAirBlock(new BlockPos(pos.getXStart() + x, y, pos.getZStart()));
            					airY1 = world.isAirBlock(new BlockPos(pos.getXStart() + x, y + 1, pos.getZStart()));
 	       					if(!airY0 && airY1)
-	       						RenderZAlignedSquare(x + 0, y + 1, 0.125d, 3);
+	       						renderZAlignedSquare(x + 0, y + 1, 0.125d, 3);
 	       					if(airY0 && !airY1)
-	       						RenderZAlignedSquare(x + 0, y + 0, 0.125d, 1);
+	       						renderZAlignedSquare(x + 0, y + 0, 0.125d, 1);
        		    		}
        		    		// Render y + 1 edge on south side
        					if(y < 255 && renderSouth)
@@ -607,9 +599,9 @@ public class ClientTickHandler
        						airY0 = world.isAirBlock(new BlockPos(pos.getXStart() + x, y, pos.getZEnd()));
        						airY1 = world.isAirBlock(new BlockPos(pos.getXStart() + x, y + 1, pos.getZEnd()));
 	       					if(!airY0 && airY1)
-	       						RenderZAlignedSquare(x + 0, y + 1, 16d - 0.125d, 3);
+	       						renderZAlignedSquare(x + 0, y + 1, 16d - 0.125d, 3);
 	       					if(airY0 && !airY1)
-	       						RenderZAlignedSquare(x + 0, y + 0, 16d - 0.125d, 1);
+	       						renderZAlignedSquare(x + 0, y + 0, 16d - 0.125d, 1);
        					}
     				}
     			}
@@ -631,9 +623,9 @@ public class ClientTickHandler
 	       					airZ1 = world.isAirBlock(new BlockPos(pos.getXStart(), y, pos.getZStart() + z + 1));
     			
 	       					if(!airZ0 && airZ1)
-	       						RenderXAlignedSquare(0.125d, y + 0, z + 1, 0);
+	       						renderXAlignedSquare(0.125d, y + 0, z + 1, 0);
 	       					if(airZ0 && !airZ1)
-	       						RenderXAlignedSquare(0.125d, y + 0, z + 0, 2);
+	       						renderXAlignedSquare(0.125d, y + 0, z + 0, 2);
        		    		}
        					// Render z + 1 edge on west side
        		    		if(z < 15 && renderEast)
@@ -642,9 +634,9 @@ public class ClientTickHandler
 	       					airZ1 = world.isAirBlock(new BlockPos(pos.getXEnd(), y, pos.getZStart() + z + 1));
 	       					
 	       					if(!airZ0 && airZ1)
-	       						RenderXAlignedSquare(16d - 0.125d, y + 0, z + 1, 0);
+	       						renderXAlignedSquare(16d - 0.125d, y + 0, z + 1, 0);
 	       					if(airZ0 && !airZ1)
-	       						RenderXAlignedSquare(16d - 0.125d, y + 0, z + 0, 2);
+	       						renderXAlignedSquare(16d - 0.125d, y + 0, z + 0, 2);
        		    		}
        		    		// Render y + 1 edge on east side
        		    		if(y < 255 && renderWest)
@@ -652,9 +644,9 @@ public class ClientTickHandler
        		    			airY0 = world.isAirBlock(new BlockPos(pos.getXStart(), y, pos.getZStart() + z));
            					airY1 = world.isAirBlock(new BlockPos(pos.getXStart(), y + 1, pos.getZStart() + z));
 	       					if(!airY0 && airY1)
-	       						RenderXAlignedSquare(0.125d, y + 1, z, 3);
+	       						renderXAlignedSquare(0.125d, y + 1, z, 3);
 	       					if(airY0 && !airY1)
-	       						RenderXAlignedSquare(0.125d, y + 0, z, 1);
+	       						renderXAlignedSquare(0.125d, y + 0, z, 1);
        		    		}
        		    		// Render y + 1 edge on west side
        					if(y < 255 && renderEast)
@@ -662,9 +654,9 @@ public class ClientTickHandler
        		    			airY0 = world.isAirBlock(new BlockPos(pos.getXEnd(), y, pos.getZStart() + z));
            					airY1 = world.isAirBlock(new BlockPos(pos.getXEnd(), y + 1, pos.getZStart() + z));	       					
            					if(!airY0 && airY1)
-	       						RenderXAlignedSquare(16d - 0.125d, y + 1, z, 3);
+	       						renderXAlignedSquare(16d - 0.125d, y + 1, z, 3);
 	       					if(airY0 && !airY1)
-	       						RenderXAlignedSquare(16d - 0.125d, y + 0, z, 1);
+	       						renderXAlignedSquare(16d - 0.125d, y + 0, z, 1);
        					}
     				}
     			}
@@ -675,7 +667,7 @@ public class ClientTickHandler
 	}
 	
 	@SubscribeEvent
-	public void OnRenderLast(RenderWorldLastEvent event)
+	public void onRenderLast(RenderWorldLastEvent event)
 	{
 		// Get the player
 		EntityPlayer player = Minecraft.getMinecraft().player;
@@ -719,16 +711,16 @@ public class ClientTickHandler
 	
 			if(CLAIMS_DIRTY)
 			{
-				UpdateRenderData();
+				updateRenderData();
 				CLAIMS_DIRTY = false;
 			}
 			
 			// Slower update speed on fast graphics
 			if(player.world.rand.nextInt(WarForgeConfig.RANDOM_BORDER_REDRAW_DENOMINATOR) == 0)
-				UpdateRandomMesh();
+				updateRandomMesh();
 			
 			// Render each chunk we have border data for
-			for(HashMap.Entry<DimChunkPos, BorderRenderData> kvp : mRenderData.entrySet())
+			for(HashMap.Entry<DimChunkPos, BorderRenderData> kvp : renderData.entrySet())
 			{
 				DimChunkPos pos = kvp.getKey();
 				BorderRenderData data = kvp.getValue();
@@ -819,9 +811,9 @@ public class ClientTickHandler
 							BlockPos pos = new BlockPos(playerPos.x * 16 + i, player.posY, playerPos.z * 16 + k);
 							
 							//pos = player.world.getHeight(pos);
-							for(; pos.getY() > 0 && player.world.isAirBlock(pos); pos = pos.down())
-							{ 
-							}
+//							for(; pos.getY() > 0 && player.world.isAirBlock(pos); pos = pos.down())
+//							{
+//							}
 							
 							tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 							
@@ -847,10 +839,9 @@ public class ClientTickHandler
 			
 			for(TileEntity te : Minecraft.getMinecraft().world.loadedTileEntityList)
 			{
-				if(te instanceof TileEntityCitadel)
+				if(te instanceof TileEntityCitadel citadel)
 				{
-					TileEntityCitadel citadel = (TileEntityCitadel)te;
-					DimBlockPos blockPos = ((IClaim) te).getPos();
+                    DimBlockPos blockPos = ((IClaim) te).getPos();
 					
 					double distance = Math.sqrt((blockPos.getX() - x)*(blockPos.getX() - x)+(blockPos.getY() - y)*(blockPos.getY() - y)+(blockPos.getZ() - z)*(blockPos.getZ() - z));					
 					double groundLevelBlend = (skyRenderDistance - distance) / (skyRenderDistance - groundRenderDistance);
@@ -865,13 +856,9 @@ public class ClientTickHandler
 				
 					
 					ItemStack bannerStack = citadel.getStackInSlot(TileEntityCitadel.BANNER_SLOT_INDEX);
-					if(bannerStack.isEmpty())
+					if(bannerTextures.containsKey(bannerStack))
 					{
-						
-					}
-					else if(mBannerTextures.containsKey(bannerStack))
-					{
-						Minecraft.getMinecraft().renderEngine.bindTexture(mBannerTextures.get(bannerStack));
+						Minecraft.getMinecraft().renderEngine.bindTexture(bannerTextures.get(bannerStack));
 					}
 					else if(bannerStack.getItem() instanceof ItemBanner)
 					{
@@ -879,7 +866,7 @@ public class ClientTickHandler
 					    
 			        	// Start with base colour
 						EnumDyeColor baseColour = ItemBanner.getBaseColor(bannerStack);
-			        	String patternResourceLocation = "b" + baseColour.getDyeDamage();
+			        	StringBuilder patternResourceLocation = new StringBuilder("b" + baseColour.getDyeDamage());
 			        	List<BannerPattern> patternList = Lists.<BannerPattern>newArrayList();
 					    List<EnumDyeColor> colorList = Lists.<EnumDyeColor>newArrayList();
 					    
@@ -890,27 +877,22 @@ public class ClientTickHandler
 				        if (bannerStack.hasTagCompound() && bannerStack.getTagCompound().hasKey("Patterns", 9))
 				        {
 				        	NBTTagList patterns = bannerStack.getTagCompound().getTagList("Patterns", 10).copy();
-			                if (patterns != null)
-			                {
-			                    for (int p = 0; p < patterns.tagCount(); p++)
-			                    {
-			                        NBTTagCompound nbttagcompound = patterns.getCompoundTagAt(p);
-			                        BannerPattern bannerpattern = BannerPattern.byHash(nbttagcompound.getString("Pattern"));
-	
-			                        if (bannerpattern != null)
-			                        {
-			                            patternList.add(bannerpattern);
-			                            int j = nbttagcompound.getInteger("Color");
-			                            colorList.add(EnumDyeColor.byDyeDamage(j));
-			                            patternResourceLocation = patternResourceLocation + bannerpattern.getHashname() + j;
-			                        }
-			                    }
-			                }
-				        }
+                            for (int p = 0; p < patterns.tagCount(); p++) {
+                                NBTTagCompound nbttagcompound = patterns.getCompoundTagAt(p);
+                                BannerPattern bannerpattern = BannerPattern.byHash(nbttagcompound.getString("Pattern"));
+
+                                if (bannerpattern != null) {
+                                    patternList.add(bannerpattern);
+                                    int j = nbttagcompound.getInteger("Color");
+                                    colorList.add(EnumDyeColor.byDyeDamage(j));
+                                    patternResourceLocation.append(bannerpattern.getHashname()).append(j);
+                                }
+                            }
+                        }
 				        
 				        
-						ResourceLocation resLoc = BannerTextures.BANNER_DESIGNS.getResourceLocation(patternResourceLocation, patternList, colorList);
-						mBannerTextures.put(bannerStack, resLoc);
+						ResourceLocation resLoc = BannerTextures.BANNER_DESIGNS.getResourceLocation(patternResourceLocation.toString(), patternList, colorList);
+						bannerTextures.put(bannerStack, resLoc);
 						Minecraft.getMinecraft().renderEngine.bindTexture(resLoc);
 						
 						 GlStateManager.pushMatrix();
@@ -941,9 +923,9 @@ public class ClientTickHandler
 		GlStateManager.popMatrix();
 	}
 	
-	private HashMap<ItemStack, ResourceLocation> mBannerTextures = new HashMap<ItemStack, ResourceLocation>();
+
 	
-	private void VertexAt(DimChunkPos chunkPos, World world, int x, int z, double groundLevelBlend, double playerHeight)
+	private void vertexAt(DimChunkPos chunkPos, World world, int x, int z, double groundLevelBlend, double playerHeight)
 	{
 		double topHeight = playerHeight + 128;
 		

@@ -349,7 +349,7 @@ public class CommandFactions extends CommandBase
 					}
 					else {
 						Faction senderFaction = WarForgeMod.FACTIONS.getFactionOfPlayer(((EntityPlayerMP) sender).getUniqueID());
-						if (senderFaction == null || senderFaction.uuid.equals(Faction.NULL) || !senderFaction.equals(factionToSend)) {
+						if (senderFaction == null || senderFaction.uuid.equals(Faction.nullUuid) || !senderFaction.equals(factionToSend)) {
 							sender.sendMessage(new TextComponentString("Information cannot be provided to non-faction members"));
 						} else {
 							PacketFactionInfo packet = new PacketFactionInfo();
@@ -395,7 +395,7 @@ public class CommandFactions extends CommandBase
 				}
 				else
 				{
-					LeaderboardInfo info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.TOTAL, Faction.NULL);
+					LeaderboardInfo info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.TOTAL, Faction.nullUuid);
 					StringBuilder result = new StringBuilder("**Top Leaderboard**");
 					for(int i = 0; i < LeaderboardInfo.NUM_LEADERBOARD_ENTRIES_PER_PAGE; i++)
 					{
@@ -420,7 +420,7 @@ public class CommandFactions extends CommandBase
 				}
 				else
 				{
-					LeaderboardInfo info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.WEALTH, Faction.NULL);
+					LeaderboardInfo info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.WEALTH, Faction.nullUuid);
 					String result = "**Top Leaderboard**";
 					for(int i = 0; i < LeaderboardInfo.NUM_LEADERBOARD_ENTRIES_PER_PAGE; i++)
 					{
@@ -445,7 +445,7 @@ public class CommandFactions extends CommandBase
 				}
 				else
 				{
-					LeaderboardInfo info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.NOTORIETY, Faction.NULL);
+					LeaderboardInfo info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.NOTORIETY, Faction.nullUuid);
 					String result = "**Notoriety Leaderboard**";
 					for(int i = 0; i < LeaderboardInfo.NUM_LEADERBOARD_ENTRIES_PER_PAGE; i++)
 					{
@@ -470,7 +470,7 @@ public class CommandFactions extends CommandBase
 				}
 				else
 				{
-					LeaderboardInfo info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.LEGACY, Faction.NULL);
+					LeaderboardInfo info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.LEGACY, Faction.nullUuid);
 					String result = "**Legacy Leaderboard**";
 					for(int i = 0; i < LeaderboardInfo.NUM_LEADERBOARD_ENTRIES_PER_PAGE; i++)
 					{

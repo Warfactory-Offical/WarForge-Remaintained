@@ -50,7 +50,7 @@ public class ContainerCitadel extends Container
 	@Override
 	public boolean canInteractWith(EntityPlayer player) 
 	{
-		return player.world.isRemote || citadel.getFaction().equals(Faction.NULL) || WarForgeMod.FACTIONS.IsPlayerInFaction(player.getUniqueID(), citadel.getFaction());
+		return player.world.isRemote || citadel.getFaction().equals(Faction.nullUuid) || WarForgeMod.FACTIONS.IsPlayerInFaction(player.getUniqueID(), citadel.getFaction());
 	}
 
 	@Override

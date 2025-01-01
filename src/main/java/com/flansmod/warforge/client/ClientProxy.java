@@ -74,18 +74,19 @@ public class ClientProxy extends CommonProxy
 	@Override
 	public Object getClientGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z)
 	{
-		switch(ID)
-		{
-			case GUI_TYPE_CITADEL: return new GuiCitadel(getServerGuiElement(ID, player, world, x, y, z));
-			case GUI_TYPE_CREATE_FACTION: return new GuiCreateFaction((TileEntityCitadel)world.getTileEntity(new BlockPos(x, y, z)), false);
-			case GUI_TYPE_RECOLOUR_FACTION: return new GuiCreateFaction((TileEntityCitadel)world.getTileEntity(new BlockPos(x, y, z)), true);
-			case GUI_TYPE_BASIC_CLAIM: return new GuiBasicClaim(getServerGuiElement(ID, player, world, x, y, z));
-			case GUI_TYPE_FACTION_INFO: return new GuiFactionInfo();
-			//case GUI_TYPE_SIEGE_CAMP: return new GuiSiegeCamp();
-			case GUI_TYPE_LEADERBOARD: return new GuiLeaderboard();
-		}
-		return null;
-	}
+        return switch (ID) {
+            case GUI_TYPE_CITADEL -> new GuiCitadel(getServerGuiElement(ID, player, world, x, y, z));
+            case GUI_TYPE_CREATE_FACTION ->
+                    new GuiCreateFaction((TileEntityCitadel) world.getTileEntity(new BlockPos(x, y, z)), false);
+            case GUI_TYPE_RECOLOUR_FACTION ->
+                    new GuiCreateFaction((TileEntityCitadel) world.getTileEntity(new BlockPos(x, y, z)), true);
+            case GUI_TYPE_BASIC_CLAIM -> new GuiBasicClaim(getServerGuiElement(ID, player, world, x, y, z));
+            case GUI_TYPE_FACTION_INFO -> new GuiFactionInfo();
+            //case GUI_TYPE_SIEGE_CAMP: return new GuiSiegeCamp();
+            case GUI_TYPE_LEADERBOARD -> new GuiLeaderboard();
+            default -> null;
+        };
+    }
 	
 	@Override 	
 	public TileEntity GetTile(DimBlockPos pos)
@@ -136,10 +137,7 @@ public class ClientProxy extends CommonProxy
 			return;
 		}
 
-		if(sSiegeInfo.containsKey(info.attackingPos))
-		{
-			sSiegeInfo.remove(info.attackingPos);
-		}
+        sSiegeInfo.remove(info.attackingPos);
 		
 		sSiegeInfo.put(info.attackingPos, info);
 	}
@@ -148,6 +146,6 @@ public class ClientProxy extends CommonProxy
 	{
 		PacketRequestFactionInfo request = new PacketRequestFactionInfo();
 		request.mFactionIDRequest = factionID;
-		WarForgeMod.INSTANCE.NETWORK.sendToServer(request);
+		WarForgeMod.NETWORK.sendToServer(request);
 	}
 }

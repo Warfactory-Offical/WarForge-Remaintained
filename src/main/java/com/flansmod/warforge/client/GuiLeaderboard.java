@@ -147,13 +147,13 @@ public class GuiLeaderboard extends GuiScreen
                 case 3 -> 0xcd7f32;
                 default -> 0xffffff;
             };
-            fontRenderer.drawStringWithShadow(faction.mFactionName, x + 2, y + 1, colour);
+            fontRenderer.drawStringWithShadow(faction.factionName, x + 2, y + 1, colour);
 			fontRenderer.drawStringWithShadow("" + stat, x + 150, y + 1, colour);
 			fontRenderer.drawStringWithShadow("#" + oneIndexedRank, x + 200, y + 1, colour);
 		}
 		else	
 		{
-			fontRenderer.drawString(faction.mFactionName, x + 2, y + 1, 0xffffff);
+			fontRenderer.drawString(faction.factionName, x + 2, y + 1, 0xffffff);
 			fontRenderer.drawString("" + stat, x + 150, y + 1, 0xffffff);
 			fontRenderer.drawString("#" + oneIndexedRank, x + 200, y + 1, 0xffffff);
 		}

@@ -45,7 +45,7 @@ public class ContainerBasicClaim extends Container
 	@Override
 	public boolean canInteractWith(EntityPlayer player) 
 	{
-		return player.world.isRemote || claim.getFaction().equals(Faction.NULL) || WarForgeMod.FACTIONS.IsPlayerInFaction(player.getUniqueID(), claim.getFaction());
+		return player.world.isRemote || claim.getFaction().equals(Faction.nullUuid) || WarForgeMod.FACTIONS.IsPlayerInFaction(player.getUniqueID(), claim.getFaction());
 	}
 	
 	@Override

@@ -124,10 +124,10 @@ public class Siege {
 		SiegeCampProgressInfo info = new SiegeCampProgressInfo();
 		info.attackingPos = mAttackingSiegeCamps.get(0);
 		info.attackingName = attackers.name;
-		info.mAttackingColour = attackers.colour;
+		info.attackingColour = attackers.colour;
 		info.defendingPos = mDefendingClaim;
 		info.defendingName = defenders.name;
-		info.mDefendingColour = defenders.colour;
+		info.defendingColour = defenders.colour;
 		info.progress = GetAttackProgress();
 		info.completionPoint = GetAttackSuccessThreshold();
 		

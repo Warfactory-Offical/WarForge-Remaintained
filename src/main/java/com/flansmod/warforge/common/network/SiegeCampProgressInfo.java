@@ -6,8 +6,8 @@ public class SiegeCampProgressInfo
 {
 	public DimBlockPos defendingPos;
 	public DimBlockPos attackingPos;
-	public int mAttackingColour;
-	public int mDefendingColour;
+	public int attackingColour;
+	public int defendingColour;
 	public String attackingName;
 	public String defendingName;
 	

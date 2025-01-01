@@ -46,8 +46,8 @@ public class FactionStorage {
 	public HashMap<DimChunkPos, ObjectIntPair<UUID>> conqueredChunks = new HashMap<>();
     
     // SafeZone and WarZone
-    public static UUID SAFE_ZONE_ID = Faction.CreateUUID("safezone");
-    public static UUID WAR_ZONE_ID = Faction.CreateUUID("warzone");
+    public static UUID SAFE_ZONE_ID = Faction.createUUID("safezone");
+    public static UUID WAR_ZONE_ID = Faction.createUUID("warzone");
     public static Faction SAFE_ZONE = null;
     public static Faction WAR_ZONE = null;
     public static boolean IsNeutralZone(UUID factionID) { return factionID.equals(SAFE_ZONE_ID) || factionID.equals(WAR_ZONE_ID); }
@@ -111,7 +111,7 @@ public class FactionStorage {
     
     public Faction getFaction(UUID factionID)
     {
-		if(factionID.equals(Faction.NULL))
+		if(factionID.equals(Faction.nullUuid))
 			return null;
 
 		if(mFactions.containsKey(factionID))
@@ -177,7 +177,7 @@ public class FactionStorage {
     {
 		if(mClaims.containsKey(pos))
 			return mClaims.get(pos);
-		return Faction.NULL;
+		return Faction.nullUuid;
     }
     
     public Faction getFactionOfPlayer(UUID playerID)
@@ -223,7 +223,7 @@ public class FactionStorage {
 
 		if(!WarForgeConfig.LEGACY_USES_YIELD_TIMER) {
 			for(HashMap.Entry<UUID, Faction> entry : mFactions.entrySet()) {
-				entry.getValue().IncreaseLegacy();
+				entry.getValue().increaseLegacy();
 			}
 		}
     }
@@ -236,7 +236,7 @@ public class FactionStorage {
 
 		if(WarForgeConfig.LEGACY_USES_YIELD_TIMER) {
 			for(HashMap.Entry<UUID, Faction> entry : mFactions.entrySet()) {
-				entry.getValue().IncreaseLegacy();
+				entry.getValue().increaseLegacy();
 			}
 		}
     }
@@ -400,7 +400,7 @@ public class FactionStorage {
 			return false;
 		}
 
-		UUID proposedID = Faction.CreateUUID(factionName);
+		UUID proposedID = Faction.createUUID(factionName);
 		if(mFactions.containsKey(proposedID)) {
 			player.sendMessage(new TextComponentString("A faction with the name " + factionName + " already exists"));
 			return false;
@@ -597,7 +597,7 @@ public class FactionStorage {
 
 	public boolean RequestDisbandFaction(EntityPlayer factionLeader, UUID factionID)
     {
-		if(factionID.equals(Faction.NULL)) {
+		if(factionID.equals(Faction.nullUuid)) {
 			Faction faction = getFactionOfPlayer(factionLeader.getUniqueID());
 			if(faction != null)
 				factionID = faction.uuid;
@@ -717,7 +717,7 @@ public class FactionStorage {
 		}
 
 		UUID existingClaim = getClaim(pos);
-		if(!existingClaim.equals(Faction.NULL)) {
+		if(!existingClaim.equals(Faction.nullUuid)) {
 			op.sendMessage(new TextComponentString("There is already a claim here"));
 			return;
 		}
@@ -782,7 +782,7 @@ public class FactionStorage {
 
 	public boolean IsClaimed(UUID excludingFaction, DimChunkPos pos) {
 		UUID factionID = getClaim(pos);
-		return factionID != null && !factionID.equals(excludingFaction) && !factionID.equals(Faction.NULL);
+		return factionID != null && !factionID.equals(excludingFaction) && !factionID.equals(Faction.nullUuid);
 	}
 
 	public static boolean isValidFaction(Faction faction) {
@@ -790,13 +790,13 @@ public class FactionStorage {
 	}
 
 	public static boolean isValidFaction(UUID factionID) {
-		return factionID != null && !factionID.equals(Faction.NULL);
+		return factionID != null && !factionID.equals(Faction.nullUuid);
 	}
 
 	public boolean RequestRemoveClaim(EntityPlayerMP player, DimBlockPos pos) {
 		UUID factionID = getClaim(pos);
 		Faction faction = getFaction(factionID);
-		if(factionID.equals(Faction.NULL) || faction == null) {
+		if(factionID.equals(Faction.nullUuid) || faction == null) {
 			player.sendMessage(new TextComponentString("Could not find a claim in that location"));
 			return false;
 		}

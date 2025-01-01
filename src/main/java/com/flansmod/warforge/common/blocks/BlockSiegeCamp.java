@@ -100,7 +100,7 @@ public class BlockSiegeCamp extends Block implements ITileEntityProvider
 		if(!world.isRemote)
 		{
 			UUID existingClaim = FACTIONS.getClaim(new DimChunkPos(world.provider.getDimension(), pos));
-			if(!existingClaim.equals(Faction.NULL))
+			if(!existingClaim.equals(Faction.nullUuid))
 				return false;
 		}
 

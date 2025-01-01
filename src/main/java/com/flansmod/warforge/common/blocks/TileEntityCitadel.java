@@ -16,7 +16,7 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
 	public static final int BANNER_SLOT_INDEX = NUM_BASE_SLOTS;
 	public static final int NUM_SLOTS = NUM_BASE_SLOTS + 1;
 
-	public UUID placer = Faction.NULL;
+	public UUID placer = Faction.nullUuid;
 	
 	// The banner stack is an optional slot that sets all banners in owned chunks to copy the design
 	protected ItemStack bannerStack;

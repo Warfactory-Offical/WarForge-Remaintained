@@ -84,7 +84,7 @@ public class ProtectionsModule
 		Faction faction = WarForgeMod.FACTIONS.getFaction(factionID);
 		if(faction != null)
 		{
-			boolean playerIsInFaction = playerID != null && !playerID.equals(Faction.NULL) && faction.isPlayerInFaction(playerID);
+			boolean playerIsInFaction = playerID != null && !playerID.equals(Faction.nullUuid) && faction.isPlayerInFaction(playerID);
 			
 			if(faction.citadelPos.toChunkPos().equals(pos))
 				return playerIsInFaction ? WarForgeConfig.CITADEL_FRIEND : WarForgeConfig.CITADEL_FOE;
@@ -129,7 +129,7 @@ public class ProtectionsModule
     		DimChunkPos cPos = new DimChunkPos(dim, event.getAffectedBlocks().get(i));
     		if(!checkedPositions.containsKey(cPos))
     		{
-    			ProtectionConfig config = GetProtections(Faction.NULL, cPos);
+    			ProtectionConfig config = GetProtections(Faction.nullUuid, cPos);
     			checkedPositions.put(cPos, config);
     		}
     		if(!checkedPositions.get(cPos).EXPLOSION_DAMAGE || !checkedPositions.get(cPos).BLOCK_REMOVAL)
@@ -312,7 +312,7 @@ public class ProtectionsModule
     @SubscribeEvent
     public void OnMobSpawn(PotentialSpawns event)
     {
-    	ProtectionConfig config = GetProtections(Faction.NULL, new DimBlockPos(event.getWorld().provider.getDimension(), event.getPos()));
+    	ProtectionConfig config = GetProtections(Faction.nullUuid, new DimBlockPos(event.getWorld().provider.getDimension(), event.getPos()));
     	if(!config.ALLOW_MOB_SPAWNS)
     	{
     		event.setCanceled(true);
@@ -327,7 +327,7 @@ public class ProtectionsModule
     	{
     		if(!(event.getEntity() instanceof EntityPlayer))
     		{
-		    	ProtectionConfig config = GetProtections(Faction.NULL, new DimBlockPos(event.getEntity().dimension, event.getEntity().getPosition()));
+		    	ProtectionConfig config = GetProtections(Faction.nullUuid, new DimBlockPos(event.getEntity().dimension, event.getEntity().getPosition()));
 		    	if(!config.ALLOW_MOB_ENTRY)
 		    	{
 		    		inLoop = true;

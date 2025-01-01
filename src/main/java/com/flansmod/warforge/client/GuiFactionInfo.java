@@ -168,7 +168,7 @@ public class GuiFactionInfo extends GuiScreen
 				if(lookingAt != null)
 				{
 					// Request promotion
-					Minecraft.getMinecraft().player.sendChatMessage("/f promote " + lookingAt.mPlayerName);
+					Minecraft.getMinecraft().player.sendChatMessage("/f promote " + lookingAt.username);
 					
 					// Re-request updated data
 					ClientProxy.requestFactionInfo(info.factionId);
@@ -180,7 +180,7 @@ public class GuiFactionInfo extends GuiScreen
 				if(lookingAt != null)
 				{
 					// Request promotion
-					Minecraft.getMinecraft().player.sendChatMessage("/f demote " + lookingAt.mPlayerName);
+					Minecraft.getMinecraft().player.sendChatMessage("/f demote " + lookingAt.username);
 					
 					// Re-request updated data
 					ClientProxy.requestFactionInfo(info.factionId);
@@ -192,7 +192,7 @@ public class GuiFactionInfo extends GuiScreen
 				if(lookingAt != null)
 				{
 					// Request promotion
-					Minecraft.getMinecraft().player.sendChatMessage("/f kick " + lookingAt.mPlayerName);
+					Minecraft.getMinecraft().player.sendChatMessage("/f kick " + lookingAt.username);
 					
 					// Re-request updated data
 					ClientProxy.requestFactionInfo(info.factionId);
@@ -260,7 +260,7 @@ public class GuiFactionInfo extends GuiScreen
 		// Then draw overlay
 		super.drawScreen(mouseX, mouseY, partialTicks);
 		
-		fontRenderer.drawStringWithShadow(info.mFactionName, j + xSize / 2 - fontRenderer.getStringWidth(info.mFactionName) * 0.5f, k + 13, 0xffffff);
+		fontRenderer.drawStringWithShadow(info.factionName, j + xSize / 2 - fontRenderer.getStringWidth(info.factionName) * 0.5f, k + 13, 0xffffff);
 		// Some space here for strings
 		//fontRenderer.drawStringWithShadow("Notoriety: " + info.mNotoriety, j + 6, k + 57, 0xffffff);
 		//fontRenderer.drawStringWithShadow("Wealth: " + info.mNotoriety, j + 2 + xSize / 2, k + 57, 0xffffff);
@@ -306,7 +306,7 @@ public class GuiFactionInfo extends GuiScreen
 					drawTexturedModalRect(j + 5 + 24 * x, k + 79 + 24 * y, playerInfo.role == Faction.Role.OFFICER ? 176 : 198, 0, 22, 22);
 					
 					// Then bind their face and render that
-					RenderPlayerFace(j + 8 + 24 * x, k + 82 + 24 * y, playerInfo.mPlayerName);
+					RenderPlayerFace(j + 8 + 24 * x, k + 82 + 24 * y, playerInfo.username);
 				}
 			}
 		}
@@ -314,8 +314,8 @@ public class GuiFactionInfo extends GuiScreen
 		if(leaderInfo != null)
 		{
 			fontRenderer.drawStringWithShadow("Leader", j + 56, k + 31, 0xffffff);
-			fontRenderer.drawStringWithShadow(leaderInfo.mPlayerName, j + 56, k + 42, 0xffffff);
-			RenderPlayerFace(j + 34, k + 32, leaderInfo.mPlayerName);
+			fontRenderer.drawStringWithShadow(leaderInfo.username, j + 56, k + 42, 0xffffff);
+			RenderPlayerFace(j + 34, k + 32, leaderInfo.username);
 		}
 		
 		
@@ -357,7 +357,7 @@ public class GuiFactionInfo extends GuiScreen
 			{
 				if(lookingAt != null)
 				{
-					fontRenderer.drawStringWithShadow(lookingAt.mPlayerName, j + 8, k + 152, 0xffffff);
+					fontRenderer.drawStringWithShadow(lookingAt.username, j + 8, k + 152, 0xffffff);
 					switch(lookingAt.role)
 					{
 						case GUEST: fontRenderer.drawStringWithShadow("Guest", j + 8, k + 162, 0xffffff); break;

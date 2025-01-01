@@ -20,7 +20,7 @@ public class PacketSiegeCampProgressUpdate extends PacketBase
 		data.writeInt(info.attackingPos.getX());
 		data.writeInt(info.attackingPos.getY());
 		data.writeInt(info.attackingPos.getZ());
-		data.writeInt(info.mAttackingColour);
+		data.writeInt(info.attackingColour);
 		writeUTF(data, info.attackingName);
 		
 		// Defend
@@ -28,7 +28,7 @@ public class PacketSiegeCampProgressUpdate extends PacketBase
 		data.writeInt(info.defendingPos.getX());
 		data.writeInt(info.defendingPos.getY());
 		data.writeInt(info.defendingPos.getZ());
-		data.writeInt(info.mDefendingColour);
+		data.writeInt(info.defendingColour);
 		writeUTF(data, info.defendingName);
 		
 		data.writeInt(info.progress);
@@ -47,7 +47,7 @@ public class PacketSiegeCampProgressUpdate extends PacketBase
 		int y = data.readInt();
 		int z = data.readInt();
 		info.attackingPos = new DimBlockPos(dim, x, y, z);
-		info.mAttackingColour = data.readInt();
+		info.attackingColour = data.readInt();
 		info.attackingName = readUTF(data);
 		
 		// Defending
@@ -56,7 +56,7 @@ public class PacketSiegeCampProgressUpdate extends PacketBase
 		y = data.readInt();
 		z = data.readInt();
 		info.defendingPos = new DimBlockPos(dim, x, y, z);
-		info.mDefendingColour = data.readInt();
+		info.defendingColour = data.readInt();
 		info.defendingName = readUTF(data);
 		
 		info.progress = data.readInt();

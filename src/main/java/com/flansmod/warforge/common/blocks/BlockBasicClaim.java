@@ -73,7 +73,7 @@ public class BlockBasicClaim extends Block implements ITileEntityProvider
 		{
 			// Can't claim a chunk claimed by another faction
 			UUID existingClaim = WarForgeMod.FACTIONS.getClaim(new DimChunkPos(world.provider.getDimension(), pos));
-			if(!existingClaim.equals(Faction.NULL))
+			if(!existingClaim.equals(Faction.nullUuid))
 				return false;
 					
 			// Can only place on a solid surface

@@ -26,7 +26,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public abstract class TileEntityClaim extends TileEntity implements IClaim
 {
-	protected UUID factionUUID = Faction.NULL;
+	protected UUID factionUUID = Faction.nullUuid;
 	public int colour = 0xFF_FF_FF;
 	public String factionName = "";
 	
@@ -89,7 +89,7 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 	{
 		if(faction == null)
 		{
-			factionUUID = Faction.NULL;
+			factionUUID = Faction.nullUuid;
 		}
 		else
 		{
@@ -155,7 +155,7 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 		if(FMLCommonHandler.instance().getEffectiveSide() == Side.SERVER)
 		{
 			Faction faction = WarForgeMod.FACTIONS.getFaction(factionUUID);
-			if(!factionUUID.equals(Faction.NULL) && faction == null)
+			if(!factionUUID.equals(Faction.nullUuid) && faction == null)
 			{
 				WarForgeMod.LOGGER.error("Faction " + factionUUID + " could not be found for citadel at " + pos);
 				//world.setBlockState(getPos(), Blocks.AIR.getDefaultState());

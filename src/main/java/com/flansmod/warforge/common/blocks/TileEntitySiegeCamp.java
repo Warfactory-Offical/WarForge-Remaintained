@@ -29,7 +29,7 @@ import net.minecraftforge.fml.relauncher.Side;
 
 public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 {
-	private UUID placer = Faction.NULL;
+	private UUID placer = Faction.nullUuid;
 	private DimBlockPos siegeTarget = null;
 	private Faction defenders = null;
 	private boolean doCheckPerTick = WarForgeConfig.ATTACKER_DESERTION_TIMER == 0 || WarForgeConfig.DEFENDER_DESERTION_TIMER == 0;
@@ -260,7 +260,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 		if (world.isRemote) return;
 
 		// do not do logic with invalid values
-		if (placer == Faction.NULL || siegeTarget == null || defenders == null) return;
+		if (placer == Faction.nullUuid || siegeTarget == null || defenders == null) return;
 
 		tickTimer &= 0b01111111_11111111_11111111_11111111; // ensure positive
 
@@ -505,7 +505,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 
 		if(FMLCommonHandler.instance().getEffectiveSide() == Side.SERVER) {
 			Faction faction = WarForgeMod.FACTIONS.getFaction(factionUUID);
-			if(!factionUUID.equals(Faction.NULL) && faction == null) {
+			if(!factionUUID.equals(Faction.nullUuid) && faction == null) {
 				WarForgeMod.LOGGER.error("Faction " + factionUUID + " could not be found for citadel at " + pos);
 				//world.setBlockState(getPos(), Blocks.AIR.getDefaultState());
 			}

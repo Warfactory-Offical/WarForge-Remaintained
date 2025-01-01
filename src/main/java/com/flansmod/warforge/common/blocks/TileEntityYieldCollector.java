@@ -91,7 +91,7 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 				}
 				faction.claims.replace(this.getPos(), 0);
 			}
-			else if(!factionUUID.equals(Faction.NULL))
+			else if(!factionUUID.equals(Faction.nullUuid))
 			{
 				WarForgeMod.LOGGER.error("Loaded YieldCollector with invalid faction");
 			}
@@ -195,7 +195,7 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 	@Override
 	public boolean isUsableByPlayer(EntityPlayer player) 
 	{
-		return factionUUID.equals(Faction.NULL) || WarForgeMod.FACTIONS.IsPlayerInFaction(player.getUniqueID(), factionUUID);
+		return factionUUID.equals(Faction.nullUuid) || WarForgeMod.FACTIONS.IsPlayerInFaction(player.getUniqueID(), factionUUID);
 	}
 	@Override
 	public void openInventory(EntityPlayer player) { }

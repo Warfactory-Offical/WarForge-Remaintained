@@ -34,8 +34,8 @@ import net.minecraft.world.World;
 
 public class Faction 
 {
-	public static final UUID NULL = new UUID(0, 0);
-	public static UUID CreateUUID(String factionName)
+	public static final UUID nullUuid = new UUID(0, 0);
+	public static UUID createUUID(String factionName)
 	{
 		return new UUID(0xfedcba0987654321L, ((long)factionName.hashCode()) * 0xa0a0b1b1c2c2d3d3L);
 	}
@@ -48,7 +48,7 @@ public class Faction
 		//public boolean mHasMovedFlagToday = false;
 		public long moveFlagCooldown = 0; // in ms
 		
-		public void ReadFromNBT(NBTTagCompound tags)
+		public void readFromNBT(NBTTagCompound tags)
 		{
 			// Read and write role by string so enum order can change
 			role = Faction.Role.valueOf(tags.getString("role"));
@@ -61,7 +61,7 @@ public class Faction
 					tags.getInteger("z"));
 		}
 		
-		public void WriteToNBT(NBTTagCompound tags)
+		public void writeToNBT(NBTTagCompound tags)
 		{
 			tags.setString("role", role.name());
 			//tags.setBoolean("movedFlag", mHasMovedFlagToday);
@@ -119,7 +119,7 @@ public class Faction
 	
 	public void Update()
 	{
-		UUID uuidToRemove = NULL;
+		UUID uuidToRemove = nullUuid;
 		for(HashMap.Entry<UUID, Float> entry : pendingInvites.entrySet())
 		{
 			entry.setValue(entry.getValue() - 1);
@@ -128,7 +128,7 @@ public class Faction
 		}
 		
 		// So this could break if players were sending > 1 unique invite per tick, but why would they do that?
-		if(!uuidToRemove.equals(NULL))
+		if(!uuidToRemove.equals(nullUuid))
 			pendingInvites.remove(uuidToRemove);
 		
 		if(!loggedInToday)
@@ -142,7 +142,7 @@ public class Faction
 
 	// array list needed to be able to pre-allocate size, but not know if all players will pass check
 	public ArrayList<EntityPlayer> getOnlinePlayers(Predicate<EntityPlayer> playerCondition) {
-		ArrayList<EntityPlayer> players = new ArrayList<>(members.keySet().size());
+		ArrayList<EntityPlayer> players = new ArrayList<>(members.size());
 		//mMembers.keySet() seems to have a null default
 		for(UUID playerID : members.keySet())
 		{
@@ -153,7 +153,7 @@ public class Faction
 		return players;
 	}
 	
-	public DimBlockPos GetFlagPosition(UUID playerID)
+	public DimBlockPos getFlagPosition(UUID playerID)
 	{
 		if(members.containsKey(playerID))
 		{
@@ -162,7 +162,7 @@ public class Faction
 		return DimBlockPos.ZERO;
 	}
 	
-	public void IncreaseLegacy()
+	public void increaseLegacy()
 	{
 		if(loggedInToday)
 		{
@@ -182,7 +182,7 @@ public class Faction
 	{
 		FactionDisplayInfo info = new FactionDisplayInfo();
 		info.factionId = uuid;
-		info.mFactionName = name;
+		info.factionName = name;
 		info.notoriety = notoriety;
 		info.wealth = wealth;
 		info.legacy = legacy;
@@ -202,7 +202,7 @@ public class Faction
 			
 			PlayerDisplayInfo playerInfo = new PlayerDisplayInfo();
 			GameProfile	profile = WarForgeMod.MC_SERVER.getPlayerProfileCache().getProfileByUUID(entry.getKey());
-			playerInfo.mPlayerName = profile == null ? "Unknown Player" : profile.getName();
+			playerInfo.username = profile == null ? "Unknown Player" : profile.getName();
 			playerInfo.playerUuid = entry.getKey();
 			playerInfo.role = entry.getValue().role;
 			info.members.add(playerInfo);
@@ -326,7 +326,8 @@ public class Faction
 		onClaimLost(claimBlockPos, false);
 	}
 
-	// avoids duplication of claim block on siege capture, as the way capture is done is by losing the claim (this method) and then creating another in its place
+	// avoids duplication of claim block on siege capture, as the way capture is done is
+	// by losing the claim (this method) and then creating another in its place
 	public void onClaimLost(DimBlockPos claimBlockPos, boolean captureAttempted)
 	{
 		// Destroy our claim block
@@ -334,7 +335,9 @@ public class Faction
 		IBlockState claimBlock = world.getBlockState(claimBlockPos.toRegularPos());
 		ItemStack drop = new ItemStack(Item.getItemFromBlock(claimBlock.getBlock()));
 		world.setBlockToAir(claimBlockPos);
-		if (!captureAttempted || !WarForgeConfig.SIEGE_CAPTURE) world.spawnEntity(new EntityItem(world, claimBlockPos.getX() + 0.5d, claimBlockPos.getY() + 0.5d, claimBlockPos.getZ() + 0.5d, drop));
+		if (!captureAttempted || !WarForgeConfig.SIEGE_CAPTURE) world.spawnEntity(new EntityItem(world,
+				claimBlockPos.getX() + 0.5d, claimBlockPos.getY() + 0.5d,
+				claimBlockPos.getZ() + 0.5d, drop));
 		
 		// Uh oh
 		if(claimBlockPos.equals(citadelPos))
@@ -575,10 +578,10 @@ public class Faction
             NBTTagCompound memberTags = (NBTTagCompound) base;
             UUID uuid = memberTags.getUniqueId("uuid");
             PlayerData data = new PlayerData();
-            data.ReadFromNBT(memberTags);
+            data.readFromNBT(memberTags);
             members.put(uuid, data);
 
-// Fixup for old data
+			// Fixup for old data
             if (data.flagPosition.equals(DimBlockPos.ZERO)) {
                 data.flagPosition = citadelPos;
             }
@@ -629,7 +632,7 @@ public class Faction
 		{
 			NBTTagCompound memberTags = new NBTTagCompound();
 			memberTags.setUniqueId("uuid", kvp.getKey());
-			kvp.getValue().WriteToNBT(memberTags);
+			kvp.getValue().writeToNBT(memberTags);
 			memberList.appendTag(memberTags);
 		}
 		tags.setTag("members", memberList);

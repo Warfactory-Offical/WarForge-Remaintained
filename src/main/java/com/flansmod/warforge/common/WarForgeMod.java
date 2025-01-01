@@ -326,7 +326,7 @@ public class WarForgeMod implements ILateMixinLoader
 		{
 			DimChunkPos chunkPos = new DimBlockPos(event.getWorld().provider.getDimension(), event.getPos()).toChunkPos();
 			UUID factionID = FACTIONS.getClaim(chunkPos);
-			if(!factionID.equals(Faction.NULL)) 
+			if(!factionID.equals(Faction.nullUuid))
 			{
 				Faction faction = FACTIONS.getFaction(factionID);
 				if(faction != null)
@@ -406,7 +406,7 @@ public class WarForgeMod implements ILateMixinLoader
 
     	// All block placements are cancelled if there is already a block from this mod in that chunk
     	DimChunkPos pos = new DimBlockPos(event.getWorld().provider.getDimension(), placementPos).toChunkPos();
-		if(!FACTIONS.getClaim(pos).equals(Faction.NULL))
+		if(!FACTIONS.getClaim(pos).equals(Faction.nullUuid))
 		{
 			// check if claim chunk has actual claim pos, and if not then remove it
 			Faction claimingFaction = FACTIONS.getFaction(FACTIONS.getClaim(pos));
@@ -429,7 +429,7 @@ public class WarForgeMod implements ILateMixinLoader
 		ObjectIntPair<UUID> conqueredChunkInfo = FACTIONS.conqueredChunks.get(pos);
 		if (conqueredChunkInfo != null) {
 			// remove invalid entries if necessary, and if not then do actual comparison
-			if (conqueredChunkInfo.getLeft() == null || conqueredChunkInfo.getLeft().equals(Faction.NULL) || FACTIONS.getFaction(conqueredChunkInfo.getLeft()) == null) {
+			if (conqueredChunkInfo.getLeft() == null || conqueredChunkInfo.getLeft().equals(Faction.nullUuid) || FACTIONS.getFaction(conqueredChunkInfo.getLeft()) == null) {
 				WarForgeMod.LOGGER.atError().log("Found invalid conquered chunk at " + pos + "; removing and permitting placement.");
 				FACTIONS.conqueredChunks.remove(pos);
 			} else if (!conqueredChunkInfo.getLeft().equals(playerFaction.uuid)) {
@@ -627,7 +627,7 @@ public class WarForgeMod implements ILateMixinLoader
     {
     	if(discordUserIdMap.containsKey(discordUserID))
     		return discordUserIdMap.get(discordUserID);
-    	return Faction.NULL;
+    	return Faction.nullUuid;
     }
     
     public void messageAll(ITextComponent msg, boolean sendToDiscord) // TODO: optional list of pings

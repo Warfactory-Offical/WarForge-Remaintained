@@ -39,7 +39,7 @@ public class GuiCitadel extends GuiContainer
 	{
 		super.initGui();
 		
-		boolean hasFactionSet = !citadelContainer.citadel.getFaction().equals(Faction.NULL);
+		boolean hasFactionSet = !citadelContainer.citadel.getFaction().equals(Faction.nullUuid);
 
 		//Create button
 		GuiButton createButton = new GuiButton(BUTTON_CREATE, width / 2 - 20, height / 2 - 70, 100, 20, "Create");
@@ -146,7 +146,7 @@ public class GuiCitadel extends GuiContainer
 		
 		fontRenderer.drawString("Inventory", 8, (ySize - 96) + 2, 0x404040);
 
-		boolean hasFactionSet = !citadelContainer.citadel.getFaction().equals(Faction.NULL);
+		boolean hasFactionSet = !citadelContainer.citadel.getFaction().equals(Faction.nullUuid);
 		if(hasFactionSet)
 		{
 			GlStateManager.disableTexture2D();

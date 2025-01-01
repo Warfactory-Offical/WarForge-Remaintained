@@ -9,9 +9,9 @@ import com.flansmod.warforge.server.Faction;
 // What gets sent over network to display faction information on client
 public class FactionDisplayInfo 
 {	
-	public UUID factionId = Faction.NULL;
-	public String mFactionName = "";
-	public UUID mLeaderID = Faction.NULL;
+	public UUID factionId = Faction.nullUuid;
+	public String factionName = "";
+	public UUID mLeaderID = Faction.nullUuid;
 	public ArrayList<PlayerDisplayInfo> members = new ArrayList<PlayerDisplayInfo>();
 	
 	

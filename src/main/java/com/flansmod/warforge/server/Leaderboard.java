@@ -125,7 +125,7 @@ public class Leaderboard
 		
 		info.firstIndex = firstIndex;
 		info.stat = stat;
-		if(playerAsking != null && !playerAsking.equals(Faction.NULL))
+		if(playerAsking != null && !playerAsking.equals(Faction.nullUuid))
 		{
 			Faction faction = WarForgeMod.FACTIONS.getFactionOfPlayer(playerAsking);
 			if(faction != null)
