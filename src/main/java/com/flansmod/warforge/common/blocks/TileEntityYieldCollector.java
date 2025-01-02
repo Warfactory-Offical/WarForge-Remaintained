@@ -39,7 +39,7 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 		
 		HashMap<IItemYieldProvider, Integer> count = new HashMap<IItemYieldProvider, Integer>();
 		
-		ChunkPos chunk = new ChunkPos(getPos());
+		ChunkPos chunk = new ChunkPos(getClaimPos());
 		
 		for(int x = chunk.x * 16; x < (chunk.x + 1) * 16; x++)
 		{
@@ -84,12 +84,12 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 			Faction faction = WarForgeMod.FACTIONS.getFaction(factionUUID);
 			if(faction != null)
 			{
-				int pendingYields = faction.claims.get(this.getPos());
+				int pendingYields = faction.claims.get(this.getClaimPos());
 				if(pendingYields > 0)
 				{
 					processYield(pendingYields);
 				}
-				faction.claims.replace(this.getPos(), 0);
+				faction.claims.replace(this.getClaimPos(), 0);
 			}
 			else if(!factionUUID.equals(Faction.nullUuid))
 			{

@@ -89,7 +89,7 @@ public class GuiCreateFaction extends GuiScreen
 			{
 				// Send request to server
 				PacketCreateFaction packet = new PacketCreateFaction();
-				packet.mCitadelPos = new DimBlockPos(citadel.getWorld().provider.getDimension(), citadel.getPos());
+				packet.mCitadelPos = new DimBlockPos(citadel.getWorld().provider.getDimension(), citadel.getClaimPos());
 				packet.mFactionName = inputField.getText();
 				packet.mColour = Color.HSBtoRGB(currentHSB[0], currentHSB[1], currentHSB[2]);
 				WarForgeMod.INSTANCE.NETWORK.sendToServer(packet);

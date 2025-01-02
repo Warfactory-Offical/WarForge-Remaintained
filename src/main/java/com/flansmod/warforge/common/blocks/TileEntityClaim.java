@@ -42,16 +42,16 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 	@Override
 	public TileEntity getAsTileEntity() { return this; }
 	@Override
-	public DimBlockPos getPos()
+	public DimBlockPos getClaimPos()
 	{ 
 		if(world == null)
 		{
 			if(worldCreate == null)
 				return DimBlockPos.ZERO;
 			else
-				return new DimBlockPos(worldCreate.provider.getDimension(), getPos()); 
+				return new DimBlockPos(worldCreate.provider.getDimension(), getPos());
 		}
-		return new DimBlockPos(world.provider.getDimension(), getPos()); 
+		return new DimBlockPos(world.provider.getDimension(), getPos());
 	}
 	@Override 
 	public boolean canBeSieged() { return true; }
@@ -166,7 +166,7 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 				factionName = faction.name;
 				for(HashMap.Entry<UUID, PlayerData> kvp : faction.members.entrySet())
 				{
-					if(kvp.getValue().flagPosition.equals(this.getPos()))
+					if(kvp.getValue().flagPosition.equals(this.getClaimPos()))
 					{
 						GameProfile profile = WarForgeMod.MC_SERVER.getPlayerProfileCache().getProfileByUUID(kvp.getKey());
 						if(profile != null)
@@ -185,7 +185,7 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 	@Override
 	public SPacketUpdateTileEntity getUpdatePacket()
 	{
-		return new SPacketUpdateTileEntity(getPos(), getBlockMetadata(), getUpdateTag());
+		return new SPacketUpdateTileEntity(getClaimPos(), getBlockMetadata(), getUpdateTag());
 	}
 	
 	@Override
@@ -237,7 +237,7 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
     @SideOnly(Side.CLIENT)
     public AxisAlignedBB getRenderBoundingBox()
     {
-		BlockPos pos = getPos();
+		BlockPos pos = getClaimPos();
 		return new AxisAlignedBB(pos.add(-1, 0, -1), pos.add(2, 16, 2));
     	
     }

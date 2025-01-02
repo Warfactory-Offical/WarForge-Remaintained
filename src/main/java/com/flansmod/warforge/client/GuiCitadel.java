@@ -84,9 +84,9 @@ public class GuiCitadel extends GuiContainer
 						WarForgeMod.INSTANCE, 
 						CommonProxy.GUI_TYPE_CREATE_FACTION, 
 						mc.world, 
-						citadelContainer.citadel.getPos().getX(),
-						citadelContainer.citadel.getPos().getY(),
-						citadelContainer.citadel.getPos().getZ());
+						citadelContainer.citadel.getClaimPos().getX(),
+						citadelContainer.citadel.getClaimPos().getY(),
+						citadelContainer.citadel.getClaimPos().getZ());
 				
 				break;
 			}
@@ -104,7 +104,7 @@ public class GuiCitadel extends GuiContainer
 			case BUTTON_PLACE_FLAG:
 			{
 				PacketPlaceFlag packet = new PacketPlaceFlag();
-				packet.pos = citadelContainer.citadel.getPos();
+				packet.pos = citadelContainer.citadel.getClaimPos();
 				WarForgeMod.NETWORK.sendToServer(packet);
 				
 				Minecraft.getMinecraft().displayGuiScreen(null);
@@ -116,9 +116,9 @@ public class GuiCitadel extends GuiContainer
 						WarForgeMod.INSTANCE, 
 						CommonProxy.GUI_TYPE_RECOLOUR_FACTION, 
 						mc.world, 
-						citadelContainer.citadel.getPos().getX(),
-						citadelContainer.citadel.getPos().getY(),
-						citadelContainer.citadel.getPos().getZ());
+						citadelContainer.citadel.getClaimPos().getX(),
+						citadelContainer.citadel.getClaimPos().getY(),
+						citadelContainer.citadel.getClaimPos().getZ());
 				break;
 			}
 		}	

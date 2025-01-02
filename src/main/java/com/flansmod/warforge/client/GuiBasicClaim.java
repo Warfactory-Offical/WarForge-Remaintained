@@ -67,7 +67,7 @@ public class GuiBasicClaim extends GuiContainer
 			case BUTTON_REMOVE_CLAIM:
 			{
 				PacketRemoveClaim packet = new PacketRemoveClaim();
-				packet.pos = claimContainer.claim.getPos();
+				packet.pos = claimContainer.claim.getClaimPos();
 				WarForgeMod.NETWORK.sendToServer(packet);
 				
 				Minecraft.getMinecraft().displayGuiScreen(null);
@@ -76,7 +76,7 @@ public class GuiBasicClaim extends GuiContainer
 			case BUTTON_PLACE_FLAG:
 			{
 				PacketPlaceFlag packet = new PacketPlaceFlag();
-				packet.pos = claimContainer.claim.getPos();
+				packet.pos = claimContainer.claim.getClaimPos();
 				WarForgeMod.NETWORK.sendToServer(packet);
 				
 				Minecraft.getMinecraft().displayGuiScreen(null);
@@ -85,7 +85,7 @@ public class GuiBasicClaim extends GuiContainer
 			case BUTTON_MOVE_CITADEL:
 			{
 				PacketMoveCitadel packet = new PacketMoveCitadel();
-				packet.pos = claimContainer.claim.getPos();
+				packet.pos = claimContainer.claim.getClaimPos();
 				WarForgeMod.NETWORK.sendToServer(packet);
 				
 				Minecraft.getMinecraft().displayGuiScreen(null);
