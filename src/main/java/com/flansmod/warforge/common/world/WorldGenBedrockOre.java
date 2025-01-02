@@ -7,39 +7,38 @@ import com.flansmod.warforge.common.ModuloHelper;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.WorldGenerator;
 
 public class WorldGenBedrockOre extends WorldGenerator 
 {
-	private IBlockState mBlock, mOuter;
-	private int mCellSize = 64;
-	private int mDepositRadius = 4;
-	private int mOuterShellRadius = 8;
-	private float mOuterShellProbability = 0.1f;
-	private int mMinInstancesPerCell = 1;
-	private int mMaxInstancesPerCell = 3;
-	private int mMinHeight = 0;
-	private int mMaxHeight = 5;
+	private final IBlockState blockState, outerState;
+	private int cellSize = 64;
+	private int depositRadius = 4;
+	private int outerShellRadius = 8;
+	private float outerShellProbability = 0.1f;
+	private int minInstancesPerCell = 1;
+	private int maxInstancesPerCell = 3;
+	private int minHeight = 0;
+	private int maxHeight = 5;
 	
-	public WorldGenBedrockOre(IBlockState block, IBlockState outer, int cellSize, int depositRadius, int outerShellRadius, float outerShellChance,
+	public WorldGenBedrockOre(IBlockState block, IBlockState outer, int cellSize, int depositRadius, int outerShellRadius, float outerShellProbability,
 			int minInstancesPerCell, int maxInstancesPerCell, int minHeight, int maxHeight)
 	{
-		mBlock = block;
-		mOuter = outer;
-		mCellSize = cellSize;
-		mDepositRadius = depositRadius;
-		mOuterShellRadius = outerShellRadius;
-		mOuterShellProbability = outerShellChance;
-		mMinInstancesPerCell = minInstancesPerCell;
-		mMaxInstancesPerCell = maxInstancesPerCell;
-		mMinHeight = minHeight;
-		mMaxHeight = maxHeight;
+		this.blockState = block;
+		this.outerState = outer;
+		this.cellSize = cellSize;
+		this.depositRadius = depositRadius;
+		this.outerShellRadius = outerShellRadius;
+		this.outerShellProbability = outerShellProbability;
+		this.minInstancesPerCell = minInstancesPerCell;
+		this.maxInstancesPerCell = maxInstancesPerCell;
+		this.minHeight = minHeight;
+		this.maxHeight = maxHeight;
 		
-		if(mDepositRadius * 2 >= mCellSize)
+		if(this.depositRadius * 2 >= this.cellSize)
 		{
-			mCellSize = mDepositRadius * 4;
+			this.cellSize = this.depositRadius * 4;
 		}
 	}
 	
@@ -51,8 +50,8 @@ public class WorldGenBedrockOre extends WorldGenerator
 		int x = cornerPos.getX() + 8;
 		int z = cornerPos.getZ() + 8;
 		
-		int xCell = ModuloHelper.divide(x, mCellSize);
-		int zCell = ModuloHelper.divide(z, mCellSize);
+		int xCell = ModuloHelper.divide(x, cellSize);
+		int zCell = ModuloHelper.divide(z, cellSize);
 		
 		Random cellRNG = new Random();
 		cellRNG.setSeed(world.getSeed());
@@ -60,16 +59,16 @@ public class WorldGenBedrockOre extends WorldGenerator
 		long seedB = cellRNG.nextLong() / 2L * 2L + 1L;
 		cellRNG.setSeed((long)xCell * seedA + (long)zCell * seedB ^ world.getSeed());
 		
-		int numDepositsInCell = cellRNG.nextInt(mMaxInstancesPerCell - mMinInstancesPerCell + 1) + mMinInstancesPerCell;
+		int numDepositsInCell = cellRNG.nextInt(maxInstancesPerCell - minInstancesPerCell + 1) + minInstancesPerCell;
 		for(int cellIndex = 0; cellIndex < numDepositsInCell; cellIndex++)
 		{
 			// Choose a random starting point, at least one radius from the edge of the cell
-			int depositX = xCell * mCellSize + 8 + cellRNG.nextInt(mCellSize - 4 * mDepositRadius) + mDepositRadius * 2;
-			int depositZ = zCell * mCellSize + 8 + cellRNG.nextInt(mCellSize - 4 * mDepositRadius) + mDepositRadius * 2;
-			BlockPos depositPosA = new BlockPos(depositX, mMinHeight + cellRNG.nextInt(mMaxHeight - mMinHeight), depositZ);
+			int depositX = xCell * cellSize + 8 + cellRNG.nextInt(cellSize - 4 * depositRadius) + depositRadius * 2;
+			int depositZ = zCell * cellSize + 8 + cellRNG.nextInt(cellSize - 4 * depositRadius) + depositRadius * 2;
+			BlockPos depositPosA = new BlockPos(depositX, minHeight + cellRNG.nextInt(maxHeight - minHeight), depositZ);
 						
-			int minY = depositPosA.getY() - mDepositRadius;
-			int maxY = depositPosA.getY() + mDepositRadius;			
+			int minY = depositPosA.getY() - depositRadius;
+			int maxY = depositPosA.getY() + depositRadius;
 			
 			for(int i = 8; i < 24; i++)
 			{
@@ -82,29 +81,29 @@ public class WorldGenBedrockOre extends WorldGenerator
 						BlockPos p = new BlockPos(cornerPos.getX() + i, j, cornerPos.getZ() + k);
 						if(world.getBlockState(p).getBlock() == Blocks.BEDROCK)
 						{							
-							double radius = mDepositRadius + rand.nextGaussian();
+							double radius = depositRadius + rand.nextGaussian();
 							
 							if(p.distanceSq(depositPosA) <= (radius * radius))
-								world.setBlockState(p, mBlock);
+								world.setBlockState(p, blockState);
 							
-							radius = mOuterShellRadius;
+							radius = outerShellRadius;
 							// These could be breakable, so don't swap bottom layer bedrock
 							if(radius > 0 && j > 0)
 							{
-								if(rand.nextFloat() < mOuterShellProbability)
+								if(rand.nextFloat() < outerShellProbability)
 								{
 									if(p.distanceSq(depositPosA) <= (radius * radius))
-										world.setBlockState(p, mOuter);
+										world.setBlockState(p, outerState);
 								}
 							}
 						}
 					}
 					
 					// And create surface indicators, but with high rarity
-					if(rand.nextFloat() < mOuterShellProbability * 0.25f) 
+					if(rand.nextFloat() < outerShellProbability * 0.25f)
 					{
 						BlockPos y0Pos = new BlockPos(cornerPos.getX() + i, 0, cornerPos.getZ() + k);
-						if(y0Pos.distanceSq(depositPosA.getX(), 0, depositPosA.getZ()) <= mDepositRadius * mDepositRadius)
+						if(y0Pos.distanceSq(depositPosA.getX(), 0, depositPosA.getZ()) <= depositRadius * depositRadius)
 						{
 							BlockPos topPos = world.getTopSolidOrLiquidBlock(y0Pos);
 							world.setBlockState(topPos.down(), Blocks.GRAVEL.getDefaultState());

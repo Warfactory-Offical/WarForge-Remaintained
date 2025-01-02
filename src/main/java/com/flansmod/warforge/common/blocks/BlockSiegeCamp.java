@@ -99,8 +99,8 @@ public class BlockSiegeCamp extends Block implements ITileEntityProvider
 		// Can't claim a chunk claimed by another faction
 		if(!world.isRemote)
 		{
-			UUID existingClaim = FACTIONS.GetClaim(new DimChunkPos(world.provider.getDimension(), pos));
-			if(!existingClaim.equals(Faction.NULL))
+			UUID existingClaim = FACTIONS.getClaim(new DimChunkPos(world.provider.getDimension(), pos));
+			if(!existingClaim.equals(Faction.nullUuid))
 				return false;
 		}
 
@@ -121,11 +121,11 @@ public class BlockSiegeCamp extends Block implements ITileEntityProvider
 			if(te != null)
 			{
 				TileEntitySiegeCamp siegeCamp = (TileEntitySiegeCamp)te;
-				FACTIONS.OnNonCitadelClaimPlaced(siegeCamp, placer);
-				siegeCamp.OnPlacedBy(placer);
+				FACTIONS.onNonCitadelClaimPlaced(siegeCamp, placer);
+				siegeCamp.onPlacedBy(placer);
 				if(placer instanceof EntityPlayerMP)
 				{
-					FACTIONS.RequestPlaceFlag((EntityPlayerMP)placer, new DimBlockPos(world.provider.getDimension(), pos));
+					FACTIONS.requestPlaceFlag((EntityPlayerMP)placer, new DimBlockPos(world.provider.getDimension(), pos));
 				}
 			}
 		}
@@ -139,7 +139,7 @@ public class BlockSiegeCamp extends Block implements ITileEntityProvider
 		if(!world.isRemote)
 		{
 			DimChunkPos chunkPos = new DimChunkPos(world.provider.getDimension(), pos);
-			if(FACTIONS.IsSiegeInProgress(chunkPos)) FACTIONS.SendAllSiegeInfoToNearby();
+			if(FACTIONS.IsSiegeInProgress(chunkPos)) FACTIONS.sendAllSiegeInfoToNearby();
 			PacketSiegeCampInfo info = new PacketSiegeCampInfo();
 			info.mPossibleAttacks = CalculatePossibleAttackDirections(world, pos, player);
 			info.mSiegeCampPos = new DimBlockPos(world.provider.getDimension(), pos);
@@ -159,17 +159,17 @@ public class BlockSiegeCamp extends Block implements ITileEntityProvider
 
 		if(siegeCamp != null) {
 			ArrayList<DimChunkPos> validTargets = new ArrayList<>(Arrays.asList(new DimChunkPos[4]));
-			FACTIONS.GetAdjacentClaims(FACTIONS.GetFactionOfPlayer(player.getUniqueID()).mUUID, new DimBlockPos(world.provider.getDimension(), pos), validTargets);
+			FACTIONS.GetAdjacentClaims(FACTIONS.getFactionOfPlayer(player.getUniqueID()).uuid, new DimBlockPos(world.provider.getDimension(), pos), validTargets);
 
 			for (int i = 0; i < validTargets.size(); ++i) {
 				if (validTargets.get(i) == null) continue; // unregistered elements may be null
 				SiegeCampAttackInfo info = new SiegeCampAttackInfo();
-				Faction targetFaction = FACTIONS.GetFaction(FACTIONS.GetClaim(validTargets.get(i)));
+				Faction targetFaction = FACTIONS.getFaction(FACTIONS.getClaim(validTargets.get(i)));
 
 				info.mDirection = EnumFacing.HORIZONTALS[i];
-				info.mFactionUUID = targetFaction.mUUID;
-				info.mFactionName = targetFaction.mName;
-				info.mFactionColour = targetFaction.mColour;
+				info.mFactionUUID = targetFaction.uuid;
+				info.mFactionName = targetFaction.name;
+				info.mFactionColour = targetFaction.colour;
 
 				list.add(info);
 			}

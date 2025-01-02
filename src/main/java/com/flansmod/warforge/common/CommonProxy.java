@@ -27,7 +27,7 @@ public class CommonProxy implements IGuiHandler
 	public static final int GUI_TYPE_RECOLOUR_FACTION = 6;
 	public static final int GUI_TYPE_SHOP = 7;
 	
-	public void PreInit(FMLPreInitializationEvent event)
+	public void preInit(FMLPreInitializationEvent event)
 	{
 		
 	}
@@ -60,7 +60,7 @@ public class CommonProxy implements IGuiHandler
 	public TileEntity GetTile(DimBlockPos pos)
 	{
 		if(FMLCommonHandler.instance().getSide() == Side.SERVER)
-			return WarForgeMod.MC_SERVER.getWorld(pos.mDim).getTileEntity(pos.ToRegularPos());
+			return WarForgeMod.MC_SERVER.getWorld(pos.dim).getTileEntity(pos.toRegularPos());
 		
 		WarForgeMod.LOGGER.error("GetTile failed");
 		return null;

@@ -1,63 +1,54 @@
 package com.flansmod.warforge.common.blocks;
 
-import java.util.List;
 import java.util.UUID;
 
-import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeConfig;
-import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.server.Faction;
 
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.ItemStackHelper;
 import net.minecraft.item.ItemBanner;
 import net.minecraft.item.ItemShield;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.NonNullList;
 
 public class TileEntityCitadel extends TileEntityYieldCollector implements IClaim
 {
 	public static final int BANNER_SLOT_INDEX = NUM_BASE_SLOTS;
 	public static final int NUM_SLOTS = NUM_BASE_SLOTS + 1;
-	
-	private UUID mPlacer = Faction.NULL;	
-	public UUID GetPlacer() { return mPlacer; }
+
+	public UUID placer = Faction.nullUuid;
 	
 	// The banner stack is an optional slot that sets all banners in owned chunks to copy the design
-	protected ItemStack mBannerStack;
+	protected ItemStack bannerStack;
 	
 	public TileEntityCitadel()
 	{
-		mBannerStack = ItemStack.EMPTY;
+		bannerStack = ItemStack.EMPTY;
 	}
 	
-	public void OnPlacedBy(EntityLivingBase placer) 
+	public void onPlacedBy(EntityLivingBase placer)
 	{
 		// This locks in the placer as the only person who can create a faction using the interface on this citadel
-		mPlacer = placer.getUniqueID();
+		this.placer = placer.getUniqueID();
 	}
 	
 	// IClaim
 	@Override
-	public int GetDefenceStrength() { return WarForgeConfig.CLAIM_STRENGTH_CITADEL; }
+	public int getDefenceStrength() { return WarForgeConfig.CLAIM_STRENGTH_CITADEL; }
 	@Override
-	public int GetSupportStrength() { return WarForgeConfig.SUPPORT_STRENGTH_CITADEL; }
+	public int getSupportStrength() { return WarForgeConfig.SUPPORT_STRENGTH_CITADEL; }
 	@Override
-	public int GetAttackStrength() { return 0; }
+	public int getAttackStrength() { return 0; }
 	@Override
-	protected float GetYieldMultiplier() { return 2.0f; }
+	protected float getYieldMultiplier() { return 2.0f; }
 	@Override
-	public String GetDisplayName() 
+	public String getClaimDisplayName()
 	{ 
-		if(mFactionName == null || mFactionName.isEmpty())
+		if(factionName == null || factionName.isEmpty())
 		{
 			return "Unclaimed Citadel";
 		}
-		return "Citadel of " + mFactionName; 
+		return "Citadel of " + factionName;
 	}
 	//-----------
 	
@@ -68,13 +59,13 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
 	@Override
 	public boolean isEmpty() 
 	{
-		return super.isEmpty() && mBannerStack.isEmpty();
+		return super.isEmpty() && bannerStack.isEmpty();
 	}
 	@Override
 	public ItemStack getStackInSlot(int index) 
 	{
 		if(index == BANNER_SLOT_INDEX)
-			return mBannerStack;
+			return bannerStack;
 		return super.getStackInSlot(index);
 	}
 	@Override
@@ -82,10 +73,10 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
 	{
 		if(index == BANNER_SLOT_INDEX)
 		{
-			int numToTake = Math.max(count, mBannerStack.getCount());
-			ItemStack result = mBannerStack.copy();
+			int numToTake = Math.max(count, bannerStack.getCount());
+			ItemStack result = bannerStack.copy();
 			result.setCount(numToTake);
-			mBannerStack.setCount(mBannerStack.getCount() - numToTake);
+			bannerStack.setCount(bannerStack.getCount() - numToTake);
 			return result;
 		}
 		return super.decrStackSize(index, count);
@@ -95,8 +86,8 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
 	{
 		if(index == BANNER_SLOT_INDEX)
 		{
-			ItemStack result = mBannerStack;
-			mBannerStack = ItemStack.EMPTY;		
+			ItemStack result = bannerStack;
+			bannerStack = ItemStack.EMPTY;
 			return result;
 		}
 		return super.removeStackFromSlot(index);
@@ -106,7 +97,7 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
 	{
 		if(index == BANNER_SLOT_INDEX)
 		{
-			mBannerStack = stack;
+			bannerStack = stack;
 			/*
 			if(stack.getItem() instanceof ItemBanner)
 			{
@@ -140,7 +131,7 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
 	public void clear() 
 	{ 
 		super.clear();
-		mBannerStack = ItemStack.EMPTY;
+		bannerStack = ItemStack.EMPTY;
 	}
 	
 	
@@ -149,10 +140,10 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
 	{
 		super.writeToNBT(nbt);
 		
-		nbt.setUniqueId("placer", mPlacer);
+		nbt.setUniqueId("placer", placer);
 		
 		NBTTagCompound bannerStackTags = new NBTTagCompound();
-		mBannerStack.writeToNBT(bannerStackTags);
+		bannerStack.writeToNBT(bannerStackTags);
 		nbt.setTag("banner", bannerStackTags);
 		
 		return nbt;
@@ -163,7 +154,7 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
 	{
 		super.readFromNBT(nbt);
 		
-		mBannerStack = new ItemStack(nbt.getCompoundTag("banner"));
-		mPlacer = nbt.getUniqueId("placer");
+		bannerStack = new ItemStack(nbt.getCompoundTag("banner"));
+		placer = nbt.getUniqueId("placer");
 	}
 }

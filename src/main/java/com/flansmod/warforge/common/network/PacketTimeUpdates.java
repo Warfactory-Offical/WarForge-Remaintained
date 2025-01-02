@@ -35,8 +35,8 @@ public class PacketTimeUpdates extends PacketBase
 	@Override
 	public void handleClientSide(EntityPlayer clientPlayer) 
 	{
-		ClientTickHandler.msOfNextSiegeDay = msTimeOfNextSiegeDay;
-		ClientTickHandler.msOfNextYieldDay = msTimeOfNextYieldDay;
+		ClientTickHandler.nextSiegeDayMs = msTimeOfNextSiegeDay;
+		ClientTickHandler.nextYieldDayMs = msTimeOfNextYieldDay;
 	}
 
 }

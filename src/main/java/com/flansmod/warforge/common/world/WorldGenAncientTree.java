@@ -10,48 +10,62 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.WorldGenerator;
 import net.minecraftforge.common.BiomeDictionary;
-import net.minecraftforge.common.BiomeManager.BiomeType;
 
-public class WorldGenAncientTree extends WorldGenerator  
-{
-	private IBlockState mBlock, mOuter, mLeaf;
-	private int mCellSize = 64;
-	private float mChance = 0.1f;
-	private float mHoleRadius = 10;
-	private float mTreeRadius = 5;
-	private float mCoreRadius = 2;
-	private float mBranchRadius = 3;
-	private float mMaxHeight = 128;
-	private int mMinDepth = 16;
-	
-	public WorldGenAncientTree(IBlockState block, IBlockState outer, IBlockState leaf, int cellSize, 
-			float chance, float holeRadius, float coreRadius, float trunkRadius, float height)
-	{
-		mBlock = block;
-		mOuter = outer;
-		mLeaf = leaf;
-		mCellSize = cellSize;
-		mChance = chance;
-		mCoreRadius = coreRadius;
-		mTreeRadius = trunkRadius;
-		mHoleRadius = holeRadius;
-		mMaxHeight = height;
-		
-		if(mHoleRadius * 4 + 2 > mCellSize)
-		{
-			mCellSize = MathHelper.ceil(mHoleRadius * 4 + 2);
+public class WorldGenAncientTree extends WorldGenerator {
+	private final IBlockState blockState, outerState, leafState;
+	private int cellSize = 64;
+	private float chance = 0.1f;
+	private float holeRadius = 10;
+	private float treeRadius = 5;
+	private float coreRadius = 2;
+	private float branchRadius = 3;
+	private float maxHeight = 128;
+	private int minDepth = 16;
+
+	public WorldGenAncientTree(IBlockState block, IBlockState outer, IBlockState leaf, int cellSize,
+							   float chance, float holeRadius, float coreRadius, float treeRadius, float height) {
+		this.blockState = block;
+		this.outerState = outer;
+		this.leafState = leaf;
+		this.cellSize = cellSize;
+		this.chance = chance;
+		this.coreRadius = coreRadius;
+		this.treeRadius = treeRadius;
+		this.holeRadius = holeRadius;
+		maxHeight = height;
+
+		if (this.holeRadius * 4 + 2 > this.cellSize) {
+			this.cellSize = MathHelper.ceil(this.holeRadius * 4 + 2);
 		}
 	}
-	
+
+	private static double calculateAngle(float angle, double distanceFromCenter, double branchRadius) {
+		final double adjust = (angle % 2 == 0) ? 2 : -2;
+		return (angle + distanceFromCenter * adjust) * Math.PI / 180d;
+	}
+
+	private static double distanceToBranchSpline(float branchAngle, double deltaX, double deltaZ, int testHeight,
+												 double distanceFromCenter, double branchRadius, float branchHeight)
+	{
+		final double angle = calculateAngle(branchAngle, distanceFromCenter, branchRadius);
+		final double cos = Math.cos(angle);
+		final double sin = Math.sin(angle);
+		final double rotX = deltaX * cos + deltaZ * sin;
+		final double rotZ = -deltaX * sin + deltaZ * cos;
+		final double deltaY = testHeight - branchHeight;
+		final double minimalRotation = Math.min(Math.abs(rotX), Math.abs(rotZ));
+		return Math.sqrt(minimalRotation * minimalRotation + deltaY * deltaY);
+	}
+
 	@Override
 	public boolean generate(World world, Random rand, BlockPos cornerPos) 
 	{
 		// We generate the 8-24 area offset from pos. So +16 is our centerpoint
-		int x = cornerPos.getX() + 8;
-		int z = cornerPos.getZ() + 8;
+		final int xCenter = cornerPos.getX() + 8;
+		final int zCenter = cornerPos.getZ() + 8;
 		
-		int xCell = ModuloHelper.divide(x, mCellSize);
-		int zCell = ModuloHelper.divide(z, mCellSize);
+		final int xCell = ModuloHelper.divide(xCenter, cellSize);
+		final int zCell = ModuloHelper.divide(zCenter, cellSize);
 		
 		Random cellRNG = new Random();
 		cellRNG.setSeed(world.getSeed());
@@ -59,10 +73,10 @@ public class WorldGenAncientTree extends WorldGenerator
 		long seedB = cellRNG.nextLong() / 2L * 2L + 1L;
 		cellRNG.setSeed((long)xCell * seedA + (long)zCell * seedB ^ world.getSeed());
 		
-		if(cellRNG.nextFloat() < mChance) // Only place in some cells, keep it rare
+		if(cellRNG.nextFloat() < chance) // Only place in some cells, keep it rare
 		{
-			int depositX = xCell * mCellSize + 8 + cellRNG.nextInt(mCellSize - 4 * (int)mHoleRadius) + (int)mHoleRadius * 2;
-			int depositZ = zCell * mCellSize + 8 + cellRNG.nextInt(mCellSize - 4 * (int)mHoleRadius) + (int)mHoleRadius * 2;
+			int depositX = xCell * cellSize + 8 + cellRNG.nextInt(cellSize - 4 * (int) holeRadius) + (int) holeRadius * 2;
+			int depositZ = zCell * cellSize + 8 + cellRNG.nextInt(cellSize - 4 * (int) holeRadius) + (int) holeRadius * 2;
 			
 			if(BiomeDictionary.hasType(world.getBiome(new BlockPos(depositX, 0, depositZ)), BiomeDictionary.Type.FOREST))
 			{
@@ -70,21 +84,21 @@ public class WorldGenAncientTree extends WorldGenerator
 				final int NUM_BRANCHES = 12;
 				float[] branchHeights = new float[NUM_BRANCHES];
 				float[] branchAngles = new float[NUM_BRANCHES];
-				for(int i = 0; i < NUM_BRANCHES; i++)
+				for(int branch = 0; branch < NUM_BRANCHES; branch++)
 				{
-					branchHeights[i] = mMinDepth + (cellRNG.nextFloat() + i) * (float)(mMaxHeight - mMinDepth) / (float)NUM_BRANCHES;
-					if(Math.abs(branchHeights[i] - 64) < 8)
-						branchHeights[i] += 12;
-					if(Math.abs(branchHeights[i] - 56) < 8)
-						branchHeights[i] -= 12;
-					branchAngles[i] = cellRNG.nextFloat() * 360f;
+					branchHeights[branch] = minDepth + (cellRNG.nextFloat() + branch) * (float)(maxHeight - minDepth) / (float)NUM_BRANCHES;
+					if(Math.abs(branchHeights[branch] - 64) < 8)
+						branchHeights[branch] += 12;
+					if(Math.abs(branchHeights[branch] - 56) < 8)
+						branchHeights[branch] -= 12;
+					branchAngles[branch] = cellRNG.nextFloat() * 360f;
 				}
 				
-				for(int i = 8; i < 24; i++)
+				for(int x = 8; x < 24; x++)
 				{
-					for(int k = 8; k < 24; k++)
+					for(int z = 8; z < 24; z++)
 					{
-						BlockPos p = new BlockPos(cornerPos.getX() + i, 0, cornerPos.getZ() + k);
+						BlockPos p = new BlockPos(cornerPos.getX() + x, 0, cornerPos.getZ() + z);
 						
 						int deltaX = p.getX() - depositX;
 						int deltaZ = p.getZ() - depositZ;
@@ -92,76 +106,68 @@ public class WorldGenAncientTree extends WorldGenerator
 						double distanceFromCenter = Math.sqrt(deltaX * deltaX + deltaZ * deltaZ );
 						
 						// Dig a hole
-						if(distanceFromCenter < mHoleRadius)
+						if(distanceFromCenter < holeRadius)
 						{
-							double edgeToTreeBlend = (distanceFromCenter - mTreeRadius) / (mHoleRadius - mTreeRadius);
+							double edgeToTreeBlend = (distanceFromCenter - treeRadius) / (holeRadius - treeRadius);
 							edgeToTreeBlend = MathHelper.clamp(edgeToTreeBlend, 0, 1);
-							int minHeight = MathHelper.floor(mMinDepth + (64 - mMinDepth) * edgeToTreeBlend);
+							int minHeight = MathHelper.floor(minDepth + (64 - minDepth) * edgeToTreeBlend);
 							minHeight += rand.nextInt(3);
 							
-							for(int j = minHeight; j < mMaxHeight; j++)
+							for(int y = minHeight; y < maxHeight; y++)
 							{
-								BlockPos pos = p.add(0, j, 0);
+								BlockPos pos = p.add(0, y, 0);
 								
-								double heightParam = (double)(j - minHeight) / (double)(mMaxHeight - minHeight);
-								double trunkRadius = mCoreRadius + (1.0d - heightParam) * (mTreeRadius - mCoreRadius);
-								double coreRadius = mCoreRadius * (1.0d - heightParam);
+								double heightParam = (double)(y - minHeight) / (double)(maxHeight - minHeight);
+								double trunkRadius = coreRadius + (1.0d - heightParam) * (treeRadius - coreRadius);
+								double coreRadius = this.coreRadius * (1.0d - heightParam);
 								
 								if(distanceFromCenter < coreRadius)
 								{
-									world.setBlockState(pos, mBlock);
+									world.setBlockState(pos, blockState);
 								}
 								else if(distanceFromCenter < trunkRadius)
 								{
-									world.setBlockState(pos, mOuter);
+									world.setBlockState(pos, outerState);
 								}
 								else 
 								{
 									double branchExtents = 
-											j > 64 ? mHoleRadius * (0.5d + 0.5d * ((float)(j - mMinDepth) / (float)(mMaxHeight - mMinDepth)))
-											: mHoleRadius;
+											y > 64 ? holeRadius * (0.5d + 0.5d * ((float)(y - minDepth) / (float)(maxHeight - minDepth)))
+											: holeRadius;
 									boolean isBranch = false;
 									
 									if(distanceFromCenter < branchExtents)
 									{
 										// Test to see if this is part of a branch
-										for(int n = 0; n < NUM_BRANCHES; n++)
+										for(int branch = 0; branch < NUM_BRANCHES; branch++)
 										{
-											int testHeight = j < 64 ? MathHelper.ceil(j + distanceFromCenter * 0.5d) : MathHelper.ceil(j - distanceFromCenter * 0.5d);
+											int testHeight = y < 64 ? MathHelper.ceil(y + distanceFromCenter * 0.5d) : MathHelper.ceil(y - distanceFromCenter * 0.5d);
 											// Quick test to see if we are at the right height
-											if(branchHeights[n] - mBranchRadius <= testHeight && testHeight <= branchHeights[n] + mBranchRadius)
+											if(branchHeights[branch] - branchRadius <= testHeight && testHeight <= branchHeights[branch] + branchRadius)
 											{
-												double cos = Math.cos((branchAngles[n] + distanceFromCenter * (n % 2== 0 ? 2 : -2)) * Math.PI / 180d);
-												double sin = Math.sin((branchAngles[n] + distanceFromCenter * (n % 2== 0 ? 2 : -2)) * Math.PI / 180d);
-												double rotX = deltaX * cos + deltaZ * sin;
-												double rotZ = -deltaX * sin + deltaZ * cos;
-												double distanceToBranchSpline = Math.min(Math.abs(rotX), Math.abs(rotZ));
-												double deltaY = testHeight - branchHeights[n];
-												distanceToBranchSpline = Math.sqrt(distanceToBranchSpline * distanceToBranchSpline + deltaY * deltaY);
-												
-												if(distanceToBranchSpline < mBranchRadius * ((1.0d - heightParam) * (1.0d - distanceFromCenter / mHoleRadius) + 0.5d))
+												final double branchSplineDistance =
+														distanceToBranchSpline(branchAngles[branch], deltaX, deltaZ,
+																testHeight, distanceFromCenter, branchRadius,
+																branchHeights[branch]);
+												if(branchSplineDistance < branchRadius * ((1.0d - heightParam) * (1.0d - distanceFromCenter / holeRadius) + 0.5d))
 												{
-													world.setBlockState(pos, mOuter);
+													world.setBlockState(pos, outerState);
 													isBranch = true;
 												}
 											}
 											// Or leaf height
-											if(j > 64 && distanceFromCenter > mTreeRadius)
+											if(y > 64 && distanceFromCenter > treeRadius)
 											{
-												if(branchHeights[n] - mBranchRadius + 3 <= testHeight && testHeight <= branchHeights[n] + mBranchRadius + 3)
+												if(branchHeights[branch] - branchRadius + 3 <= testHeight && testHeight <= branchHeights[branch] + branchRadius + 3)
 												{
-													double cos = Math.cos((branchAngles[n] + distanceFromCenter * (n % 2== 0 ? 2 : -2)) * Math.PI / 180d);
-													double sin = Math.sin((branchAngles[n] + distanceFromCenter * (n % 2== 0 ? 2 : -2)) * Math.PI / 180d);
-													double rotX = deltaX * cos + deltaZ * sin;
-													double rotZ = -deltaX * sin + deltaZ * cos;
-													double distanceToBranchSpline = Math.min(Math.abs(rotX), Math.abs(rotZ));
-													double deltaY = testHeight - branchHeights[n];
-													
-													distanceToBranchSpline = Math.sqrt(distanceToBranchSpline * distanceToBranchSpline + deltaY * deltaY);
-													
-													if(distanceToBranchSpline < mBranchRadius * 2d * ((1.0d - heightParam) * (1.0d - Math.min(0.5d * mHoleRadius, distanceFromCenter) / mHoleRadius) + 0.5d))
+													final double branchSplineDistance =
+															distanceToBranchSpline(branchAngles[branch], deltaX, deltaZ,
+																	testHeight, distanceFromCenter, branchRadius,
+																	branchHeights[branch]);
+
+													if(branchSplineDistance < branchRadius * 2d * ((1.0d - heightParam) * (1.0d - Math.min(0.5d * holeRadius, distanceFromCenter) / holeRadius) + 0.5d))
 													{
-														world.setBlockState(pos, mLeaf);
+														world.setBlockState(pos, leafState);
 														isBranch = true;
 													}
 												}

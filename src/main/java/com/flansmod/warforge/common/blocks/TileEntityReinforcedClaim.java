@@ -6,9 +6,7 @@ import com.flansmod.warforge.common.WarForgeMod;
 public class TileEntityReinforcedClaim extends TileEntityBasicClaim
 {
 	@Override
-	public int GetDefenceStrength() { return WarForgeConfig.CLAIM_STRENGTH_REINFORCED; }
+	public int getDefenceStrength() { return WarForgeConfig.CLAIM_STRENGTH_REINFORCED; }
 	@Override
-	public int GetSupportStrength() { return WarForgeConfig.SUPPORT_STRENGTH_REINFORCED; }
-	@Override
-	public int GetAttackStrength() { return 0; }
+	public int getSupportStrength() { return WarForgeConfig.SUPPORT_STRENGTH_REINFORCED; }
 }

@@ -1,8 +1,6 @@
 package com.flansmod.warforge.common;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.UUID;
 
 import javax.annotation.Nonnull;
@@ -15,27 +13,17 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MoverType;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemFood;
-import net.minecraft.item.ItemPotion;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityPiston;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EntityDamageSource;
-import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityEvent.EnteringChunk;
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.EntityMountEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.event.world.WorldEvent.PotentialSpawns;
-import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class ProtectionsModule 
@@ -80,25 +68,25 @@ public class ProtectionsModule
 	@Nonnull
 	public static ProtectionConfig GetProtections(UUID playerID, DimBlockPos pos)
 	{
-		return GetProtections(playerID, pos.ToChunkPos());
+		return GetProtections(playerID, pos.toChunkPos());
 	}
 	
 	// It is generally expected that you are asking about a loaded chunk, not that that should matter
 	@Nonnull
 	public static ProtectionConfig GetProtections(UUID playerID, DimChunkPos pos)
 	{
-		UUID factionID = WarForgeMod.FACTIONS.GetClaim(pos);
+		UUID factionID = WarForgeMod.FACTIONS.getClaim(pos);
 		if(factionID.equals(FactionStorage.SAFE_ZONE_ID))
 			return WarForgeConfig.SAFE_ZONE;
 		if(factionID.equals(FactionStorage.WAR_ZONE_ID))
 			return WarForgeConfig.WAR_ZONE;
 		
-		Faction faction = WarForgeMod.FACTIONS.GetFaction(factionID);
+		Faction faction = WarForgeMod.FACTIONS.getFaction(factionID);
 		if(faction != null)
 		{
-			boolean playerIsInFaction = playerID != null && !playerID.equals(Faction.NULL) && faction.IsPlayerInFaction(playerID);
+			boolean playerIsInFaction = playerID != null && !playerID.equals(Faction.nullUuid) && faction.isPlayerInFaction(playerID);
 			
-			if(faction.mCitadelPos.ToChunkPos().equals(pos))
+			if(faction.citadelPos.toChunkPos().equals(pos))
 				return playerIsInFaction ? WarForgeConfig.CITADEL_FRIEND : WarForgeConfig.CITADEL_FOE;
 
 			return playerIsInFaction ? WarForgeConfig.CLAIM_FRIEND : WarForgeConfig.CLAIM_FOE;
@@ -141,7 +129,7 @@ public class ProtectionsModule
     		DimChunkPos cPos = new DimChunkPos(dim, event.getAffectedBlocks().get(i));
     		if(!checkedPositions.containsKey(cPos))
     		{
-    			ProtectionConfig config = GetProtections(Faction.NULL, cPos);
+    			ProtectionConfig config = GetProtections(Faction.nullUuid, cPos);
     			checkedPositions.put(cPos, config);
     		}
     		if(!checkedPositions.get(cPos).EXPLOSION_DAMAGE || !checkedPositions.get(cPos).BLOCK_REMOVAL)
@@ -208,7 +196,7 @@ public class ProtectionsModule
     	if(event.getWorld().isRemote)
     		return;
 
-    	if(OP_OVERRIDE && WarForgeMod.IsOp(event.getEntity()))
+    	if(OP_OVERRIDE && WarForgeMod.isOp(event.getEntity()))
     		return;
 
 		Entity eventEntity = event.getEntity();
@@ -237,7 +225,7 @@ public class ProtectionsModule
     	if(event.getWorld().isRemote)
     		return;
     	
-    	if(OP_OVERRIDE && WarForgeMod.IsOp(event.getPlayer()))
+    	if(OP_OVERRIDE && WarForgeMod.isOp(event.getPlayer()))
     		return;
     	
     	DimBlockPos pos = new DimBlockPos(event.getPlayer().dimension, event.getPos());
@@ -258,7 +246,7 @@ public class ProtectionsModule
     	if(event.getWorld().isRemote)
     		return;
     	
-    	if(OP_OVERRIDE && WarForgeMod.IsOp(event.getEntityPlayer()))
+    	if(OP_OVERRIDE && WarForgeMod.isOp(event.getEntityPlayer()))
     		return;
     	
     	DimBlockPos pos = new DimBlockPos(event.getTarget().dimension, event.getTarget().getPosition());
@@ -277,7 +265,7 @@ public class ProtectionsModule
     	if(event.getWorld().isRemote)
     		return;
     	
-    	if(OP_OVERRIDE && WarForgeMod.IsOp(event.getEntityPlayer()))
+    	if(OP_OVERRIDE && WarForgeMod.isOp(event.getEntityPlayer()))
     		return;
     	
     	DimBlockPos pos = new DimBlockPos(event.getEntity().dimension, event.getPos());
@@ -304,7 +292,7 @@ public class ProtectionsModule
     	if(event.getWorld().isRemote)
     		return;
     	
-    	if(OP_OVERRIDE && WarForgeMod.IsOp(event.getEntityPlayer()))
+    	if(OP_OVERRIDE && WarForgeMod.isOp(event.getEntityPlayer()))
     		return;
     	
     	// Always allow food
@@ -324,7 +312,7 @@ public class ProtectionsModule
     @SubscribeEvent
     public void OnMobSpawn(PotentialSpawns event)
     {
-    	ProtectionConfig config = GetProtections(Faction.NULL, new DimBlockPos(event.getWorld().provider.getDimension(), event.getPos()));
+    	ProtectionConfig config = GetProtections(Faction.nullUuid, new DimBlockPos(event.getWorld().provider.getDimension(), event.getPos()));
     	if(!config.ALLOW_MOB_SPAWNS)
     	{
     		event.setCanceled(true);
@@ -339,7 +327,7 @@ public class ProtectionsModule
     	{
     		if(!(event.getEntity() instanceof EntityPlayer))
     		{
-		    	ProtectionConfig config = GetProtections(Faction.NULL, new DimBlockPos(event.getEntity().dimension, event.getEntity().getPosition()));
+		    	ProtectionConfig config = GetProtections(Faction.nullUuid, new DimBlockPos(event.getEntity().dimension, event.getEntity().getPosition()));
 		    	if(!config.ALLOW_MOB_ENTRY)
 		    	{
 		    		inLoop = true;

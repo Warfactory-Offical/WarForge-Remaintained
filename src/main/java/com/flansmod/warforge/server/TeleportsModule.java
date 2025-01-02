@@ -1,7 +1,6 @@
 package com.flansmod.warforge.server;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import com.flansmod.warforge.common.DimBlockPos;
@@ -27,7 +26,7 @@ public class TeleportsModule
 	
 	private List<PendingTeleport> mPendingTPs = new ArrayList<PendingTeleport>();
 	
-	public void RequestSpawn(EntityPlayer player)
+	public void requestSpawn(EntityPlayer player)
 	{
 		if(!WarForgeConfig.ENABLE_SPAWN_COMMAND)
 		{
@@ -61,15 +60,15 @@ public class TeleportsModule
 			return;
 		}
 		
-		Faction faction = WarForgeMod.FACTIONS.GetFactionOfPlayer(player.getUniqueID());
+		Faction faction = WarForgeMod.FACTIONS.getFactionOfPlayer(player.getUniqueID());
 		if(faction == null)
 		{
 			player.sendMessage(new TextComponentString("You are not in a faction"));
 			return;
 		}
 		
-		DimBlockPos target = faction.mCitadelPos;
-		if(!WarForgeConfig.ALLOW_F_HOME_BETWEEN_DIMENSIONS && target.mDim != player.dimension)
+		DimBlockPos target = faction.citadelPos;
+		if(!WarForgeConfig.ALLOW_F_HOME_BETWEEN_DIMENSIONS && target.dim != player.dimension)
 		{
 			player.sendMessage(new TextComponentString("You need to be in the same dimension as your citadel"));
 			return;
@@ -105,7 +104,7 @@ public class TeleportsModule
 
 			if(tp.ticksRemaining == 0)
 			{
-				TeleportUtil.teleportPlayer( (EntityPlayerMP)tp.player, tp.target.mDim, (BlockPos)tp.target);
+				TeleportUtil.teleportPlayer( (EntityPlayerMP)tp.player, tp.target.dim, (BlockPos)tp.target);
 			}
 		}
 	}

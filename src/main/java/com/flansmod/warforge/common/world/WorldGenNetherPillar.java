@@ -10,39 +10,36 @@ import net.minecraft.world.gen.feature.WorldGenerator;
 
 public class WorldGenNetherPillar extends WorldGenerator 
 {
-	private IBlockState mDense, mOuter;
+	private final IBlockState denseState, outerState;
 	
 	public WorldGenNetherPillar(IBlockState dense, IBlockState outer)
 	{
-		mDense = dense;
-		mOuter = outer;
+		denseState = dense;
+		outerState = outer;
 	}
 	
 	@Override
 	public boolean generate(World worldIn, Random rand, BlockPos position) 
 	{
-		for(int i = 0; i < 16; i++)
+		for(int x = 0; x < 16; x++)
 		{
-			for(int k = 0; k < 16; k++)
+			for(int z = 0; z < 16; z++)
 			{
-				double xzDistSq = (i - 8) * (i - 8) + (k - 8) * (k - 8);
-				for(int j = 1; j < 127; j++)
+				double xzDistSq = (x - 8) * (x - 8) + (z - 8) * (z - 8);
+				for(int y = 1; y < 127; y++)
 				{
-					double targetRadius = 1 + 5 * (Math.abs(j - 64) / (double)64);
-					BlockPos pos = position.add(i + 8, j - position.getY(), k + 8);					
+					double targetRadius = 1 + 5 * (Math.abs(y - 64) / (double)64);
+					BlockPos pos = position.add(x + 8, y - position.getY(), z + 8);
 					if(xzDistSq <= targetRadius * targetRadius)
 					{
 						if(xzDistSq <= (targetRadius - 1) * (targetRadius - 1))
 						{
-							worldIn.setBlockState(pos, mDense);
-						}
-						else if(rand.nextInt(3) == 0)
-						{
-							
+							worldIn.setBlockState(pos, denseState);
 						}
 						else
 						{
-							worldIn.setBlockState(pos, rand.nextInt(3) == 0 ? mOuter : Blocks.NETHERRACK.getDefaultState());
+							final IBlockState state = rand.nextInt(3) == 0 ? outerState : Blocks.NETHERRACK.getDefaultState();
+							worldIn.setBlockState(pos, state);
 						}
 					}
 				}

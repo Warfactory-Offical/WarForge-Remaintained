@@ -5,7 +5,6 @@ import com.flansmod.warforge.common.ContainerCitadel;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketDisbandFaction;
 import com.flansmod.warforge.common.network.PacketPlaceFlag;
-import com.flansmod.warforge.common.network.PacketRequestFactionInfo;
 import com.flansmod.warforge.server.Faction;
 
 import net.minecraft.client.Minecraft;
@@ -13,7 +12,6 @@ import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.inventory.Container;
-import net.minecraft.server.integrated.IntegratedServer;
 import net.minecraft.util.ResourceLocation;
 
 public class GuiCitadel extends GuiContainer
@@ -41,7 +39,7 @@ public class GuiCitadel extends GuiContainer
 	{
 		super.initGui();
 		
-		boolean hasFactionSet = !citadelContainer.citadel.GetFaction().equals(Faction.NULL);
+		boolean hasFactionSet = !citadelContainer.citadel.getFaction().equals(Faction.nullUuid);
 
 		//Create button
 		GuiButton createButton = new GuiButton(BUTTON_CREATE, width / 2 - 20, height / 2 - 70, 100, 20, "Create");
@@ -94,7 +92,7 @@ public class GuiCitadel extends GuiContainer
 			}
 			case BUTTON_INFO:
 			{
-				ClientProxy.RequestFactionInfo(citadelContainer.citadel.GetFaction());
+				ClientProxy.requestFactionInfo(citadelContainer.citadel.getFaction());
 				break;
 			}
 			case BUTTON_DISBAND:
@@ -106,7 +104,7 @@ public class GuiCitadel extends GuiContainer
 			case BUTTON_PLACE_FLAG:
 			{
 				PacketPlaceFlag packet = new PacketPlaceFlag();
-				packet.pos = citadelContainer.citadel.GetPos();
+				packet.pos = citadelContainer.citadel.getPos();
 				WarForgeMod.NETWORK.sendToServer(packet);
 				
 				Minecraft.getMinecraft().displayGuiScreen(null);
@@ -141,22 +139,22 @@ public class GuiCitadel extends GuiContainer
 	{
 		super.drawGuiContainerForegroundLayer(x, y);
 		
-		fontRenderer.drawString(citadelContainer.citadel.GetDisplayName(), 6, 6, 0x404040);
+		fontRenderer.drawString(citadelContainer.citadel.getClaimDisplayName(), 6, 6, 0x404040);
 		
 		fontRenderer.drawString("Yields", 6, 20, 0x404040);
 		fontRenderer.drawString("Banner:", 148 - fontRenderer.getStringWidth("Banner:"), 72, 0x404040);
 		
 		fontRenderer.drawString("Inventory", 8, (ySize - 96) + 2, 0x404040);
 
-		boolean hasFactionSet = !citadelContainer.citadel.GetFaction().equals(Faction.NULL);
+		boolean hasFactionSet = !citadelContainer.citadel.getFaction().equals(Faction.nullUuid);
 		if(hasFactionSet)
 		{
 			GlStateManager.disableTexture2D();
 			
 			float scale = 1f/256f;
-			float red = scale * ((citadelContainer.citadel.mColour >> 16) & 0xff);
-			float green = scale * ((citadelContainer.citadel.mColour >> 8) & 0xff);
-			float blue = scale * ((citadelContainer.citadel.mColour >> 0) & 0xff);
+			float red = scale * ((citadelContainer.citadel.colour >> 16) & 0xff);
+			float green = scale * ((citadelContainer.citadel.colour >> 8) & 0xff);
+			float blue = scale * ((citadelContainer.citadel.colour >> 0) & 0xff);
 			GlStateManager.color(red, green, blue);
 			drawTexturedModalRect(72, 25, 0, 0, 12, 12);
 			

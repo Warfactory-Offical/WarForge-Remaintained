@@ -25,7 +25,7 @@ public class SurvivalHelperMixin {
                                         boolean skipCollisionCheck, boolean playSound,
                                         CallbackInfoReturnable<Boolean> cir) {
 
-        if (ProtectionsModule.OP_OVERRIDE && WarForgeMod.IsOp(player)) return;
+        if (ProtectionsModule.OP_OVERRIDE && WarForgeMod.isOp(player)) return;
 
         DimBlockPos dimPos = new DimBlockPos(player.dimension, pos);
         ProtectionConfig config = ProtectionsModule.GetProtections(player.getUniqueID(), dimPos);

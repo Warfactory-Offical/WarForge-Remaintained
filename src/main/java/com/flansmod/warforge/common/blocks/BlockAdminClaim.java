@@ -23,7 +23,7 @@ public class BlockAdminClaim extends Block implements ITileEntityProvider
 	public BlockAdminClaim() 
 	{
 		super(Material.ROCK);
-		this.setCreativeTab(CreativeTabs.COMBAT);
+//		this.setCreativeTab(CreativeTabs.COMBAT);
 		this.setBlockUnbreakable();
 		this.setResistance(30000000f);
 	}

@@ -6,7 +6,7 @@ import com.flansmod.warforge.server.Faction;
 
 public class PlayerDisplayInfo
 {
-	public String mPlayerName = "";
-	public UUID mPlayerUUID = Faction.NULL;
-	public Faction.Role mRole = Faction.Role.MEMBER;
+	public String username = "";
+	public UUID playerUuid = Faction.nullUuid;
+	public Faction.Role role = Faction.Role.MEMBER;
 }

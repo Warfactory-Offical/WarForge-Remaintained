@@ -1,7 +1,6 @@
 package com.flansmod.warforge.server;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -31,7 +30,7 @@ import net.minecraft.util.text.TextComponentString;
 
 public class CommandFactions extends CommandBase
 {
-	private static List<String> ALIASES;
+	private static final List<String> ALIASES;
 	static
 	{
 		ALIASES = new ArrayList<String>(4);
@@ -79,19 +78,12 @@ public class CommandFactions extends CommandBase
         
         if(args.length == 2)
         {
-        	switch(args[0])
-        	{
-        		case "info": 
-        			return getListOfStringsMatchingLastWord(args, WarForgeMod.FACTIONS.GetFactionNames());
-        		case "invite":
-        		case "expel":
-        		case "demote":
-        		case "promote":
-        		case "setleader":
-        			return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
-        		default: 
-        			return getListOfStringsMatchingLastWord(args, new String[0]);
-        	}
+            return switch (args[0]) {
+                case "info" -> getListOfStringsMatchingLastWord(args, WarForgeMod.FACTIONS.GetFactionNames());
+                case "invite", "expel", "demote", "promote", "setleader" ->
+                        getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
+                default -> getListOfStringsMatchingLastWord(args, new String[0]);
+            };
         }
         
         return getListOfStringsMatchingLastWord(args, new String[0]);
@@ -109,7 +101,7 @@ public class CommandFactions extends CommandBase
 		Faction faction = null;
 		if(sender instanceof EntityPlayer)
 		{
-			faction = WarForgeMod.FACTIONS.GetFactionOfPlayer(((EntityPlayer)sender).getUniqueID());
+			faction = WarForgeMod.FACTIONS.getFactionOfPlayer(((EntityPlayer)sender).getUniqueID());
 		}
 		
 		// Argument 0 is subcommand
@@ -129,7 +121,7 @@ public class CommandFactions extends CommandBase
 				sender.sendMessage(new TextComponentString("/f legacy"));
 				sender.sendMessage(new TextComponentString("/f notoriety"));
 				
-				if(WarForgeMod.IsOp(sender))
+				if(WarForgeMod.isOp(sender))
 				{
 					sender.sendMessage(new TextComponentString("/f safezone"));
 					sender.sendMessage(new TextComponentString("/f warzone"));
@@ -160,11 +152,11 @@ public class CommandFactions extends CommandBase
 				}
 				
 				// First, resolve the op version where we can specify the faction
-				if(args.length >= 3 && WarForgeMod.IsOp(sender))
+				if(args.length >= 3 && WarForgeMod.isOp(sender))
 				{
-					faction = WarForgeMod.FACTIONS.GetFaction(args[2]);
+					faction = WarForgeMod.FACTIONS.getFaction(args[2]);
 					if(faction != null)
-						WarForgeMod.FACTIONS.RequestInvitePlayerToFaction(sender, faction.mUUID, invitee.getUniqueID());
+						WarForgeMod.FACTIONS.RequestInvitePlayerToFaction(sender, faction.uuid, invitee.getUniqueID());
 					else 
 						sender.sendMessage(new TextComponentString("Could not find faction " + args[2]));
 					
@@ -193,9 +185,9 @@ public class CommandFactions extends CommandBase
 			}
 			case "disband":
 			{
-				if(WarForgeMod.IsOp(sender) && args.length == 2)
+				if(WarForgeMod.isOp(sender) && args.length == 2)
 				{
-					Faction toDisband = WarForgeMod.FACTIONS.GetFaction(args[1]);
+					Faction toDisband = WarForgeMod.FACTIONS.getFaction(args[1]);
 					if(toDisband != null)
 					{
 						WarForgeMod.FACTIONS.FactionDefeated(toDisband);
@@ -209,7 +201,7 @@ public class CommandFactions extends CommandBase
 				{
 					if(sender instanceof EntityPlayer && faction != null)
 					{
-						WarForgeMod.FACTIONS.RequestDisbandFaction((EntityPlayer)sender, faction.mUUID);
+						WarForgeMod.FACTIONS.RequestDisbandFaction((EntityPlayer)sender, faction.uuid);
 					}
 					else
 					{
@@ -230,10 +222,10 @@ public class CommandFactions extends CommandBase
 						
 						if(faction == null)
 						{
-							faction = WarForgeMod.FACTIONS.GetFactionOfPlayer(toRemoveID);
+							faction = WarForgeMod.FACTIONS.getFactionOfPlayer(toRemoveID);
 						}
 						
-						WarForgeMod.FACTIONS.RequestRemovePlayerFromFaction(sender, faction.mUUID, toRemoveID);
+						WarForgeMod.FACTIONS.RequestRemovePlayerFromFaction(sender, faction.uuid, toRemoveID);
 					}
 					else
 					{
@@ -251,7 +243,7 @@ public class CommandFactions extends CommandBase
 			{
 				if(sender instanceof EntityPlayer)
 				{
-					WarForgeMod.FACTIONS.RequestRemovePlayerFromFaction(sender, faction.mUUID, ((EntityPlayer) sender).getUniqueID());
+					WarForgeMod.FACTIONS.RequestRemovePlayerFromFaction(sender, faction.uuid, ((EntityPlayer) sender).getUniqueID());
 				}
 				else
 				{
@@ -276,14 +268,14 @@ public class CommandFactions extends CommandBase
 						}
 						else
 						{
-							Faction targetFaction = WarForgeMod.FACTIONS.GetFactionOfPlayer(profile.getId());
+							Faction targetFaction = WarForgeMod.FACTIONS.getFactionOfPlayer(profile.getId());
 							if(targetFaction == null)
 							{
 								sender.sendMessage(new TextComponentString("That player is not in a faction"));
 							}
 							else
 							{
-								WarForgeMod.FACTIONS.RequestTransferLeadership((EntityPlayer)sender, targetFaction.mUUID, profile.getId());
+								WarForgeMod.FACTIONS.RequestTransferLeadership((EntityPlayer)sender, targetFaction.uuid, profile.getId());
 							}
 						}
 					}
@@ -297,9 +289,9 @@ public class CommandFactions extends CommandBase
 			case "time":
 			{
 
-				long day = WarForgeMod.INSTANCE.numberOfSiegeDaysTicked;
+				long day = WarForgeMod.numberOfSiegeDaysTicked;
 				long flagCoolown = WarForgeMod.FACTIONS.getPlayerCooldown(sender.getCommandSenderEntity().getUniqueID());
-				long ms = WarForgeMod.INSTANCE.GetMSToNextYield();
+				long ms = WarForgeMod.INSTANCE.getTimeToNextYieldMs();
 				long s = ms / 1000;
 				long m = s / 60;
 				long h = m / 60;
@@ -311,7 +303,7 @@ public class CommandFactions extends CommandBase
 				+ String.format("%02d", (m % 60)) + ":"
 				+ String.format("%02d", (s % 60))));
 				
-				ms = WarForgeMod.INSTANCE.GetMSToNextSiegeAdvance();
+				ms = WarForgeMod.INSTANCE.getTimeToNextSiegeAdvanceMs();
 				s = ms / 1000;
 				m = s / 60;
 				h = m / 60;
@@ -344,11 +336,11 @@ public class CommandFactions extends CommandBase
 					Faction factionToSend = null;
 					if(args.length >= 2)
 					{
-						factionToSend = WarForgeMod.FACTIONS.GetFaction(args[1]);
+						factionToSend = WarForgeMod.FACTIONS.getFaction(args[1]);
 					}
 					if(factionToSend == null)
 					{
-						factionToSend = WarForgeMod.FACTIONS.GetFactionOfPlayer(((EntityPlayerMP)sender).getUniqueID());
+						factionToSend = WarForgeMod.FACTIONS.getFactionOfPlayer(((EntityPlayerMP)sender).getUniqueID());
 					}
 
 					if(factionToSend == null)
@@ -356,36 +348,36 @@ public class CommandFactions extends CommandBase
 						sender.sendMessage(new TextComponentString("Could not find that faction"));
 					}
 					else {
-						Faction senderFaction = WarForgeMod.FACTIONS.GetFactionOfPlayer(((EntityPlayerMP) sender).getUniqueID());
-						if (senderFaction == null || senderFaction.mUUID.equals(Faction.NULL) || !senderFaction.equals(factionToSend)) {
+						Faction senderFaction = WarForgeMod.FACTIONS.getFactionOfPlayer(((EntityPlayerMP) sender).getUniqueID());
+						if (senderFaction == null || senderFaction.uuid.equals(Faction.nullUuid) || !senderFaction.equals(factionToSend)) {
 							sender.sendMessage(new TextComponentString("Information cannot be provided to non-faction members"));
 						} else {
 							PacketFactionInfo packet = new PacketFactionInfo();
-							packet.mInfo = factionToSend.CreateInfo();
+							packet.info = factionToSend.createInfo();
 							WarForgeMod.NETWORK.sendTo(packet, (EntityPlayerMP)sender);
 						}
 					}
 				}
 				else
 				{
-					Faction factionToSend = WarForgeMod.FACTIONS.GetFaction(args[1]);
+					Faction factionToSend = WarForgeMod.FACTIONS.getFaction(args[1]);
 					if(factionToSend != null)
 					{
-						String memberList = "Members: ";
-						for(HashMap.Entry<UUID, PlayerData> kvp : factionToSend.mMembers.entrySet())
+						StringBuilder memberList = new StringBuilder("Members: ");
+						for(HashMap.Entry<UUID, PlayerData> kvp : factionToSend.members.entrySet())
 						{
 							GameProfile profile = WarForgeMod.MC_SERVER.getPlayerProfileCache().getProfileByUUID(kvp.getKey());
 							if(profile != null)
 							{
-								memberList = memberList + profile.getName() + ", ";
+								memberList.append(profile.getName()).append(", ");
 							}
 						}
 						
-						sender.sendMessage(new TextComponentString("**" + factionToSend.mName + "**\n"
+						sender.sendMessage(new TextComponentString("**" + factionToSend.name + "**\n"
 																	+ memberList + "\n"
-																	+ "Notoriety: " + factionToSend.mNotoriety + "\n"
-																	+ "Wealth: " + factionToSend.mWealth + "\n"
-																	+ "Legacy: " + factionToSend.mLegacy + "\n"));
+																	+ "Notoriety: " + factionToSend.notoriety + "\n"
+																	+ "Wealth: " + factionToSend.wealth + "\n"
+																	+ "Legacy: " + factionToSend.legacy + "\n"));
 					}
 				}
 				break;
@@ -398,19 +390,19 @@ public class CommandFactions extends CommandBase
 				{
 					UUID uuid = ((EntityPlayerMP)sender).getUniqueID();
 					PacketLeaderboardInfo packet = new PacketLeaderboardInfo();
-					packet.mInfo = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.TOTAL, uuid);
+					packet.info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.TOTAL, uuid);
 					WarForgeMod.NETWORK.sendTo(packet, (EntityPlayerMP)sender);
 				}
 				else
 				{
-					LeaderboardInfo info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.TOTAL, Faction.NULL);
-					String result = "**Top Leaderboard**";
+					LeaderboardInfo info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.TOTAL, Faction.nullUuid);
+					StringBuilder result = new StringBuilder("**Top Leaderboard**");
 					for(int i = 0; i < LeaderboardInfo.NUM_LEADERBOARD_ENTRIES_PER_PAGE; i++)
 					{
-						FactionDisplayInfo facInfo = info.mFactionInfos[i];
-						result = result + "\n#" + facInfo.mTotalRank + " | " + (facInfo.mLegacy + facInfo.mNotoriety + facInfo.mWealth);
+						FactionDisplayInfo facInfo = info.factionInfos[i];
+						result.append("\n#").append(facInfo.totalRank).append(" | ").append(facInfo.legacy + facInfo.notoriety + facInfo.wealth);
 					}
-					sender.sendMessage(new TextComponentString(result));
+					sender.sendMessage(new TextComponentString(result.toString()));
 				}
 				break;
 			}
@@ -423,17 +415,17 @@ public class CommandFactions extends CommandBase
 				{
 					UUID uuid = ((EntityPlayerMP)sender).getUniqueID();
 					PacketLeaderboardInfo packet = new PacketLeaderboardInfo();
-					packet.mInfo = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.WEALTH, uuid);
+					packet.info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.WEALTH, uuid);
 					WarForgeMod.NETWORK.sendTo(packet, (EntityPlayerMP)sender);
 				}
 				else
 				{
-					LeaderboardInfo info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.WEALTH, Faction.NULL);
+					LeaderboardInfo info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.WEALTH, Faction.nullUuid);
 					String result = "**Top Leaderboard**";
 					for(int i = 0; i < LeaderboardInfo.NUM_LEADERBOARD_ENTRIES_PER_PAGE; i++)
 					{
-						FactionDisplayInfo facInfo = info.mFactionInfos[i];
-						result = result + "\n#" + facInfo.mWealthRank + " | " + facInfo.mWealth;
+						FactionDisplayInfo facInfo = info.factionInfos[i];
+						result = result + "\n#" + facInfo.wealthRank + " | " + facInfo.wealth;
 					}
 					sender.sendMessage(new TextComponentString(result));
 				}
@@ -448,17 +440,17 @@ public class CommandFactions extends CommandBase
 				{
 					UUID uuid = ((EntityPlayerMP)sender).getUniqueID();
 					PacketLeaderboardInfo packet = new PacketLeaderboardInfo();
-					packet.mInfo = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.NOTORIETY, uuid);
+					packet.info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.NOTORIETY, uuid);
 					WarForgeMod.NETWORK.sendTo(packet, (EntityPlayerMP)sender);
 				}
 				else
 				{
-					LeaderboardInfo info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.NOTORIETY, Faction.NULL);
+					LeaderboardInfo info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.NOTORIETY, Faction.nullUuid);
 					String result = "**Notoriety Leaderboard**";
 					for(int i = 0; i < LeaderboardInfo.NUM_LEADERBOARD_ENTRIES_PER_PAGE; i++)
 					{
-						FactionDisplayInfo facInfo = info.mFactionInfos[i];
-						result = result + "\n#" + facInfo.mNotorietyRank + " | " + facInfo.mNotoriety;
+						FactionDisplayInfo facInfo = info.factionInfos[i];
+						result = result + "\n#" + facInfo.notorietyRank + " | " + facInfo.notoriety;
 					}
 					sender.sendMessage(new TextComponentString(result));
 				}
@@ -473,17 +465,17 @@ public class CommandFactions extends CommandBase
 				{
 					UUID uuid = ((EntityPlayerMP)sender).getUniqueID();
 					PacketLeaderboardInfo packet = new PacketLeaderboardInfo();
-					packet.mInfo = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.LEGACY, uuid);
+					packet.info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.LEGACY, uuid);
 					WarForgeMod.NETWORK.sendTo(packet, (EntityPlayerMP)sender);
 				}
 				else
 				{
-					LeaderboardInfo info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.LEGACY, Faction.NULL);
+					LeaderboardInfo info = WarForgeMod.LEADERBOARD.CreateInfo(0, FactionStat.LEGACY, Faction.nullUuid);
 					String result = "**Legacy Leaderboard**";
 					for(int i = 0; i < LeaderboardInfo.NUM_LEADERBOARD_ENTRIES_PER_PAGE; i++)
 					{
-						FactionDisplayInfo facInfo = info.mFactionInfos[i];
-						result = result + "\n#" + facInfo.mLegacyRank + " | " + facInfo.mLegacy;
+						FactionDisplayInfo facInfo = info.factionInfos[i];
+						result = result + "\n#" + facInfo.legacyRank + " | " + facInfo.legacy;
 					}
 					sender.sendMessage(new TextComponentString(result));
 				}
@@ -493,12 +485,12 @@ public class CommandFactions extends CommandBase
 			case "safezone":
 			case "claimsafe":
 			{
-				if(WarForgeMod.IsOp(sender))
+				if(WarForgeMod.isOp(sender))
 				{
 					if(sender instanceof EntityPlayer)
 					{
 						EntityPlayer player = (EntityPlayer)sender;
-						DimChunkPos pos = new DimBlockPos(player.dimension, player.getPosition()).ToChunkPos();
+						DimChunkPos pos = new DimBlockPos(player.dimension, player.getPosition()).toChunkPos();
 						WarForgeMod.FACTIONS.RequestOpClaim(player, pos, FactionStorage.SAFE_ZONE_ID);
 					}
 					else
@@ -516,12 +508,12 @@ public class CommandFactions extends CommandBase
 			case "war":
 			case "claimwarzone":
 			{
-				if(WarForgeMod.IsOp(sender))
+				if(WarForgeMod.isOp(sender))
 				{
 					if(sender instanceof EntityPlayer)
 					{
 						EntityPlayer player = (EntityPlayer)sender;
-						DimChunkPos pos = new DimBlockPos(player.dimension, player.getPosition()).ToChunkPos();
+						DimChunkPos pos = new DimBlockPos(player.dimension, player.getPosition()).toChunkPos();
 						WarForgeMod.FACTIONS.RequestOpClaim(player, pos, FactionStorage.WAR_ZONE_ID);
 					}
 					else
@@ -539,7 +531,7 @@ public class CommandFactions extends CommandBase
 			case "protection":
 			case "protectionOverride":
 			{
-				if(WarForgeMod.IsOp(sender))
+				if(WarForgeMod.isOp(sender))
 				{
 					ProtectionsModule.OP_OVERRIDE = !ProtectionsModule.OP_OVERRIDE;
 					if(ProtectionsModule.OP_OVERRIDE)
@@ -564,7 +556,7 @@ public class CommandFactions extends CommandBase
 			case "spawn":
 			{
 				if(sender instanceof EntityPlayer)
-					WarForgeMod.TELEPORTS.RequestSpawn((EntityPlayer)sender);
+					WarForgeMod.TELEPORTS.requestSpawn((EntityPlayer)sender);
 				else
 					sender.sendMessage(new TextComponentString("Only valid for players"));
 				break;
@@ -582,7 +574,7 @@ public class CommandFactions extends CommandBase
 						}
 						else
 						{
-							WarForgeMod.FACTIONS.RequestPromote((EntityPlayer)sender, target);
+							WarForgeMod.FACTIONS.requestPromote((EntityPlayer)sender, target);
 						}
 					}
 					else
@@ -608,7 +600,7 @@ public class CommandFactions extends CommandBase
 						}
 						else
 						{
-							WarForgeMod.FACTIONS.RequestDemote((EntityPlayer)sender, target);
+							WarForgeMod.FACTIONS.requestDemote((EntityPlayer)sender, target);
 						}
 					}
 					else
@@ -623,17 +615,17 @@ public class CommandFactions extends CommandBase
 			}
 			case "clearnotoriety":
 			{
-				if(WarForgeMod.IsOp(sender))
+				if(WarForgeMod.isOp(sender))
 				{
-					WarForgeMod.FACTIONS.ClearNotoriety();
+					WarForgeMod.FACTIONS.clearNotoriety();
 				}
 				break;
 			}
 			case "clearlegacy":
 			{
-				if(WarForgeMod.IsOp(sender))
+				if(WarForgeMod.isOp(sender))
 				{
-					WarForgeMod.FACTIONS.ClearLegacy();
+					WarForgeMod.FACTIONS.clearLegacy();
 				}
 				break;
 			}
@@ -644,10 +636,10 @@ public class CommandFactions extends CommandBase
 				{
 					if(faction != null)
 					{
-						String msg = "\u00a7a[" + sender.getName() + " > Faction]\u00a7f";
+						StringBuilder msg = new StringBuilder("§a[" + sender.getName() + " > Faction]§f");
 						for(int i = 1; i < args.length; i++)
-							msg += " " + args[i];
-						faction.MessageAll(new TextComponentString(msg));
+							msg.append(" ").append(args[i]);
+						faction.messageAll(new TextComponentString(msg.toString()));
 					}
 				}
 				break;
@@ -659,10 +651,10 @@ public class CommandFactions extends CommandBase
 				{
 					if(faction != null)
 					{
-						DimBlockPos pos = faction.GetSpecificPosForClaim(new DimChunkPos(((EntityPlayer) sender).dimension, sender.getPosition()));
+						DimBlockPos pos = faction.getSpecificPosForClaim(new DimChunkPos(((EntityPlayer) sender).dimension, sender.getPosition()));
 						if(pos != null)
 						{
-							faction.PlaceFlag((EntityPlayer)sender, pos);
+							faction.placeFlag((EntityPlayer)sender, pos);
 						}
 						else
 							sender.sendMessage(new TextComponentString("Could not find a claim of your faction in this chunk"));
@@ -676,9 +668,9 @@ public class CommandFactions extends CommandBase
 			}
 			case "resetflagcooldowns":
 			{
-				if(WarForgeMod.IsOp(sender))
+				if(WarForgeMod.isOp(sender))
 				{
-					WarForgeMod.FACTIONS.OpResetFlagCooldowns();
+					WarForgeMod.FACTIONS.opResetFlagCooldowns();
 				}
 				break;
 			}

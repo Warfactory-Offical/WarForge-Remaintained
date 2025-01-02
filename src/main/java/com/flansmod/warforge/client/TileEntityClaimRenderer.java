@@ -1,14 +1,10 @@
 package com.flansmod.warforge.client;
 
 import java.util.List;
-import java.util.UUID;
 
-import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.TileEntityClaim;
-import com.flansmod.warforge.common.blocks.TileEntityLeaderboard;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
@@ -23,7 +19,7 @@ public class TileEntityClaimRenderer extends TileEntitySpecialRenderer<TileEntit
 	{
 		Tessellator tessellator = Tessellator.getInstance();
     	BufferBuilder buff = tessellator.getBuffer();
-    	List<String> flags = te.GetPlayerFlags();
+    	List<String> flags = te.getPlayerFlags();
     	 
 		GlStateManager.pushMatrix();
         GlStateManager.translate((float)x, (float)y + 1.0F, (float)z);
@@ -94,9 +90,9 @@ public class TileEntityClaimRenderer extends TileEntitySpecialRenderer<TileEntit
 
         	GlStateManager.translate(0.5F, 0.0F, 0.5F);
         	
-	        float r = (float)(te.mColour >> 16 & 255) / 255.0F;
-	        float g = (float)(te.mColour >> 8 & 255) / 255.0F;
-	        float b = (float)(te.mColour & 255) / 255.0F;
+	        float r = (float)(te.colour >> 16 & 255) / 255.0F;
+	        float g = (float)(te.colour >> 8 & 255) / 255.0F;
+	        float b = (float)(te.colour & 255) / 255.0F;
 	        
 	        for(int i = 0; i < flags.size(); i++)
 	        {

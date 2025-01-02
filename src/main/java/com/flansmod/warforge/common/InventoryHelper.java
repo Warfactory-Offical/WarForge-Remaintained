@@ -9,7 +9,7 @@ import net.minecraft.item.ItemStack;
  */
 public class InventoryHelper
 {
-	public static boolean addItemStackToInventory(IInventory inventory, ItemStack stack, boolean creative)
+	public static boolean addItemStackToInventory(IInventory inventory, ItemStack stack, boolean isCreative)
 	{
 		if(stack == null || stack.isEmpty())
 			return false;
@@ -33,7 +33,7 @@ public class InventoryHelper
 						stack.setCount(0);
 						return true;
 					}
-					else if(creative)
+					else if(isCreative)
 					{
 						stack.setCount(0);
 						return true;
@@ -49,7 +49,7 @@ public class InventoryHelper
 					}
 					while(stack.getCount() > 0 && stack.getCount() < i);
 					
-					if(stack.getCount() == i && creative)
+					if(stack.getCount() == i && isCreative)
 					{
 						stack.setCount(0);
 						return true;
@@ -72,9 +72,12 @@ public class InventoryHelper
 		for(int i = 0; i < inventory.getSizeInventory(); ++i)
 		{
 			ItemStack oldStack = inventory.getStackInSlot(i);
-			if(oldStack != null && !oldStack.isEmpty() && oldStack.getItem() == stack.getItem() && oldStack.isStackable() &&
-					oldStack.getCount() < oldStack.getMaxStackSize() && oldStack.getCount() < inventory.getInventoryStackLimit() &&
-					(!oldStack.getHasSubtypes() || oldStack.getItemDamage() == stack.getItemDamage()) && ItemStack.areItemStackTagsEqual(oldStack, stack))
+			if(!oldStack.isEmpty() && oldStack.getItem() == stack.getItem() &&
+					oldStack.isStackable() && oldStack.getCount() < oldStack.getMaxStackSize() &&
+					oldStack.getCount() < inventory.getInventoryStackLimit() &&
+					(!oldStack.getHasSubtypes() || oldStack.getItemDamage() == stack.getItemDamage())
+					&& ItemStack.areItemStackTagsEqual(oldStack, stack))
+
 			{
 				return i;
 			}
@@ -86,76 +89,57 @@ public class InventoryHelper
 	public static int storePartialItemStack(IInventory inventory, ItemStack stack)
 	{
 		Item item = stack.getItem();
-		int j = stack.getCount();
-		int k;
+		int itemCount = stack.getCount();
+		int emptySlot;
 		
 		//If the item doesn't stack, just find an empty slot for it
 		if(stack.getMaxStackSize() == 1)
 		{
-			k = getFirstEmptyStack(inventory);
+			emptySlot = getFirstEmptyStack(inventory);
 			//If it is impossible, return
-			if(k < 0)
+			if(emptySlot < 0)
 			{
-				return j;
+				return itemCount;
 			}
 			else
 			{
-				if(inventory.getStackInSlot(k) == null || inventory.getStackInSlot(k).isEmpty())
+                ItemStack oldStack = inventory.getStackInSlot(emptySlot);
+                if(oldStack.isEmpty())
 				{
-					inventory.setInventorySlotContents(k, stack.copy());
+					inventory.setInventorySlotContents(emptySlot, stack.copy());
 				}
 				return 0;
 			}
 		}
 		else
 		{
-			k = storeItemStack(inventory, stack);
-			if(k < 0)
+			emptySlot = storeItemStack(inventory, stack);
+			if(emptySlot < 0)
 			{
-				k = getFirstEmptyStack(inventory);
+				emptySlot = getFirstEmptyStack(inventory);
 			}
-			
-			if(k < 0)
-			{
-				return j;
-			}
-			else
-			{
-				ItemStack oldStack = inventory.getStackInSlot(k);
-				
-				if(oldStack == null || oldStack.isEmpty())
-				{
-					oldStack = new ItemStack(item, 0, stack.getItemDamage());
-					if(stack.hasTagCompound())
-						oldStack.setTagCompound(stack.getTagCompound().copy());
-					inventory.setInventorySlotContents(k, oldStack);
-				}
-				
-				int l = j;
-				
-				if(j > oldStack.getMaxStackSize() - oldStack.getCount())
-				{
-					l = oldStack.getMaxStackSize() - oldStack.getCount();
-				}
-				
-				if(l > inventory.getInventoryStackLimit() - oldStack.getCount())
-				{
-					l = inventory.getInventoryStackLimit() - oldStack.getCount();
-				}
-				
-				if(l == 0)
-				{
-					return j;
-				}
-				else
-				{
-					j -= l;
-					oldStack.setCount(oldStack.getCount() + l);
-					oldStack.setAnimationsToGo(5);
-					return j;
-				}
-			}
-		}
+
+            if (emptySlot >= 0) {
+                ItemStack oldStack = inventory.getStackInSlot(emptySlot);
+
+                if (oldStack.isEmpty()) {
+                    oldStack = new ItemStack(item, 0, stack.getItemDamage());
+                    if (stack.hasTagCompound())
+                        oldStack.setTagCompound(stack.getTagCompound().copy());
+                    inventory.setInventorySlotContents(emptySlot, oldStack);
+                }
+
+                int l = Math.min(inventory.getInventoryStackLimit() - oldStack.getCount(),
+                        Math.min(itemCount, oldStack.getMaxStackSize() - oldStack.getCount()));
+
+                if (l != 0) {
+                    itemCount -= l;
+                    oldStack.setCount(oldStack.getCount() + l);
+                    oldStack.setAnimationsToGo(5);
+                }
+            }
+            return itemCount;
+        }
 	}
 	
 	/**
@@ -163,9 +147,10 @@ public class InventoryHelper
 	 */
 	public static int getFirstEmptyStack(IInventory inventory)
 	{
-		for(int i = 0; i < inventory.getSizeInventory(); ++i)
-			if(inventory.getStackInSlot(i) == null || inventory.getStackInSlot(i).isEmpty())
-				return i;
+		for(int i = 0; i < inventory.getSizeInventory(); ++i) {
+            if(inventory.getStackInSlot(i).isEmpty())
+                return i;
+        }
 		
 		return -1;
 	}

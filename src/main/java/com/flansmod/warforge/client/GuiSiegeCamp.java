@@ -1,7 +1,6 @@
 package com.flansmod.warforge.client;
 
 import java.util.List;
-import java.util.UUID;
 
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
@@ -37,7 +36,7 @@ public class GuiSiegeCamp extends GuiScreen
         
 	public GuiSiegeCamp(DimBlockPos siegeCampPos, List<SiegeCampAttackInfo> possibleAttacks)
 	{
-		mSiegeCamp = (TileEntitySiegeCamp)Minecraft.getMinecraft().world.getTileEntity(siegeCampPos.ToRegularPos());
+		mSiegeCamp = (TileEntitySiegeCamp)Minecraft.getMinecraft().world.getTileEntity(siegeCampPos.toRegularPos());
 		if(mSiegeCamp == null)
 			Minecraft.getMinecraft().displayGuiScreen(null);
 		mAttackInfo = possibleAttacks;
@@ -54,7 +53,7 @@ public class GuiSiegeCamp extends GuiScreen
 		int j = width / 2 - xSize / 2;
 		int k = height / 2 - ySize / 2;
 		
-		if(ClientProxy.sSiegeInfo.containsKey(mSiegeCamp.GetPos()))
+		if(ClientProxy.sSiegeInfo.containsKey(mSiegeCamp.getPos()))
 		{
 			GuiButton setFlagButton = new GuiButton(4, j + 16, k + 86, 104, 20, "Place Flag Here");
 			buttonList.add(setFlagButton);
@@ -102,7 +101,7 @@ public class GuiSiegeCamp extends GuiScreen
 		if(button.id == 4)
 		{
 			PacketPlaceFlag packet = new PacketPlaceFlag();
-			packet.pos = mSiegeCamp.GetPos();
+			packet.pos = mSiegeCamp.getPos();
 			WarForgeMod.INSTANCE.NETWORK.sendToServer(packet);
 			mc.displayGuiScreen(null);
 		}
@@ -110,7 +109,7 @@ public class GuiSiegeCamp extends GuiScreen
 		{
 			PacketStartSiege siegePacket = new PacketStartSiege();
 				
-			siegePacket.mSiegeCampPos = mSiegeCamp.GetPos();
+			siegePacket.mSiegeCampPos = mSiegeCamp.getPos();
 			switch(button.id)
 			{
 				case BUTTON_NORTH: siegePacket.mDirection = EnumFacing.NORTH; break;

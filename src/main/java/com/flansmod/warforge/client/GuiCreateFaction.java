@@ -10,14 +10,12 @@ import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.TileEntityCitadel;
 import com.flansmod.warforge.common.network.PacketCreateFaction;
 import com.flansmod.warforge.common.network.PacketSetFactionColour;
-import com.flansmod.warforge.server.Faction;
 
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.client.FMLClientHandler;
 
 public class GuiCreateFaction extends GuiScreen
 {
@@ -40,7 +38,7 @@ public class GuiCreateFaction extends GuiScreen
     public GuiCreateFaction(TileEntityCitadel tile, boolean isRecolour)
     {
     	citadel = tile;
-    	Color.RGBtoHSB((citadel.mColour >> 16) & 0xff, (citadel.mColour >> 8) & 0xff, (citadel.mColour >> 0) & 0xff, currentHSB);
+    	Color.RGBtoHSB((citadel.colour >> 16) & 0xff, (citadel.colour >> 8) & 0xff, (citadel.colour >> 0) & 0xff, currentHSB);
     	xSize = 176;
     	ySize = 56;
     	isRecolourGUI = isRecolour;

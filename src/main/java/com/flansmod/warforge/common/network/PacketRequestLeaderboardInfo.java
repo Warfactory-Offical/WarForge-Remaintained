@@ -10,28 +10,28 @@ import net.minecraft.entity.player.EntityPlayerMP;
 
 public class PacketRequestLeaderboardInfo extends PacketBase
 {
-	public FactionStat mStat = FactionStat.TOTAL;
-	public int mFirstIndex = 0;
+	public FactionStat stat = FactionStat.TOTAL;
+	public int firstIndex = 0;
 	
 	@Override
 	public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) 
 	{
-		data.writeInt(mFirstIndex);
-		data.writeInt(mStat.ordinal());
+		data.writeInt(firstIndex);
+		data.writeInt(stat.ordinal());
 	}
 
 	@Override
 	public void decodeInto(ChannelHandlerContext ctx, ByteBuf data) 
 	{
-		mFirstIndex = data.readInt();
-		mStat = FactionStat.values()[data.readInt()];
+		firstIndex = data.readInt();
+		stat = FactionStat.values()[data.readInt()];
 	}
 
 	@Override
 	public void handleServerSide(EntityPlayerMP playerEntity) 
 	{
 		PacketLeaderboardInfo packet = new PacketLeaderboardInfo();
-		packet.mInfo = WarForgeMod.LEADERBOARD.CreateInfo(mFirstIndex, mStat, playerEntity.getUniqueID());
+		packet.info = WarForgeMod.LEADERBOARD.CreateInfo(firstIndex, stat, playerEntity.getUniqueID());
 		WarForgeMod.NETWORK.sendTo(packet, playerEntity);
 	}
 

@@ -15,7 +15,7 @@ public class PacketPlaceFlag extends PacketBase
 	@Override
 	public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) 
 	{
-		data.writeInt(pos.mDim);
+		data.writeInt(pos.dim);
 		data.writeInt(pos.getX());
 		data.writeInt(pos.getY());
 		data.writeInt(pos.getZ());
@@ -34,7 +34,7 @@ public class PacketPlaceFlag extends PacketBase
 	@Override
 	public void handleServerSide(EntityPlayerMP player) 
 	{
-		WarForgeMod.FACTIONS.RequestPlaceFlag(player, pos);
+		WarForgeMod.FACTIONS.requestPlaceFlag(player, pos);
 	}
 
 	@Override
