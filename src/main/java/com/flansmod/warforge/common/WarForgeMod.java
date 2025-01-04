@@ -6,9 +6,6 @@ import com.flansmod.warforge.server.*;
 import com.flansmod.warforge.api.ObjectIntPair;
 import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockNewLeaf;
-import net.minecraft.block.BlockNewLog;
-import net.minecraft.block.BlockPlanks.EnumType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandHandler;
 import net.minecraft.command.ICommandSender;
@@ -30,7 +27,6 @@ import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
-import net.minecraftforge.event.terraingen.PopulateChunkEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -387,14 +383,13 @@ public class WarForgeMod implements ILateMixinLoader
     	BlockPos placementPos = event.getPos().offset(event.getFace() != null ? event.getFace() : EnumFacing.UP);
     	
     	// Only players can place these blocks
-    	if(!(event.getEntity() instanceof EntityPlayer))
+    	if(!(event.getEntity() instanceof EntityPlayer player))
     	{
     		event.setCanceled(true);
     		return;
     	}
-    	
-    	EntityPlayer player = (EntityPlayer)event.getEntity();
-    	Faction playerFaction = FACTIONS.getFactionOfPlayer(player.getUniqueID());
+
+        Faction playerFaction = FACTIONS.getFactionOfPlayer(player.getUniqueID());
     	// TODO : Op override
 
     	// All block placements are cancelled if there is already a block from this mod in that chunk
