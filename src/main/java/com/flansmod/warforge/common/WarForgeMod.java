@@ -6,9 +6,6 @@ import com.flansmod.warforge.server.*;
 import com.flansmod.warforge.api.ObjectIntPair;
 import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockNewLeaf;
-import net.minecraft.block.BlockNewLog;
-import net.minecraft.block.BlockPlanks.EnumType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandHandler;
 import net.minecraft.command.ICommandSender;
@@ -30,7 +27,6 @@ import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
-import net.minecraftforge.event.terraingen.PopulateChunkEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -58,13 +54,6 @@ import org.apache.logging.log4j.Logger;
 import com.flansmod.warforge.common.network.PacketHandler;
 import com.flansmod.warforge.common.network.PacketTimeUpdates;
 import com.flansmod.warforge.common.potions.PotionsModule;
-import com.flansmod.warforge.common.world.WorldGenAncientTree;
-import com.flansmod.warforge.common.world.WorldGenBedrockOre;
-import com.flansmod.warforge.common.world.WorldGenClayPool;
-import com.flansmod.warforge.common.world.WorldGenDenseOre;
-import com.flansmod.warforge.common.world.WorldGenNetherPillar;
-import com.flansmod.warforge.common.world.WorldGenShulkerFossil;
-import com.flansmod.warforge.common.world.WorldGenSlimeFountain;
 import com.google.common.io.Files;
 import com.flansmod.warforge.server.Faction.Role;
 import zone.rong.mixinbooter.ILateMixinLoader;
@@ -394,14 +383,13 @@ public class WarForgeMod implements ILateMixinLoader
     	BlockPos placementPos = event.getPos().offset(event.getFace() != null ? event.getFace() : EnumFacing.UP);
     	
     	// Only players can place these blocks
-    	if(!(event.getEntity() instanceof EntityPlayer))
+    	if(!(event.getEntity() instanceof EntityPlayer player))
     	{
     		event.setCanceled(true);
     		return;
     	}
-    	
-    	EntityPlayer player = (EntityPlayer)event.getEntity();
-    	Faction playerFaction = FACTIONS.getFactionOfPlayer(player.getUniqueID());
+
+        Faction playerFaction = FACTIONS.getFactionOfPlayer(player.getUniqueID());
     	// TODO : Op override
 
     	// All block placements are cancelled if there is already a block from this mod in that chunk
@@ -659,104 +647,7 @@ public class WarForgeMod implements ILateMixinLoader
     }
 */
 
-    // World Generation
-	private WorldGenDenseOre ironGenerator, goldGenerator, redstoneGenerator;
-	private WorldGenBedrockOre diamondGenerator, magmaGenerator;
-	private WorldGenAncientTree ancientTreeGenerator;
-	private WorldGenClayPool clayLakeGenerator;
-	private WorldGenNetherPillar quartzPillarGenerator;
-	private WorldGenSlimeFountain slimeGenerator;
-	private WorldGenShulkerFossil shulkerGenerator;
 	
-	@SubscribeEvent
-	public void populateOverworldChunk(PopulateChunkEvent event)
-	{
-		if(WarForgeConfig.ENABLE_WORLD_GEN) {
-			// Overworld generators
-			if (event.getWorld().provider.getDimension() == 0) {
-				if (ironGenerator == null) {
-                    assert Blocks.IRON_ORE != null;
-                    ironGenerator = new WorldGenDenseOre(CONTENT.denseIronOreBlock.getDefaultState(), Blocks.IRON_ORE.getDefaultState(),
-                            WarForgeConfig.DENSE_IRON_CELL_SIZE, WarForgeConfig.DENSE_IRON_DEPOSIT_RADIUS, WarForgeConfig.DENSE_IRON_OUTER_SHELL_RADIUS, WarForgeConfig.DENSE_IRON_OUTER_SHELL_CHANCE,
-                            WarForgeConfig.DENSE_IRON_MIN_INSTANCES_PER_CELL, WarForgeConfig.DENSE_IRON_MAX_INSTANCES_PER_CELL, WarForgeConfig.DENSE_IRON_MIN_HEIGHT, WarForgeConfig.DENSE_IRON_MAX_HEIGHT);
-                }
-				if (goldGenerator == null) {
-                    assert Blocks.GOLD_ORE != null;
-                    goldGenerator = new WorldGenDenseOre(CONTENT.denseGoldOreBlock.getDefaultState(), Blocks.GOLD_ORE.getDefaultState(),
-                            WarForgeConfig.DENSE_GOLD_CELL_SIZE, WarForgeConfig.DENSE_GOLD_DEPOSIT_RADIUS, WarForgeConfig.DENSE_GOLD_OUTER_SHELL_RADIUS, WarForgeConfig.DENSE_GOLD_OUTER_SHELL_CHANCE,
-                            WarForgeConfig.DENSE_GOLD_MIN_INSTANCES_PER_CELL, WarForgeConfig.DENSE_GOLD_MAX_INSTANCES_PER_CELL, WarForgeConfig.DENSE_GOLD_MIN_HEIGHT, WarForgeConfig.DENSE_GOLD_MAX_HEIGHT);
-                }
-				if (diamondGenerator == null) {
-                    assert Blocks.DIAMOND_ORE != null;
-                    diamondGenerator = new WorldGenBedrockOre(CONTENT.denseDiamondOreBlock.getDefaultState(), Blocks.DIAMOND_ORE.getDefaultState(),
-                            WarForgeConfig.DENSE_DIAMOND_CELL_SIZE, WarForgeConfig.DENSE_DIAMOND_DEPOSIT_RADIUS, WarForgeConfig.DENSE_DIAMOND_OUTER_SHELL_RADIUS, WarForgeConfig.DENSE_DIAMOND_OUTER_SHELL_CHANCE,
-                            WarForgeConfig.DENSE_DIAMOND_MIN_INSTANCES_PER_CELL, WarForgeConfig.DENSE_DIAMOND_MAX_INSTANCES_PER_CELL, WarForgeConfig.DENSE_DIAMOND_MIN_HEIGHT, WarForgeConfig.DENSE_DIAMOND_MAX_HEIGHT);
-                }
-				if (magmaGenerator == null) {
-                    assert Blocks.LAVA != null;
-                    magmaGenerator = new WorldGenBedrockOre(CONTENT.magmaVentBlock.getDefaultState(), Blocks.LAVA.getDefaultState(),
-                            WarForgeConfig.MAGMA_VENT_CELL_SIZE, WarForgeConfig.MAGMA_VENT_DEPOSIT_RADIUS, WarForgeConfig.MAGMA_VENT_OUTER_SHELL_RADIUS, WarForgeConfig.MAGMA_VENT_OUTER_SHELL_CHANCE,
-                            WarForgeConfig.MAGMA_VENT_MIN_INSTANCES_PER_CELL, WarForgeConfig.MAGMA_VENT_MAX_INSTANCES_PER_CELL, WarForgeConfig.MAGMA_VENT_MIN_HEIGHT, WarForgeConfig.MAGMA_VENT_MAX_HEIGHT);
-                }
-				if (redstoneGenerator == null) {
-                    assert Blocks.REDSTONE_ORE != null;
-                    redstoneGenerator = new WorldGenDenseOre(CONTENT.denseRedstoneOreBlock.getDefaultState(), Blocks.REDSTONE_ORE.getDefaultState(),
-                            WarForgeConfig.DENSE_REDSTONE_CELL_SIZE, WarForgeConfig.DENSE_REDSTONE_DEPOSIT_RADIUS, WarForgeConfig.DENSE_REDSTONE_OUTER_SHELL_RADIUS, WarForgeConfig.DENSE_REDSTONE_OUTER_SHELL_CHANCE,
-                            WarForgeConfig.DENSE_REDSTONE_MIN_INSTANCES_PER_CELL, WarForgeConfig.DENSE_REDSTONE_MAX_INSTANCES_PER_CELL, WarForgeConfig.DENSE_REDSTONE_MIN_HEIGHT, WarForgeConfig.DENSE_REDSTONE_MAX_HEIGHT);
-                }
-
-
-				if (ancientTreeGenerator == null) {
-                    assert Blocks.LOG2 != null;
-                    ancientTreeGenerator = new WorldGenAncientTree(CONTENT.ancientOakBlock.getDefaultState(), Blocks.LOG2.getDefaultState().withProperty(BlockNewLog.VARIANT, EnumType.DARK_OAK), Blocks.LEAVES2.getDefaultState().withProperty(BlockNewLeaf.VARIANT, EnumType.DARK_OAK),
-                            WarForgeConfig.ANCIENT_OAK_CELL_SIZE, WarForgeConfig.ANCIENT_OAK_CHANCE, WarForgeConfig.ANCIENT_OAK_HOLE_RADIUS,
-                            WarForgeConfig.ANCIENT_OAK_CORE_RADIUS, WarForgeConfig.ANCIENT_OAK_MAX_TRUNK_RADIUS, WarForgeConfig.ANCIENT_OAK_MAX_HEIGHT);
-                }
-
-				if (clayLakeGenerator == null)
-					clayLakeGenerator = new WorldGenClayPool(CONTENT.denseClayBlock, Blocks.CLAY, Blocks.WATER);
-
-				if (slimeGenerator == null) {
-                    assert Blocks.WATER != null;
-                    assert Blocks.SLIME_BLOCK != null;
-                    slimeGenerator = new WorldGenSlimeFountain(CONTENT.denseSlimeBlock.getDefaultState(), Blocks.WATER.getDefaultState(), Blocks.SLIME_BLOCK.getDefaultState(),
-                            WarForgeConfig.SLIME_POOL_CELL_SIZE, WarForgeConfig.SLIME_POOL_LAKE_RADIUS, WarForgeConfig.SLIME_POOL_LAKE_CEILING_HEIGHT,
-                            WarForgeConfig.SLIME_POOL_MIN_INSTANCES_PER_CELL, WarForgeConfig.SLIME_POOL_MAX_INSTANCES_PER_CELL,
-                            WarForgeConfig.SLIME_POOL_MIN_HEIGHT, WarForgeConfig.SLIME_POOL_MAX_HEIGHT);
-                }
-
-				ironGenerator.generate(event.getWorld(), event.getRand(), new BlockPos(event.getChunkX() * 16, 128, event.getChunkZ() * 16));
-				goldGenerator.generate(event.getWorld(), event.getRand(), new BlockPos(event.getChunkX() * 16, 128, event.getChunkZ() * 16));
-				redstoneGenerator.generate(event.getWorld(), event.getRand(), new BlockPos(event.getChunkX() * 16, 128, event.getChunkZ() * 16));
-				diamondGenerator.generate(event.getWorld(), event.getRand(), new BlockPos(event.getChunkX() * 16, 128, event.getChunkZ() * 16));
-				magmaGenerator.generate(event.getWorld(), event.getRand(), new BlockPos(event.getChunkX() * 16, 128, event.getChunkZ() * 16));
-				ancientTreeGenerator.generate(event.getWorld(), event.getRand(), new BlockPos(event.getChunkX() * 16, 128, event.getChunkZ() * 16));
-				slimeGenerator.generate(event.getWorld(), event.getRand(), new BlockPos(event.getChunkX() * 16, 128, event.getChunkZ() * 16));
-
-				if (rand.nextInt(WarForgeConfig.CLAY_POOL_CHANCE) == 0)
-					clayLakeGenerator.generate(event.getWorld(), event.getRand(), new BlockPos(event.getChunkX() * 16, 128, event.getChunkZ() * 16));
-			} else if (event.getWorld().provider.getDimension() == -1) {
-				if (quartzPillarGenerator == null)
-					quartzPillarGenerator = new WorldGenNetherPillar(CONTENT.denseQuartzOreBlock.getDefaultState(), Blocks.QUARTZ_ORE.getDefaultState());
-
-
-				if (rand.nextInt(WarForgeConfig.QUARTZ_PILLAR_CHANCE) == 0) {
-					quartzPillarGenerator.generate(event.getWorld(), event.getRand(), new BlockPos(event.getChunkX() * 16, 128, event.getChunkZ() * 16));
-				}
-			} else if (event.getWorld().provider.getDimension() == 1) {
-				if (shulkerGenerator == null) {
-                    assert Blocks.END_STONE != null;
-                    shulkerGenerator = new WorldGenShulkerFossil(Blocks.END_STONE.getDefaultState(), CONTENT.shulkerFossilBlock.getDefaultState(),
-                            WarForgeConfig.SHULKER_FOSSIL_CELL_SIZE, WarForgeConfig.SHULKER_FOSSIL_MIN_INSTANCES_PER_CELL, WarForgeConfig.SHULKER_FOSSIL_MAX_INSTANCES_PER_CELL,
-                            WarForgeConfig.SHULKER_FOSSIL_MIN_ROTATIONS, WarForgeConfig.SHULKER_FOSSIL_MAX_ROTATIONS, WarForgeConfig.SHULKER_FOSSIL_RADIUS_PER_ROTATION,
-                            WarForgeConfig.SHULKER_FOSSIL_DISC_THICKNESS, WarForgeConfig.SHULKER_FOSSIL_MIN_HEIGHT, WarForgeConfig.SHULKER_FOSSIL_MAX_HEIGHT
-                    );
-                }
-
-				shulkerGenerator.generate(event.getWorld(), event.getRand(), new BlockPos(event.getChunkX() * 16, 128, event.getChunkZ() * 16));
-			}
-		}
-	}
 
 	private void readFromNBT(NBTTagCompound tags)
 	{

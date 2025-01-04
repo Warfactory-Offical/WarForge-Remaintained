@@ -52,8 +52,7 @@ public class GuiSiegeCamp extends GuiScreen
 				
 		int j = width / 2 - xSize / 2;
 		int k = height / 2 - ySize / 2;
-		
-		if(ClientProxy.sSiegeInfo.containsKey(mSiegeCamp.getPos()))
+		if(ClientProxy.sSiegeInfo.containsKey(mSiegeCamp.getClaimPos()))
 		{
 			GuiButton setFlagButton = new GuiButton(4, j + 16, k + 86, 104, 20, "Place Flag Here");
 			buttonList.add(setFlagButton);
@@ -101,7 +100,7 @@ public class GuiSiegeCamp extends GuiScreen
 		if(button.id == 4)
 		{
 			PacketPlaceFlag packet = new PacketPlaceFlag();
-			packet.pos = mSiegeCamp.getPos();
+			packet.pos = mSiegeCamp.getClaimPos();
 			WarForgeMod.INSTANCE.NETWORK.sendToServer(packet);
 			mc.displayGuiScreen(null);
 		}
@@ -109,7 +108,7 @@ public class GuiSiegeCamp extends GuiScreen
 		{
 			PacketStartSiege siegePacket = new PacketStartSiege();
 				
-			siegePacket.mSiegeCampPos = mSiegeCamp.getPos();
+			siegePacket.mSiegeCampPos = mSiegeCamp.getClaimPos();
 			switch(button.id)
 			{
 				case BUTTON_NORTH: siegePacket.mDirection = EnumFacing.NORTH; break;

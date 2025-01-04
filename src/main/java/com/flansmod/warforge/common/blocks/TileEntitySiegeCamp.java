@@ -172,12 +172,12 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 				WarForgeMod.FACTIONS.getSieges().get(siegeTarget.toChunkPos()).setAttackProgress(siegeStatus.isFailed() ? -5 : WarForgeMod.FACTIONS.getSieges().get(siegeTarget.toChunkPos()).GetAttackSuccessThreshold()); // ends siege
 				WarForgeMod.FACTIONS.handleCompletedSiege(siegeTarget.toChunkPos(), false); // performs check on completed sieges without invoking checks on unrelated sieges
 			} catch (Exception e) {
-				WarForgeMod.LOGGER.atError().log("Got exception when attempting to force end siege of: " + e + " with siegeTarget of: " + siegeTarget + " and pos of: " + getPos());
+				WarForgeMod.LOGGER.atError().log("Got exception when attempting to force end siege of: " + e + " with siegeTarget of: " + siegeTarget + " and pos of: " + getClaimPos());
 				e.printStackTrace();
 			}
 
 			for (DimBlockPos siegeCampPos : siege.mAttackingSiegeCamps) {
-				if (siegeCampPos == null || getPos().equals(siegeCampPos.toRegularPos())) continue;
+				if (siegeCampPos == null || getClaimPos().equals(siegeCampPos.toRegularPos())) continue;
 
 				TileEntity siegeCamp = world.getTileEntity(siegeCampPos);
 				if (!(siegeCamp instanceof TileEntitySiegeCamp)) continue;
@@ -200,14 +200,14 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 	}
 
 	public void destroy() {
-		IBlockState oldState = world.getBlockState(getPos());
+		IBlockState oldState = world.getBlockState(getClaimPos());
 		world.markBlockRangeForRenderUpdate(pos, pos);
-		world.notifyBlockUpdate(getPos(), oldState, Blocks.AIR.getDefaultState(), 3); // 2 is bit mask apparently indicating send to client
+		world.notifyBlockUpdate(getClaimPos(), oldState, Blocks.AIR.getDefaultState(), 3); // 2 is bit mask apparently indicating send to client
 		world.scheduleBlockUpdate(pos, this.getBlockType(), 0, 0);
 		markDirty();
 
-		world.destroyBlock(getPos(), true); // destroy block of failed siege (gets rid of tile-entity
-		world.removeTileEntity(getPos());
+		world.destroyBlock(getClaimPos(), true); // destroy block of failed siege (gets rid of tile-entity
+		world.removeTileEntity(getClaimPos());
 	}
 
 	// allows client side to also receive block events (not used currently)
@@ -268,7 +268,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 		if (doCheckPerTick || tickTimer % 20 == 0) {
 			// send message to all players on defending team with necessary information to defend every 5 minutes
 			if (tickTimer % 6000 == 0) {
-				messageAllDefenders("warforge.info.siege_defense_info", new DimBlockPos(world.provider.getDimension(), getPos()).toFancyString());
+				messageAllDefenders("warforge.info.siege_defense_info", new DimBlockPos(world.provider.getDimension(), getClaimPos()).toFancyString());
 			}
 
 			// --- ATTACKER HANDLING ---
@@ -294,7 +294,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 			// --- DEFENDER HANDLING ---
 
 			if (lastSeenDefenderCount == 0 && defenders.onlinePlayerCount > 0 && defenderOfflineTimerMs > 0) {
-				defenders.messageAll(new TextComponentString("Your faction [" + defenders.name + "] has an offline timer of " + WarForgeMod.formatTime(defenderOfflineTimerMs) + " for the siege camp at " + getPos()));
+				defenders.messageAll(new TextComponentString("Your faction [" + defenders.name + "] has an offline timer of " + WarForgeMod.formatTime(defenderOfflineTimerMs) + " for the siege camp at " + getClaimPos()));
 			}
 
 			lastSeenDefenderCount = defenders.onlinePlayerCount;
@@ -427,13 +427,13 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 
 	private boolean isPlayerInWarzone(EntityPlayer player) {
 		DimChunkPos playerChunk = new DimChunkPos(player.dimension, player.getPosition());
-		DimChunkPos blockChunk = new DimChunkPos(world.provider.getDimension(), getPos());
+		DimChunkPos blockChunk = new DimChunkPos(world.provider.getDimension(), getClaimPos());
 		return !player.isDead && Siege.isPlayerInRadius(blockChunk, playerChunk);
 	}
 
 	private boolean isPlayerInRadius(EntityPlayer player, int radius) {
 		DimChunkPos playerChunk = new DimChunkPos(player.dimension, player.getPosition());
-		DimChunkPos blockChunk = new DimChunkPos(world.provider.getDimension(), getPos());
+		DimChunkPos blockChunk = new DimChunkPos(world.provider.getDimension(), getClaimPos());
 		return !player.isDead && Siege.isPlayerInRadius(blockChunk, playerChunk, radius);
 	}
 

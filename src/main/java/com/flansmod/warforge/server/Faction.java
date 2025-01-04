@@ -318,7 +318,7 @@ public class Faction
 	
 	public void onClaimPlaced(IClaim claim)
 	{
-		claims.put(claim.getPos(), 0);
+		claims.put(claim.getClaimPos(), 0);
 	}
 
 	// for methods where claim block is actually being removed

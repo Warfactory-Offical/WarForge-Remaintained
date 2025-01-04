@@ -113,7 +113,7 @@ public class ClientTickHandler
 					{
 						if(te instanceof IClaim)
 						{
-							DimChunkPos tePos = ((IClaim) te).getPos().toChunkPos();
+							DimChunkPos tePos = ((IClaim) te).getClaimPos().toChunkPos();
 							if(tePos.equals(playerChunkPos))
 								preClaim = (IClaim)te;
 							
@@ -401,7 +401,7 @@ public class ClientTickHandler
 		{
 			if(te instanceof IClaim)
 			{
-				DimBlockPos blockPos = ((IClaim) te).getPos();
+				DimBlockPos blockPos = ((IClaim) te).getClaimPos();
 				DimChunkPos chunkPos = blockPos.toChunkPos();
 			
 				if(renderData.containsKey(chunkPos))
@@ -766,7 +766,8 @@ public class ClientTickHandler
 				{
 					if(te instanceof IClaim)
 					{
-						DimBlockPos blockPos = ((IClaim) te).getPos();
+
+						DimBlockPos blockPos = ((IClaim) te).getClaimPos();
 						DimChunkPos chunkPos = blockPos.toChunkPos();
 						
 						if(playerPos.x == chunkPos.x && playerPos.z == chunkPos.z)
@@ -841,7 +842,7 @@ public class ClientTickHandler
 			{
 				if(te instanceof TileEntityCitadel citadel)
 				{
-                    DimBlockPos blockPos = ((IClaim) te).getPos();
+                    DimBlockPos blockPos = ((IClaim) te).getClaimPos();
 					
 					double distance = Math.sqrt((blockPos.getX() - x)*(blockPos.getX() - x)+(blockPos.getY() - y)*(blockPos.getY() - y)+(blockPos.getZ() - z)*(blockPos.getZ() - z));					
 					double groundLevelBlend = (skyRenderDistance - distance) / (skyRenderDistance - groundRenderDistance);

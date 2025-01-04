@@ -10,7 +10,7 @@ import net.minecraft.tileentity.TileEntity;
 
 public interface IClaim 
 {
-	public DimBlockPos getPos();
+	public DimBlockPos getClaimPos();
 	public TileEntity getAsTileEntity();
 	
 	public boolean canBeSieged();

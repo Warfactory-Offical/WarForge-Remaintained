@@ -158,14 +158,14 @@ public class FactionStorage {
 	public void onNonCitadelClaimPlaced(IClaim claim, Faction faction) {
 		if(faction != null) {
 			TileEntity tileEntity = claim.getAsTileEntity();
-			mClaims.put(claim.getPos().toChunkPos(), faction.uuid);
+			mClaims.put(claim.getClaimPos().toChunkPos(), faction.uuid);
 
-			faction.messageAll(new TextComponentString("Claimed the chunk [" + claim.getPos().toChunkPos().x + ", " + claim.getPos().toChunkPos().z + "] around " + claim.getPos().toFancyString()));
+			faction.messageAll(new TextComponentString("Claimed the chunk [" + claim.getClaimPos().toChunkPos().x + ", " + claim.getClaimPos().toChunkPos().z + "] around " + claim.getClaimPos().toFancyString()));
 
 			claim.onServerSetFaction(faction);
 			faction.onClaimPlaced(claim);
 		} else
-			WarForgeMod.LOGGER.error("Invalid placer placed a claim at " + claim.getPos());
+			WarForgeMod.LOGGER.error("Invalid placer placed a claim at " + claim.getClaimPos());
 	}
 
 	public UUID getClaim(DimBlockPos pos)
@@ -424,7 +424,7 @@ public class FactionStorage {
 
 		mFactions.put(proposedID, faction);
 		citadel.onServerSetFaction(faction);
-		mClaims.put(citadel.getPos().toChunkPos(), proposedID);
+		mClaims.put(citadel.getClaimPos().toChunkPos(), proposedID);
 		WarForgeMod.LEADERBOARD.RegisterFaction(faction);
 
 		WarForgeMod.INSTANCE.messageAll(new TextComponentString(player.getName() + " created the faction " + factionName), true);
