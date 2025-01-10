@@ -11,7 +11,6 @@ import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.IClaim;
 import com.flansmod.warforge.common.blocks.TileEntityCitadel;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
-import com.google.common.collect.Lists;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -868,8 +867,8 @@ public class ClientTickHandler
 			        	// Start with base colour
 						EnumDyeColor baseColour = ItemBanner.getBaseColor(bannerStack);
 			        	StringBuilder patternResourceLocation = new StringBuilder("b" + baseColour.getDyeDamage());
-			        	List<BannerPattern> patternList = Lists.<BannerPattern>newArrayList();
-					    List<EnumDyeColor> colorList = Lists.<EnumDyeColor>newArrayList();
+						List<BannerPattern> patternList = new ArrayList<>();
+						List<EnumDyeColor> colorList = new ArrayList<>();
 					    
 		                patternList.add(BannerPattern.BASE);
 		                colorList.add(baseColour);
