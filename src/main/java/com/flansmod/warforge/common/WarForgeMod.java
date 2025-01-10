@@ -47,6 +47,8 @@ import net.minecraftforge.fml.common.network.NetworkRegistry;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 import org.apache.logging.log4j.Logger;
@@ -54,7 +56,6 @@ import org.apache.logging.log4j.Logger;
 import com.flansmod.warforge.common.network.PacketHandler;
 import com.flansmod.warforge.common.network.PacketTimeUpdates;
 import com.flansmod.warforge.common.potions.PotionsModule;
-import com.google.common.io.Files;
 import com.flansmod.warforge.server.Faction.Role;
 import zone.rong.mixinbooter.ILateMixinLoader;
 
@@ -734,13 +735,11 @@ public class WarForgeMod implements ILateMixinLoader
 			{
 				NBTTagCompound tags = new NBTTagCompound();
 				WriteToNBT(tags);
-				
+
 				File factionsFile = getFactionsFile();
-				if(factionsFile.exists()) {
-					Files.copy(factionsFile, getFactionsFileBackup());
-				}
-				else
-				{
+				if (factionsFile.exists()) {
+					Files.copy(factionsFile.toPath(), getFactionsFileBackup().toPath(), StandardCopyOption.REPLACE_EXISTING);
+				} else {
 					factionsFile.createNewFile();
 				}
 				
