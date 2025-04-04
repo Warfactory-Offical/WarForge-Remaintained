@@ -6,7 +6,8 @@
 	"minVersion": "0.8.5",
 	"compatibilityLevel": "JAVA_8",
 	"mixins": [
-		"SurvivalHelperMixin"
+		"SurvivalHelperMixin",
+		"vanilla.RenderMixin"
 	],
 	"server": [],
 	"client": []
