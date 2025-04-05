@@ -375,6 +375,16 @@ public class ClientTickHandler
 		tess.getBuffer().pos(x + 0, y + 1, z).tex(((ori + 3) / 2) % 2, ((ori + 2) / 2) % 2).endVertex();
 		tess.draw();
     }
+
+	private void renderZAlignedRectangle(double x, int y, double width, double z, int ori)
+	{
+		tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
+		tess.getBuffer().pos(x + 0, y + 0, z).tex(((ori + 0) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
+		tess.getBuffer().pos(x + width, y + 0, z).tex(((ori + 1) / 2) % 2, ((ori + 0) / 2) % 2).endVertex();
+		tess.getBuffer().pos(x + width, y + 1, z).tex(((ori + 2) / 2) % 2, ((ori + 1) / 2) % 2).endVertex();
+		tess.getBuffer().pos(x + 0, y + 1, z).tex(((ori + 3) / 2) % 2, ((ori + 2) / 2) % 2).endVertex();
+		tess.draw();
+	}
     
     private void renderXAlignedSquare(double x, int y, int z, int ori)
     {
@@ -419,7 +429,9 @@ public class ClientTickHandler
 		renderData = tempData;
 		
 	}
-	
+	final static double alignment = 0.25d;
+	final static double smaller_alignment = alignment - 0.125d;
+
 	private void updateRandomMesh()
 	{	
 		World world = Minecraft.getMinecraft().world;
@@ -459,10 +471,10 @@ public class ClientTickHandler
     			if(renderWest)
     			{
 	    			tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-					tess.getBuffer().pos(0, 0, 0.25d).tex(64f, 0.5f).endVertex();
-					tess.getBuffer().pos(2, 0, 0.25d).tex(64f, 0f).endVertex();
-					tess.getBuffer().pos(2, 128, 0.25d).tex(0f, 0f).endVertex();
-					tess.getBuffer().pos(0, 128, 0.25d).tex(0f, 0.5f).endVertex();
+					tess.getBuffer().pos(0+alignment, 0, alignment).tex(64f, 0.5f).endVertex();
+					tess.getBuffer().pos(2+alignment, 0, alignment).tex(64f, 0f).endVertex();
+					tess.getBuffer().pos(2+alignment, 128, alignment).tex(0f, 0f).endVertex();
+					tess.getBuffer().pos(0+alignment, 128, alignment).tex(0f, 0.5f).endVertex();
 					tess.draw();
     			}
 				
@@ -470,10 +482,10 @@ public class ClientTickHandler
     			if(renderEast)
     			{
 	    			tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-					tess.getBuffer().pos(16, 0, 0.25d).tex(64f, 0.5f).endVertex();
-					tess.getBuffer().pos(14, 0, 0.25d).tex(64f, 0f).endVertex();
-					tess.getBuffer().pos(14, 128, 0.25d).tex(0f, 0f).endVertex();
-					tess.getBuffer().pos(16, 128, 0.25d).tex(0f, 0.5f).endVertex();
+					tess.getBuffer().pos(16-alignment, 0, alignment).tex(64f, 0.5f).endVertex();
+					tess.getBuffer().pos(14-alignment, 0, alignment).tex(64f, 0f).endVertex();
+					tess.getBuffer().pos(14-alignment, 128, alignment).tex(0f, 0f).endVertex();
+					tess.getBuffer().pos(16-alignment, 128, alignment).tex(0f, 0.5f).endVertex();
 					tess.draw();
     			}
     		}
@@ -484,20 +496,20 @@ public class ClientTickHandler
     			if(renderWest)
     			{
 	    			tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-					tess.getBuffer().pos(0, 0, 16d - 0.25d).tex(64f, 0.5f).endVertex();
-					tess.getBuffer().pos(2, 0, 16d - 0.25d).tex(64f, 0f).endVertex();
-					tess.getBuffer().pos(2, 128, 16d - 0.25d).tex(0f, 0f).endVertex();
-					tess.getBuffer().pos(0, 128, 16d - 0.25d).tex(0f, 0.5f).endVertex();
+					tess.getBuffer().pos(16-alignment, 0, 16d - alignment).tex(64f, 0.5f).endVertex();
+					tess.getBuffer().pos(14-alignment, 0, 16d - alignment).tex(64f, 0f).endVertex();
+					tess.getBuffer().pos(14-alignment, 128, 16d - alignment).tex(0f, 0f).endVertex();
+					tess.getBuffer().pos(16-alignment, 128, 16d - alignment).tex(0f, 0.5f).endVertex();
 					tess.draw();
     			}
 				
     			if(renderEast)
     			{
 	    			tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-					tess.getBuffer().pos(16, 0, 16d - 0.25d).tex(64f, 0.5f).endVertex();
-					tess.getBuffer().pos(14, 0, 16d - 0.25d).tex(64f, 0f).endVertex();
-					tess.getBuffer().pos(14, 128, 16d - 0.25d).tex(0f, 0f).endVertex();
-					tess.getBuffer().pos(16, 128, 16d - 0.25d).tex(0f, 0.5f).endVertex();
+					tess.getBuffer().pos(16-alignment, 0, 16d - alignment).tex(64f, 0.5f).endVertex();
+					tess.getBuffer().pos(14-alignment, 0, 16d - alignment).tex(64f, 0f).endVertex();
+					tess.getBuffer().pos(14-alignment, 128, 16d - alignment).tex(0f, 0f).endVertex();
+					tess.getBuffer().pos(16-alignment, 128, 16d - alignment).tex(0f, 0.5f).endVertex();
 					tess.draw();
     			}
     		}
@@ -508,20 +520,20 @@ public class ClientTickHandler
     			if(renderNorth)
     			{
 	    			tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-					tess.getBuffer().pos(0.25d, 0, 0).tex(64f, 0.5f).endVertex();
-					tess.getBuffer().pos(0.25d, 0, 2).tex(64f, 0f).endVertex();
-					tess.getBuffer().pos(0.25d, 128, 2).tex(0f, 0f).endVertex();
-					tess.getBuffer().pos(0.25d, 128, 0).tex(0f, 0.5f).endVertex();
+					tess.getBuffer().pos(alignment, 0, 0+alignment).tex(64f, 0.5f).endVertex();
+					tess.getBuffer().pos(alignment, 0, 2+alignment).tex(64f, 0f).endVertex();
+					tess.getBuffer().pos(alignment, 128, 2+alignment).tex(0f, 0f).endVertex();
+					tess.getBuffer().pos(alignment, 128, 0+alignment).tex(0f, 0.5f).endVertex();
 					tess.draw();
     			}
 				
     			if(renderSouth)
     			{
 	    			tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-					tess.getBuffer().pos(0.25d, 0, 16).tex(64f, 0.5f).endVertex();
-					tess.getBuffer().pos(0.25d, 0, 14).tex(64f, 0f).endVertex();
-					tess.getBuffer().pos(0.25d, 128, 14).tex(0f, 0f).endVertex();
-					tess.getBuffer().pos(0.25d, 128, 16).tex(0f, 0.5f).endVertex();
+					tess.getBuffer().pos(alignment, 0, 16-alignment).tex(64f, 0.5f).endVertex();
+					tess.getBuffer().pos(alignment, 0, 14-alignment).tex(64f, 0f).endVertex();
+					tess.getBuffer().pos(alignment, 128, 14-alignment).tex(0f, 0f).endVertex();
+					tess.getBuffer().pos(alignment, 128, 16-alignment).tex(0f, 0.5f).endVertex();
 					tess.draw();
     			}
     		}
@@ -532,20 +544,20 @@ public class ClientTickHandler
     			if(renderNorth)
     			{
 	    			tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-					tess.getBuffer().pos(16d - 0.25d, 0, 0).tex(64f, 0.5f).endVertex();
-					tess.getBuffer().pos(16d - 0.25d, 0, 2).tex(64f, 0f).endVertex();
-					tess.getBuffer().pos(16d - 0.25d, 128, 2).tex(0f, 0f).endVertex();
-					tess.getBuffer().pos(16d - 0.25d, 128, 0).tex(0f, 0.5f).endVertex();
+					tess.getBuffer().pos(16d - alignment, 0, 0+alignment).tex(64f, 0.5f).endVertex();
+					tess.getBuffer().pos(16d - alignment, 0, 2+alignment).tex(64f, 0f).endVertex();
+					tess.getBuffer().pos(16d - alignment, 128, 2+alignment).tex(0f, 0f).endVertex();
+					tess.getBuffer().pos(16d - alignment, 128, 0+alignment).tex(0f, 0.5f).endVertex();
 					tess.draw();
     			}
 				
     			if(renderSouth)
     			{
 	    			tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-					tess.getBuffer().pos(16d - 0.25d, 0, 16).tex(64f, 0.5f).endVertex();
-					tess.getBuffer().pos(16d - 0.25d, 0, 14).tex(64f, 0f).endVertex();
-					tess.getBuffer().pos(16d - 0.25d, 128, 14).tex(0f, 0f).endVertex();
-					tess.getBuffer().pos(16d - 0.25d, 128, 16).tex(0f, 0.5f).endVertex();
+					tess.getBuffer().pos(16d - alignment, 0, 16-alignment).tex(64f, 0.5f).endVertex();
+					tess.getBuffer().pos(16d - alignment, 0, 14-alignment).tex(64f, 0f).endVertex();
+					tess.getBuffer().pos(16d - alignment, 128, 14-alignment).tex(0f, 0f).endVertex();
+					tess.getBuffer().pos(16d - alignment, 128, 16-alignment).tex(0f, 0.5f).endVertex();
 					tess.draw();
     			}
     		}
@@ -567,9 +579,9 @@ public class ClientTickHandler
 	       					airX1 = world.isAirBlock(new BlockPos(pos.getXStart() + x + 1, y, pos.getZStart()));
     			
 	       					if(!airX0 && airX1)
-	       						renderZAlignedSquare(x + 1, y + 0, 0.125d, 0);
+	       						renderZAlignedSquare(x + 1, y + 0, smaller_alignment, 0);
 	       					if(airX0 && !airX1)
-	       						renderZAlignedSquare(x + 0, y + 0, 0.125d, 2);
+	       						renderZAlignedSquare(x + 0, y + 0, smaller_alignment, 2);
        		    		}
        					// Render x + 1 edge on south side
        		    		if(x < 15 && renderSouth)
@@ -578,9 +590,9 @@ public class ClientTickHandler
 	       					airX1 = world.isAirBlock(new BlockPos(pos.getXStart() + x + 1, y, pos.getZEnd()));
 	       					
 	       					if(!airX0 && airX1)
-	       						renderZAlignedSquare(x + 1, y + 0, 16d - 0.125d, 0);
+	       						renderZAlignedSquare(x + 1, y + 0, 16d - smaller_alignment, 0);
 	       					if(airX0 && !airX1)
-	       						renderZAlignedSquare(x + 0, y + 0, 16d - 0.125d, 2);
+	       						renderZAlignedSquare(x + 0, y + 0, 16d - smaller_alignment, 2);
        		    		}
        		    		// Render y + 1 edge on north side
        		    		if(y < 255 && renderNorth)
@@ -588,9 +600,9 @@ public class ClientTickHandler
        		    			airY0 = world.isAirBlock(new BlockPos(pos.getXStart() + x, y, pos.getZStart()));
            					airY1 = world.isAirBlock(new BlockPos(pos.getXStart() + x, y + 1, pos.getZStart()));
 	       					if(!airY0 && airY1)
-	       						renderZAlignedSquare(x + 0, y + 1, 0.125d, 3);
+	       						renderZAlignedSquare(x + 0, y + 1, smaller_alignment, 3);
 	       					if(airY0 && !airY1)
-	       						renderZAlignedSquare(x + 0, y + 0, 0.125d, 1);
+	       						renderZAlignedSquare(x + 0, y + 0, smaller_alignment, 1);
        		    		}
        		    		// Render y + 1 edge on south side
        					if(y < 255 && renderSouth)
@@ -598,9 +610,9 @@ public class ClientTickHandler
        						airY0 = world.isAirBlock(new BlockPos(pos.getXStart() + x, y, pos.getZEnd()));
        						airY1 = world.isAirBlock(new BlockPos(pos.getXStart() + x, y + 1, pos.getZEnd()));
 	       					if(!airY0 && airY1)
-	       						renderZAlignedSquare(x + 0, y + 1, 16d - 0.125d, 3);
+	       						renderZAlignedSquare(x + 0, y + 1, 16d - smaller_alignment, 3);
 	       					if(airY0 && !airY1)
-	       						renderZAlignedSquare(x + 0, y + 0, 16d - 0.125d, 1);
+	       						renderZAlignedSquare(x + 0, y + 0, 16d - smaller_alignment, 1);
        					}
     				}
     			}
@@ -622,9 +634,9 @@ public class ClientTickHandler
 	       					airZ1 = world.isAirBlock(new BlockPos(pos.getXStart(), y, pos.getZStart() + z + 1));
     			
 	       					if(!airZ0 && airZ1)
-	       						renderXAlignedSquare(0.125d, y + 0, z + 1, 0);
+	       						renderXAlignedSquare(smaller_alignment, y + 0, z + 1, 0);
 	       					if(airZ0 && !airZ1)
-	       						renderXAlignedSquare(0.125d, y + 0, z + 0, 2);
+	       						renderXAlignedSquare(smaller_alignment, y + 0, z + 0, 2);
        		    		}
        					// Render z + 1 edge on west side
        		    		if(z < 15 && renderEast)
@@ -633,9 +645,9 @@ public class ClientTickHandler
 	       					airZ1 = world.isAirBlock(new BlockPos(pos.getXEnd(), y, pos.getZStart() + z + 1));
 	       					
 	       					if(!airZ0 && airZ1)
-	       						renderXAlignedSquare(16d - 0.125d, y + 0, z + 1, 0);
+	       						renderXAlignedSquare(16d - smaller_alignment, y + 0, z + 1, 0);
 	       					if(airZ0 && !airZ1)
-	       						renderXAlignedSquare(16d - 0.125d, y + 0, z + 0, 2);
+	       						renderXAlignedSquare(16d - smaller_alignment, y + 0, z + 0, 2);
        		    		}
        		    		// Render y + 1 edge on east side
        		    		if(y < 255 && renderWest)
@@ -643,9 +655,9 @@ public class ClientTickHandler
        		    			airY0 = world.isAirBlock(new BlockPos(pos.getXStart(), y, pos.getZStart() + z));
            					airY1 = world.isAirBlock(new BlockPos(pos.getXStart(), y + 1, pos.getZStart() + z));
 	       					if(!airY0 && airY1)
-	       						renderXAlignedSquare(0.125d, y + 1, z, 3);
+	       						renderXAlignedSquare(smaller_alignment, y + 1, z, 3);
 	       					if(airY0 && !airY1)
-	       						renderXAlignedSquare(0.125d, y + 0, z, 1);
+	       						renderXAlignedSquare(smaller_alignment, y + 0, z, 1);
        		    		}
        		    		// Render y + 1 edge on west side
        					if(y < 255 && renderEast)
@@ -653,9 +665,9 @@ public class ClientTickHandler
        		    			airY0 = world.isAirBlock(new BlockPos(pos.getXEnd(), y, pos.getZStart() + z));
            					airY1 = world.isAirBlock(new BlockPos(pos.getXEnd(), y + 1, pos.getZStart() + z));	       					
            					if(!airY0 && airY1)
-	       						renderXAlignedSquare(16d - 0.125d, y + 1, z, 3);
+	       						renderXAlignedSquare(16d - smaller_alignment, y + 1, z, 3);
 	       					if(airY0 && !airY1)
-	       						renderXAlignedSquare(16d - 0.125d, y + 0, z, 1);
+	       						renderXAlignedSquare(16d - smaller_alignment, y + 0, z, 1);
        					}
     				}
     			}
