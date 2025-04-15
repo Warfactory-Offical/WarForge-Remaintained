@@ -61,7 +61,8 @@ public class WorldGenDenseOre extends WorldGenerator
 		long seedA = cellRNG.nextLong() / 2L * 2L + 1L;
 		long seedB = cellRNG.nextLong() / 2L * 2L + 1L;
 		cellRNG.setSeed((long)xCell * seedA + (long)zCell * seedB ^ world.getSeed());
-		
+
+		// minimum amount will override the maximum
 		int numDepositsInCell = cellRNG.nextInt(mMaxInstancesPerCell - mMinInstancesPerCell + 1) + mMinInstancesPerCell;
 		for(int cellIndex = 0; cellIndex < numDepositsInCell; cellIndex++)
 		{
