@@ -659,11 +659,8 @@ public class WarForgeMod implements ILateMixinLoader
     }
         
     // World Generation
-	private WorldGenDenseOre ironGenerator, goldGenerator, redstoneGenerator;
-	private WorldGenBedrockOre diamondGenerator, magmaGenerator;
 	private WorldGenAncientTree ancientTreeGenerator;
 	private WorldGenClayPool clayLakeGenerator;
-	private WorldGenNetherPillar quartzPillarGenerator;
 	private WorldGenSlimeFountain slimeGenerator;
 	private WorldGenShulkerFossil shulkerGenerator;
 	
@@ -673,28 +670,6 @@ public class WarForgeMod implements ILateMixinLoader
 		if(WarForgeConfig.ENABLE_WORLD_GEN) {
 			// Overworld generators
 			if (event.getWorld().provider.getDimension() == 0) {
-				if (ironGenerator == null)
-					ironGenerator = new WorldGenDenseOre(CONTENT.denseIronOreBlock.getDefaultState(), Blocks.IRON_ORE.getDefaultState(),
-							WarForgeConfig.DENSE_IRON_CELL_SIZE, WarForgeConfig.DENSE_IRON_DEPOSIT_RADIUS, WarForgeConfig.DENSE_IRON_OUTER_SHELL_RADIUS, WarForgeConfig.DENSE_IRON_OUTER_SHELL_CHANCE,
-							WarForgeConfig.DENSE_IRON_MIN_INSTANCES_PER_CELL, WarForgeConfig.DENSE_IRON_MAX_INSTANCES_PER_CELL, WarForgeConfig.DENSE_IRON_MIN_HEIGHT, WarForgeConfig.DENSE_IRON_MAX_HEIGHT);
-				if (goldGenerator == null)
-					goldGenerator = new WorldGenDenseOre(CONTENT.denseGoldOreBlock.getDefaultState(), Blocks.GOLD_ORE.getDefaultState(),
-							WarForgeConfig.DENSE_GOLD_CELL_SIZE, WarForgeConfig.DENSE_GOLD_DEPOSIT_RADIUS, WarForgeConfig.DENSE_GOLD_OUTER_SHELL_RADIUS, WarForgeConfig.DENSE_GOLD_OUTER_SHELL_CHANCE,
-							WarForgeConfig.DENSE_GOLD_MIN_INSTANCES_PER_CELL, WarForgeConfig.DENSE_GOLD_MAX_INSTANCES_PER_CELL, WarForgeConfig.DENSE_GOLD_MIN_HEIGHT, WarForgeConfig.DENSE_GOLD_MAX_HEIGHT);
-				if (diamondGenerator == null)
-					diamondGenerator = new WorldGenBedrockOre(CONTENT.denseDiamondOreBlock.getDefaultState(), Blocks.DIAMOND_ORE.getDefaultState(),
-							WarForgeConfig.DENSE_DIAMOND_CELL_SIZE, WarForgeConfig.DENSE_DIAMOND_DEPOSIT_RADIUS, WarForgeConfig.DENSE_DIAMOND_OUTER_SHELL_RADIUS, WarForgeConfig.DENSE_DIAMOND_OUTER_SHELL_CHANCE,
-							WarForgeConfig.DENSE_DIAMOND_MIN_INSTANCES_PER_CELL, WarForgeConfig.DENSE_DIAMOND_MAX_INSTANCES_PER_CELL, WarForgeConfig.DENSE_DIAMOND_MIN_HEIGHT, WarForgeConfig.DENSE_DIAMOND_MAX_HEIGHT);
-				if (magmaGenerator == null)
-					magmaGenerator = new WorldGenBedrockOre(CONTENT.magmaVentBlock.getDefaultState(), Blocks.LAVA.getDefaultState(),
-							WarForgeConfig.MAGMA_VENT_CELL_SIZE, WarForgeConfig.MAGMA_VENT_DEPOSIT_RADIUS, WarForgeConfig.MAGMA_VENT_OUTER_SHELL_RADIUS, WarForgeConfig.MAGMA_VENT_OUTER_SHELL_CHANCE,
-							WarForgeConfig.MAGMA_VENT_MIN_INSTANCES_PER_CELL, WarForgeConfig.MAGMA_VENT_MAX_INSTANCES_PER_CELL, WarForgeConfig.MAGMA_VENT_MIN_HEIGHT, WarForgeConfig.MAGMA_VENT_MAX_HEIGHT);
-				if (redstoneGenerator == null)
-					redstoneGenerator = new WorldGenDenseOre(CONTENT.denseRedstoneOreBlock.getDefaultState(), Blocks.REDSTONE_ORE.getDefaultState(),
-							WarForgeConfig.DENSE_REDSTONE_CELL_SIZE, WarForgeConfig.DENSE_REDSTONE_DEPOSIT_RADIUS, WarForgeConfig.DENSE_REDSTONE_OUTER_SHELL_RADIUS, WarForgeConfig.DENSE_REDSTONE_OUTER_SHELL_CHANCE,
-							WarForgeConfig.DENSE_REDSTONE_MIN_INSTANCES_PER_CELL, WarForgeConfig.DENSE_REDSTONE_MAX_INSTANCES_PER_CELL, WarForgeConfig.DENSE_REDSTONE_MIN_HEIGHT, WarForgeConfig.DENSE_REDSTONE_MAX_HEIGHT);
-
-
 				if (ancientTreeGenerator == null)
 					ancientTreeGenerator = new WorldGenAncientTree(CONTENT.ancientOakBlock.getDefaultState(), Blocks.LOG2.getDefaultState().withProperty(BlockNewLog.VARIANT, EnumType.DARK_OAK), Blocks.LEAVES2.getDefaultState().withProperty(BlockNewLeaf.VARIANT, EnumType.DARK_OAK),
 							WarForgeConfig.ANCIENT_OAK_CELL_SIZE, WarForgeConfig.ANCIENT_OAK_CHANCE, WarForgeConfig.ANCIENT_OAK_HOLE_RADIUS,
@@ -709,24 +684,11 @@ public class WarForgeMod implements ILateMixinLoader
 							WarForgeConfig.SLIME_POOL_MIN_INSTANCES_PER_CELL, WarForgeConfig.SLIME_POOL_MAX_INSTANCES_PER_CELL,
 							WarForgeConfig.SLIME_POOL_MIN_HEIGHT, WarForgeConfig.SLIME_POOL_MAX_HEIGHT);
 
-				ironGenerator.generate(event.getWorld(), event.getRand(), new BlockPos(event.getChunkX() * 16, 128, event.getChunkZ() * 16));
-				goldGenerator.generate(event.getWorld(), event.getRand(), new BlockPos(event.getChunkX() * 16, 128, event.getChunkZ() * 16));
-				redstoneGenerator.generate(event.getWorld(), event.getRand(), new BlockPos(event.getChunkX() * 16, 128, event.getChunkZ() * 16));
-				diamondGenerator.generate(event.getWorld(), event.getRand(), new BlockPos(event.getChunkX() * 16, 128, event.getChunkZ() * 16));
-				magmaGenerator.generate(event.getWorld(), event.getRand(), new BlockPos(event.getChunkX() * 16, 128, event.getChunkZ() * 16));
 				ancientTreeGenerator.generate(event.getWorld(), event.getRand(), new BlockPos(event.getChunkX() * 16, 128, event.getChunkZ() * 16));
 				slimeGenerator.generate(event.getWorld(), event.getRand(), new BlockPos(event.getChunkX() * 16, 128, event.getChunkZ() * 16));
 
 				if (rand.nextInt(WarForgeConfig.CLAY_POOL_CHANCE) == 0)
 					clayLakeGenerator.generate(event.getWorld(), event.getRand(), new BlockPos(event.getChunkX() * 16, 128, event.getChunkZ() * 16));
-			} else if (event.getWorld().provider.getDimension() == -1) {
-				if (quartzPillarGenerator == null)
-					quartzPillarGenerator = new WorldGenNetherPillar(CONTENT.denseQuartzOreBlock.getDefaultState(), Blocks.QUARTZ_ORE.getDefaultState());
-
-
-				if (rand.nextInt(WarForgeConfig.QUARTZ_PILLAR_CHANCE) == 0) {
-					quartzPillarGenerator.generate(event.getWorld(), event.getRand(), new BlockPos(event.getChunkX() * 16, 128, event.getChunkZ() * 16));
-				}
 			} else if (event.getWorld().provider.getDimension() == 1) {
 				if (shulkerGenerator == null)
 					shulkerGenerator = new WorldGenShulkerFossil(Blocks.END_STONE.getDefaultState(), CONTENT.shulkerFossilBlock.getDefaultState(),

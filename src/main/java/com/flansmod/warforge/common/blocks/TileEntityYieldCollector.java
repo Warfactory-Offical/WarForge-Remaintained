@@ -1,11 +1,13 @@
 package com.flansmod.warforge.common.blocks;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
 
 import com.flansmod.warforge.api.IItemYieldProvider;
+import com.flansmod.warforge.api.Vein;
+import com.flansmod.warforge.api.VeinKey;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.InventoryHelper;
 import com.flansmod.warforge.common.WarForgeConfig;
@@ -18,6 +20,7 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemBanner;
 import net.minecraft.item.ItemShield;
 import net.minecraft.item.ItemStack;
@@ -26,12 +29,18 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.relauncher.Side;
+
+import static com.flansmod.warforge.api.VeinKey.generateChunkHash;
+import static com.flansmod.warforge.common.WarForgeConfig.VEIN_MAP;
+import static com.flansmod.warforge.common.WarForgeConfig.YIELD_QUALITY_MULTIPLIER;
 
 public abstract class TileEntityYieldCollector extends TileEntityClaim implements IInventory
 {
@@ -51,45 +60,52 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 		}
 	}
 			
-	public void ProcessYield(int numYields) 
-	{
-		if(world.isRemote)
-			return;
-		
-		HashMap<IItemYieldProvider, Integer> count = new HashMap<IItemYieldProvider, Integer>();
-		
+	public void ProcessYield(int numYields) {
+		if(world.isRemote) { return; }
+
 		ChunkPos chunk = new ChunkPos(getPos());
-		
-		for(int x = chunk.x * 16; x < (chunk.x + 1) * 16; x++)
-		{
-			for(int z = chunk.z * 16; z < (chunk.z + 1) * 16; z++)
-			{
-				for(int y = 0; y < WarForgeConfig.HIGHEST_YIELD_ASSUMPTION; y++)
-				{
-					Block block = world.getBlockState(new BlockPos(x, y, z)).getBlock();
-					if(block instanceof IItemYieldProvider)
-					{
-						IItemYieldProvider yieldProv = (IItemYieldProvider)block;
-						if(count.containsKey(yieldProv))
-							count.replace(yieldProv, count.get(yieldProv) + 1);
-						else
-							count.put(yieldProv, 1);
-						
-					}
+
+		// get vein data [chunk hash is stored as the randomly generated number, then the quality
+		int[] chunk_hash = generateChunkHash(chunk.x, chunk.z, world.getSeed());
+		Vein chunk_vein = VEIN_MAP.get(world.provider.getDimension()).get(new VeinKey(chunk_hash[0], true));
+		if (chunk_vein.isNullVein()) { return; }  // ignore null vein
+
+		Random rand = new Random((WarForgeMod.currTickTimestamp * world.getSeed()) * 2654435761L);
+		ArrayList<ItemStack> vein_components = new ArrayList<>(chunk_vein.component_ids.length);
+
+		// for each component in the vein, attempt to yield it numYields many times
+		for (int i = 0; i < chunk_vein.component_ids.length; ++i) {
+			int num_items = 0;  // figure out how many items of this component are needed
+
+			// determine yield amount based on quality and component base yield
+			int curr_yield = chunk_vein.component_yields[i];
+			if (chunk_hash[1] == 0) { curr_yield /= YIELD_QUALITY_MULTIPLIER; }  // if poor quality, half yield
+			else if (chunk_hash[1] == 2) { curr_yield *= YIELD_QUALITY_MULTIPLIER; }  // if rich quality, double yield
+
+			// calculate the number of times to yield this component
+			for (int j = 0; j < numYields; ++j) {
+				if (rand.nextInt(10000) < chunk_vein.component_weights[i]) {
+					num_items += curr_yield;
 				}
 			}
+
+			// attempt to locate the item and append the new item stack representing yield amounts
+			final Item curr_component = ForgeRegistries.ITEMS.getValue(chunk_vein.component_ids[i]);
+			if (curr_component == null) {
+				// item does not exist for some reason
+				WarForgeMod.LOGGER.atError().log("Got null item component for vein w/ key: " + chunk_vein.translation_key);
+				continue;
+			}
+
+			vein_components.add(new ItemStack(curr_component, num_items));
 		}
-		
-		for(HashMap.Entry<IItemYieldProvider, Integer> kvp : count.entrySet())
-		{
-			if(kvp.getKey().GetMultiplier() > 0.0f)
+
+		// try to add the items
+		for (ItemStack curr_component_stack : vein_components) {
+			if(!InventoryHelper.addItemStackToInventory(this, curr_component_stack, false))
 			{
-				ItemStack stack = kvp.getKey().GetYieldToProvide().copy();
-				stack.setCount(MathHelper.ceil(kvp.getValue() * numYields * kvp.getKey().GetMultiplier() * GetYieldMultiplier()));
-				if(!InventoryHelper.addItemStackToInventory(this, stack, false))
-				{
-					
-				}
+				WarForgeMod.LOGGER.atError().log("Failed to add <" + curr_component_stack.toString() + "> to yield " +
+						"collector at " + this.getPos());
 			}
 		}
 		

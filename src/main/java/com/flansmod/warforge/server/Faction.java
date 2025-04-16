@@ -348,7 +348,7 @@ public class Faction
 		world.setBlockToAir(claimBlockPos);
 		if (!captureAttempted || !WarForgeConfig.SIEGE_CAPTURE) world.spawnEntity(new EntityItem(world, claimBlockPos.getX() + 0.5d, claimBlockPos.getY() + 0.5d, claimBlockPos.getZ() + 0.5d, drop));
 		
-		// Uh oh
+		// Uh oh - faction defeated
 		if(claimBlockPos.equals(mCitadelPos))
 		{
 			WarForgeMod.FACTIONS.FactionDefeated(this);
@@ -486,6 +486,7 @@ public class Faction
 				if(te instanceof TileEntityYieldCollector)
 				{
 					((TileEntityYieldCollector)te).ProcessYield(1);
+					kvp.setValue(0);  // no claims saved
 				}
 			}
 			// Otherwise, cache the number of times it needs to process when it next loads
