@@ -69,7 +69,7 @@ public class CommandFactions extends CommandBase {
     @Override
     public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
         if (args.length == 1) {
-            return getListOfStringsMatchingLastWord(args, tabCompletions);
+            return getListOfStringsMatchingLastWord(args, WarForgeMod.isOp(sender) ? tabCompletionsOp : tabCompletions);
         }
 
         if (args.length == 2) {
@@ -190,7 +190,7 @@ public class CommandFactions extends CommandBase {
                             faction = WarForgeMod.FACTIONS.getFactionOfPlayer(toRemoveID);
                         }
 
-                        WarForgeMod.FACTIONS.RequestRemovePlayerFromFaction(sender, faction.uuid, toRemoveID);
+                        WarForgeMod.FACTIONS.requestRemovePlayerFromFaction(sender, faction.uuid, toRemoveID);
                     } else {
                         sender.sendMessage(new TextComponentString("Could not find player " + args[1]));
                     }
@@ -202,7 +202,7 @@ public class CommandFactions extends CommandBase {
             case "leave":
             case "exit": {
                 if (sender instanceof EntityPlayer) {
-                    WarForgeMod.FACTIONS.RequestRemovePlayerFromFaction(sender, faction.uuid, ((EntityPlayer) sender).getUniqueID());
+                    WarForgeMod.FACTIONS.requestRemovePlayerFromFaction(sender, faction.uuid, ((EntityPlayer) sender).getUniqueID());
                 } else {
                     sender.sendMessage(new TextComponentString("This command is only for players"));
                 }

@@ -84,7 +84,7 @@ public class TeleportsModule
 		player.sendMessage(new TextComponentString("Teleport started. Stand still."));
 	}
 	
-	public void Update()
+	public void update()
 	{
 		for(int i = mPendingTPs.size() - 1; i >= 0; i--)
 		{

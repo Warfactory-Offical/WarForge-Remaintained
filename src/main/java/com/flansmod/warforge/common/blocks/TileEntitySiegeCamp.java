@@ -176,7 +176,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 				e.printStackTrace();
 			}
 
-			for (DimBlockPos siegeCampPos : siege.mAttackingSiegeCamps) {
+			for (DimBlockPos siegeCampPos : siege.attackingCamp) {
 				if (siegeCampPos == null || getClaimPos().equals(siegeCampPos.toRegularPos())) continue;
 
 				TileEntity siegeCamp = world.getTileEntity(siegeCampPos);

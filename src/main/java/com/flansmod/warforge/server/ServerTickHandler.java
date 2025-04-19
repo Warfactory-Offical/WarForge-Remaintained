@@ -13,9 +13,9 @@ public class ServerTickHandler
 		WarForgeMod.INSTANCE.updateServer();
 		WarForgeMod.NETWORK.handleServerPackets();
 		WarForgeMod.PROTECTIONS.UpdateServer();
-		WarForgeMod.TELEPORTS.Update();
+		WarForgeMod.TELEPORTS.update();
 		WarForgeMod.proxy.TickServer();
-		WarForgeMod.FACTIONS.Update();
+		WarForgeMod.FACTIONS.update();
 
 		// WarForgeMod.LOGGER.info("Current tick: " + WarForgeMod.ServerTick);
 	}

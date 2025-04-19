@@ -52,13 +52,13 @@ public class GuiSiegeCamp extends GuiScreen
 				
 		int j = width / 2 - xSize / 2;
 		int k = height / 2 - ySize / 2;
-		if(ClientProxy.sSiegeInfo.containsKey(mSiegeCamp.getClaimPos()))
-		{
-			GuiButton setFlagButton = new GuiButton(4, j + 16, k + 86, 104, 20, "Place Flag Here");
-			buttonList.add(setFlagButton);
-		}
-		else
-		{	
+//		if(ClientProxy.sSiegeInfo.containsKey(mSiegeCamp.getClaimPos()))
+//		{
+//			GuiButton setFlagButton = new GuiButton(4, j + 16, k + 86, 104, 20, "Place Flag Here");
+//			buttonList.add(setFlagButton);
+//		}
+		//else
+		//{
 			// North Button
 			northButton = new GuiButton(BUTTON_NORTH, j + 16, k + 86, 104, 20, "Attack North");
 			buttonList.add(northButton);
@@ -91,21 +91,21 @@ public class GuiSiegeCamp extends GuiScreen
 					default: break;
 				}
 			}
-		}
+	//	}
 	}
 	
 	@Override
 	protected void actionPerformed(GuiButton button)
 	{
-		if(button.id == 4)
-		{
-			PacketPlaceFlag packet = new PacketPlaceFlag();
-			packet.pos = mSiegeCamp.getClaimPos();
-			WarForgeMod.INSTANCE.NETWORK.sendToServer(packet);
-			mc.displayGuiScreen(null);
-		}
-		else
-		{
+//		if(button.id == 4)
+//		{
+//			PacketPlaceFlag packet = new PacketPlaceFlag();
+//			packet.pos = mSiegeCamp.getClaimPos();
+//			WarForgeMod.INSTANCE.NETWORK.sendToServer(packet);
+//			mc.displayGuiScreen(null);
+//		}
+//		else
+//		{
 			PacketStartSiege siegePacket = new PacketStartSiege();
 				
 			siegePacket.mSiegeCampPos = mSiegeCamp.getClaimPos();
@@ -119,7 +119,7 @@ public class GuiSiegeCamp extends GuiScreen
 			
 			WarForgeMod.INSTANCE.NETWORK.sendToServer(siegePacket);
 			mc.displayGuiScreen(null);
-		}
+		//}
 	}
 
 	

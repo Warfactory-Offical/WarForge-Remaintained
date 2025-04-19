@@ -32,7 +32,11 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 
-public class Faction 
+
+/**
+ * Data class for faction, responsible for storing faction info
+ */
+public class Faction
 {
 	public static final UUID nullUuid = new UUID(0, 0);
 	public static UUID createUUID(String factionName)
@@ -44,8 +48,10 @@ public class Faction
 	public static class PlayerData
 	{
 		public Faction.Role role = Faction.Role.MEMBER;
+		@Deprecated
 		public DimBlockPos flagPosition = DimBlockPos.ZERO;
 		//public boolean mHasMovedFlagToday = false;
+		@Deprecated
 		public long moveFlagCooldown = 0; // in ms
 		
 		public void readFromNBT(NBTTagCompound tags)
@@ -117,7 +123,7 @@ public class Faction
 		killCounter = new HashMap<UUID, Integer>();
 	}
 	
-	public void Update()
+	public void update()
 	{
 		UUID uuidToRemove = nullUuid;
 		for(HashMap.Entry<UUID, Float> entry : pendingInvites.entrySet())
@@ -210,7 +216,7 @@ public class Faction
 		return info;
 	}
 	
-	public void InvitePlayer(UUID playerID)
+	public void invitePlayer(UUID playerID)
 	{
 		// Don't invite offline players
         getPlayer(playerID);
@@ -281,12 +287,13 @@ public class Faction
 		
 		World world = WarForgeMod.MC_SERVER.getWorld(citadelPos.dim);
 		world.setBlockToAir(citadelPos.toRegularPos());
-		
-		messageAll(new TextComponentString(name + " was disbanded."));
+
+
+		String message = getMemberCount() > 0? name + " was disbanded." : name + "was abandoned and disbanded";
+		messageAll(new TextComponentString(message));
 		members.clear();
 		claims.clear();
 		pendingInvites.clear();
-
 	}
 	
 	public boolean isPlayerInFaction(UUID playerID)

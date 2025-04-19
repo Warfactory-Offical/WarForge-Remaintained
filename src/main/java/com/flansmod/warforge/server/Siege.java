@@ -24,10 +24,10 @@ import java.util.HashMap;
 import java.util.UUID;
 
 public class Siege {
-    public UUID mAttackingFaction;
-    public UUID mDefendingFaction;
-    public ArrayList<DimBlockPos> mAttackingSiegeCamps;
-    public DimBlockPos mDefendingClaim;
+    public UUID attackingFaction;
+    public UUID defendingFaction;
+    public ArrayList<DimBlockPos> attackingCamp;
+    public DimBlockPos defendingClaim;
 
     /**
      * The base progress comes from passive sources and must be recalculated whenever checking progress.
@@ -68,9 +68,9 @@ public class Siege {
 
 	// ensures attackers are within warzone before siege completes
 	public boolean hasAbandonedSieges() {
-		Faction attacking = WarForgeMod.FACTIONS.getFaction(mAttackingFaction);
+		Faction attacking = WarForgeMod.FACTIONS.getFaction(attackingFaction);
 
-		for (DimBlockPos siegeCampPos : mAttackingSiegeCamps) {
+		for (DimBlockPos siegeCampPos : attackingCamp) {
 			if (siegeCampPos == null) continue;
 			// YOU WILL GET INCOMPREHENSIBLE ERRORS IF YOU DO NOT FOLLOW THE BELOW CONVERSION TO REGULAR POS
 			TileEntity siegeCamp = WarForgeMod.MC_SERVER.getWorld(siegeCampPos.dim).getTileEntity(siegeCampPos.toRegularPos());
@@ -93,15 +93,15 @@ public class Siege {
 	
 	public Siege()
 	{
-		mAttackingSiegeCamps = new ArrayList<DimBlockPos>(4);
+		attackingCamp = new ArrayList<>(4);
 	}
 	
 	public Siege(UUID attacker, UUID defender, DimBlockPos defending)
 	{
-		mAttackingSiegeCamps = new ArrayList<DimBlockPos>(4);
-		mAttackingFaction = attacker;
-		mDefendingFaction = defender;
-		mDefendingClaim = defending;
+		attackingCamp = new ArrayList<>(4);
+		attackingFaction = attacker;
+		defendingFaction = defender;
+		defendingClaim = defending;
 		
 		TileEntity te = WarForgeMod.MC_SERVER.getWorld(defending.dim).getTileEntity(defending.toRegularPos());
 		if(te instanceof IClaim)
@@ -112,8 +112,8 @@ public class Siege {
 	
 	public SiegeCampProgressInfo GetSiegeInfo()
 	{
-		Faction attackers = WarForgeMod.FACTIONS.getFaction(mAttackingFaction);
-		Faction defenders = WarForgeMod.FACTIONS.getFaction(mDefendingFaction);
+		Faction attackers = WarForgeMod.FACTIONS.getFaction(attackingFaction);
+		Faction defenders = WarForgeMod.FACTIONS.getFaction(defendingFaction);
 		
 		if(attackers == null || defenders == null)
 		{
@@ -122,10 +122,10 @@ public class Siege {
 		}
 		
 		SiegeCampProgressInfo info = new SiegeCampProgressInfo();
-		info.attackingPos = mAttackingSiegeCamps.get(0);
+		info.attackingPos = attackingCamp.get(0);
 		info.attackingName = attackers.name;
 		info.attackingColour = attackers.colour;
-		info.defendingPos = mDefendingClaim;
+		info.defendingPos = defendingClaim;
 		info.defendingName = defenders.name;
 		info.defendingColour = defenders.colour;
 		info.progress = GetAttackProgress();
@@ -136,8 +136,8 @@ public class Siege {
 	
 	public boolean Start() 
 	{
-		Faction attackers = WarForgeMod.FACTIONS.getFaction(mAttackingFaction);
-		Faction defenders = WarForgeMod.FACTIONS.getFaction(mDefendingFaction);
+		Faction attackers = WarForgeMod.FACTIONS.getFaction(attackingFaction);
+		Faction defenders = WarForgeMod.FACTIONS.getFaction(defendingFaction);
 		
 		if (attackers == null || defenders == null) {
 			WarForgeMod.LOGGER.error("Invalid factions in siege. Cannot start");
@@ -146,14 +146,14 @@ public class Siege {
 		
 		CalculateBasePower();
 		WarForgeMod.INSTANCE.messageAll(new TextComponentString(attackers.name + " started a siege against " + defenders.name), true);
-		WarForgeMod.FACTIONS.SendSiegeInfoToNearby(mDefendingClaim.toChunkPos());
+		WarForgeMod.FACTIONS.SendSiegeInfoToNearby(defendingClaim.toChunkPos());
 		return true;
 	}
 	
 	public void AdvanceDay()
 	{
-		Faction attackers = WarForgeMod.FACTIONS.getFaction(mAttackingFaction);
-		Faction defenders = WarForgeMod.FACTIONS.getFaction(mDefendingFaction);
+		Faction attackers = WarForgeMod.FACTIONS.getFaction(attackingFaction);
+		Faction defenders = WarForgeMod.FACTIONS.getFaction(defendingFaction);
 		
 		if(attackers == null || defenders == null)
 		{
@@ -170,47 +170,47 @@ public class Siege {
 			totalSwing -= WarForgeConfig.SIEGE_SWING_PER_DAY_ELAPSED_NO_ATTACKER_LOGINS;
 		
 		
-		for(HashMap.Entry<UUID, PlayerData> kvp : defenders.members.entrySet())
-		{
-			if(kvp.getValue().flagPosition.equals(mDefendingClaim))
-			{
-				totalSwing -= WarForgeConfig.SIEGE_SWING_PER_DEFENDER_FLAG;
-			}
-		}
-		
-		for(HashMap.Entry<UUID, PlayerData> kvp : attackers.members.entrySet())
-		{
-			if(mAttackingSiegeCamps.contains(kvp.getValue().flagPosition))
-			{
-				totalSwing += WarForgeConfig.SIEGE_SWING_PER_ATTACKER_FLAG;
-			}
-		}
+//		for(HashMap.Entry<UUID, PlayerData> kvp : defenders.members.entrySet())
+//		{
+//			if(kvp.getValue().flagPosition.equals(defendingClaim))
+//			{
+//				totalSwing -= WarForgeConfig.SIEGE_SWING_PER_DEFENDER_FLAG;
+//			}
+//		}
+//
+//		for(HashMap.Entry<UUID, PlayerData> kvp : attackers.members.entrySet())
+//		{
+//			if(attackingCamp.contains(kvp.getValue().flagPosition))
+//			{
+//				totalSwing += WarForgeConfig.SIEGE_SWING_PER_ATTACKER_FLAG;
+//			}
+//		}
 		
 		mAttackProgress += totalSwing;
 		
 		if(totalSwing > 0)
 		{
-			attackers.messageAll(new TextComponentString("Your siege on " + defenders.name + " at " + mDefendingClaim.toFancyString() + " shifted " + totalSwing + " points in your favour. The progress is now at " + GetAttackProgress() + "/" + mBaseDifficulty));
-			defenders.messageAll(new TextComponentString("The siege on " + mDefendingClaim.toFancyString() + " by " + attackers.name + " shifted " + totalSwing + " points in their favour. The progress is now at " + GetAttackProgress() + "/" + mBaseDifficulty));
+			attackers.messageAll(new TextComponentString("Your siege on " + defenders.name + " at " + defendingClaim.toFancyString() + " shifted " + totalSwing + " points in your favour. The progress is now at " + GetAttackProgress() + "/" + mBaseDifficulty));
+			defenders.messageAll(new TextComponentString("The siege on " + defendingClaim.toFancyString() + " by " + attackers.name + " shifted " + totalSwing + " points in their favour. The progress is now at " + GetAttackProgress() + "/" + mBaseDifficulty));
 		}
 		else if(totalSwing < 0)
 		{
-			defenders.messageAll(new TextComponentString("The siege on " + mDefendingClaim.toFancyString() + " by " + attackers.name + " shifted " + -totalSwing + " points in your favour. The progress is now at " + GetAttackProgress() + "/" + mBaseDifficulty));
-			attackers.messageAll(new TextComponentString("Your siege on " + defenders.name + " at " + mDefendingClaim.toFancyString() + " shifted " + -totalSwing + " points in their favour. The progress is now at " + GetAttackProgress() + "/" + mBaseDifficulty));
+			defenders.messageAll(new TextComponentString("The siege on " + defendingClaim.toFancyString() + " by " + attackers.name + " shifted " + -totalSwing + " points in your favour. The progress is now at " + GetAttackProgress() + "/" + mBaseDifficulty));
+			attackers.messageAll(new TextComponentString("Your siege on " + defenders.name + " at " + defendingClaim.toFancyString() + " shifted " + -totalSwing + " points in their favour. The progress is now at " + GetAttackProgress() + "/" + mBaseDifficulty));
 		}
 		else
 		{
-			defenders.messageAll(new TextComponentString("The siege on " + mDefendingClaim.toFancyString() + " by " + attackers.name + " did not shift today. The progress is at " + GetAttackProgress() + "/" + mBaseDifficulty));
-			attackers.messageAll(new TextComponentString("Your siege on " + defenders.name + " at " + mDefendingClaim.toFancyString() + " did not shift today. The progress is at " + GetAttackProgress() + "/" + mBaseDifficulty));
+			defenders.messageAll(new TextComponentString("The siege on " + defendingClaim.toFancyString() + " by " + attackers.name + " did not shift today. The progress is at " + GetAttackProgress() + "/" + mBaseDifficulty));
+			attackers.messageAll(new TextComponentString("Your siege on " + defenders.name + " at " + defendingClaim.toFancyString() + " did not shift today. The progress is at " + GetAttackProgress() + "/" + mBaseDifficulty));
 		}
 		
-		WarForgeMod.FACTIONS.SendSiegeInfoToNearby(mDefendingClaim.toChunkPos());
+		WarForgeMod.FACTIONS.SendSiegeInfoToNearby(defendingClaim.toChunkPos());
 	}
 	
 	public void CalculateBasePower()
 	{
-		Faction attackers = WarForgeMod.FACTIONS.getFaction(mAttackingFaction);
-		Faction defenders = WarForgeMod.FACTIONS.getFaction(mDefendingFaction);
+		Faction attackers = WarForgeMod.FACTIONS.getFaction(attackingFaction);
+		Faction defenders = WarForgeMod.FACTIONS.getFaction(defendingFaction);
 		
 		if(attackers == null || defenders == null || WarForgeMod.MC_SERVER == null)
 		{
@@ -224,19 +224,19 @@ public class Siege {
 		for(HashMap.Entry<UUID, PlayerData> kvp : defenders.members.entrySet())
 		{
 			// 
-			if(kvp.getValue().flagPosition.equals(mDefendingClaim))
+			if(kvp.getValue().flagPosition.equals(defendingClaim))
 			{
 				mExtraDifficulty += WarForgeConfig.SIEGE_DIFFICULTY_PER_DEFENDER_FLAG;
 			}
 		}
 		
-		DimChunkPos defendingChunk = mDefendingClaim.toChunkPos();
+		DimChunkPos defendingChunk = defendingClaim.toChunkPos();
 		for(EnumFacing direction : EnumFacing.HORIZONTALS)
 		{
 			DimChunkPos checkChunk = defendingChunk.Offset(direction, 1);
 			UUID factionInChunk = WarForgeMod.FACTIONS.getClaim(checkChunk);
 			// Sum up all additional attack claims
-			if(factionInChunk.equals(mAttackingFaction))
+			if(factionInChunk.equals(attackingFaction))
 			{
 				DimBlockPos claimBlockPos = attackers.getSpecificPosForClaim(checkChunk);
 				if(claimBlockPos != null)
@@ -249,7 +249,7 @@ public class Siege {
 				}
 			}
 			// Sum up all defending support claims
-			if(factionInChunk.equals(mDefendingFaction))
+			if(factionInChunk.equals(defendingFaction))
 			{
 				DimBlockPos claimBlockPos = defenders.getSpecificPosForClaim(checkChunk);
 				if(claimBlockPos != null)
@@ -265,17 +265,17 @@ public class Siege {
 	}
 
 	// called when siege is ended for any reason and not detected as completed normally
-	public void OnCancelled()
+	public void onCancelled()
 	{
 
 		// canceling is only run inside EndSiege, which is only run in TE, so no need for this to do anything
 	}
 
 	// called when natural conclusion of siege occurs, not called from TE itself
-	public void OnCompleted(boolean successful)
+	public void onCompleted(boolean successful)
 	{
 		// for every attacking siege camp attempt to locate it, and if an actual siege camp handle appropriately
-		for (DimBlockPos siegeCampPos : mAttackingSiegeCamps) {
+		for (DimBlockPos siegeCampPos : attackingCamp) {
 			TileEntity siegeCamp = WarForgeMod.MC_SERVER.getWorld(siegeCampPos.dim).getTileEntity(siegeCampPos.toRegularPos());
 			if (siegeCamp != null) {
 				if (siegeCamp instanceof TileEntitySiegeCamp) {
@@ -312,9 +312,9 @@ public class Siege {
 				&& (playerChunkPos.z >= minChunkZ && playerChunkPos.z <= maxChunkZ);
 	}
 
-    public void OnPVPKill(EntityPlayerMP killer, EntityPlayerMP killed) {
-        Faction attackers = WarForgeMod.FACTIONS.getFaction(mAttackingFaction);
-        Faction defenders = WarForgeMod.FACTIONS.getFaction(mDefendingFaction);
+    public void onPVPKill(EntityPlayerMP killer, EntityPlayerMP killed) {
+        Faction attackers = WarForgeMod.FACTIONS.getFaction(attackingFaction);
+        Faction defenders = WarForgeMod.FACTIONS.getFaction(defendingFaction);
         Faction killerFaction = WarForgeMod.FACTIONS.getFactionOfPlayer(killer.getUniqueID());
         Faction killedFaction = WarForgeMod.FACTIONS.getFactionOfPlayer(killed.getUniqueID());
 
@@ -327,7 +327,7 @@ public class Siege {
         boolean defendValid = false;
 
 		// there may be multiple siege camps per siege, so ensure kill occurred in radius of any
-        for (DimBlockPos siegeCamp : mAttackingSiegeCamps) {
+        for (DimBlockPos siegeCamp : attackingCamp) {
             if (isPlayerInWarzone(siegeCamp, killer)) {
                 // First case, an attacker killed a defender
                 if ( killerFaction == attackers && killedFaction == defenders ) {
@@ -344,7 +344,7 @@ public class Siege {
 
 		// update progress appropriately; either valid attack, or def by this point, so state of one bool implies the state of the other
 		mAttackProgress += attackValid ? WarForgeConfig.SIEGE_SWING_PER_DEFENDER_DEATH : -WarForgeConfig.SIEGE_SWING_PER_ATTACKER_DEATH;
-		WarForgeMod.FACTIONS.SendSiegeInfoToNearby(mDefendingClaim.toChunkPos());
+		WarForgeMod.FACTIONS.SendSiegeInfoToNearby(defendingClaim.toChunkPos());
 
 		// build notification
 		ITextComponent notification = new TextComponentTranslation("warforge.notification.siege_death",
@@ -357,11 +357,11 @@ public class Siege {
     }
 
     public void ReadFromNBT(NBTTagCompound tags) {
-        mAttackingSiegeCamps.clear();
+        attackingCamp.clear();
 
         // Get the attacker and defender
-        mAttackingFaction = tags.getUniqueId("attacker");
-        mDefendingFaction = tags.getUniqueId("defender");
+        attackingFaction = tags.getUniqueId("attacker");
+        defendingFaction = tags.getUniqueId("defender");
 
         // Get the important locations
         NBTTagList claimList = tags.getTagList("attackLocations", 11); // IntArray (see NBTBase.class)
@@ -369,11 +369,11 @@ public class Siege {
             for (NBTBase base : claimList) {
                 NBTTagIntArray claimInfo = (NBTTagIntArray) base;
                 DimBlockPos pos = DimBlockPos.readFromNBT(claimInfo);
-                mAttackingSiegeCamps.add(pos);
+                attackingCamp.add(pos);
             }
         }
 
-        mDefendingClaim = DimBlockPos.readFromNBT(tags, "defendLocation");
+        defendingClaim = DimBlockPos.readFromNBT(tags, "defendLocation");
         mAttackProgress = tags.getInteger("progress");
         mBaseDifficulty = tags.getInteger("baseDifficulty");
         mExtraDifficulty = tags.getInteger("extraDifficulty");
@@ -381,17 +381,17 @@ public class Siege {
 
     public void WriteToNBT(NBTTagCompound tags) {
         // Set attacker / defender
-        tags.setUniqueId("attacker", mAttackingFaction);
-        tags.setUniqueId("defender", mDefendingFaction);
+        tags.setUniqueId("attacker", attackingFaction);
+        tags.setUniqueId("defender", defendingFaction);
 
         // Set important locations
         NBTTagList claimsList = new NBTTagList();
-        for (DimBlockPos pos : mAttackingSiegeCamps) {
+        for (DimBlockPos pos : attackingCamp) {
             claimsList.appendTag(pos.writeToNBT());
         }
 
         tags.setTag("attackLocations", claimsList);
-        tags.setTag("defendLocation", mDefendingClaim.writeToNBT());
+        tags.setTag("defendLocation", defendingClaim.writeToNBT());
         tags.setInteger("progress", mAttackProgress);
         tags.setInteger("baseDifficulty", mBaseDifficulty);
         tags.setInteger("extraDifficulty", mExtraDifficulty);
