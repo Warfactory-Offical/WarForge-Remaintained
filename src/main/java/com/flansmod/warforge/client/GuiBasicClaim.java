@@ -48,10 +48,10 @@ public class GuiBasicClaim extends GuiContainer
 		
 		GuiButton placeFlagButton = new GuiButton(BUTTON_PLACE_FLAG, width / 2 - 20, height / 2 - 70, 100, 20, "Place Flag");
 		buttonList.add(placeFlagButton);
-		if(claimContainer.claim.getPlayerFlags().contains(Minecraft.getMinecraft().getSession().getUsername()))
-		{
-			placeFlagButton.enabled = false;
-		}
+//		if(claimContainer.claim.getPlayerFlags().contains(Minecraft.getMinecraft().getSession().getUsername()))
+//		{
+//			placeFlagButton.enabled = false;
+//		}
 	}
 	
 	@Override

@@ -68,11 +68,6 @@ public class BlockSiegeCamp extends Block implements ITileEntityProvider
 	public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
 		return layer == BlockRenderLayer.TRANSLUCENT;
 	}
-	/* Unused code that errors #5
-	@SideOnly(Side.CLIENT)
-    @Override
-    public BlockRenderLayer getBlockLayer() { return BlockRenderLayer.CUTOUT; }
-	*/
 
 	// vanilla hasTileEntity check
 	@Override
@@ -123,10 +118,10 @@ public class BlockSiegeCamp extends Block implements ITileEntityProvider
 				TileEntitySiegeCamp siegeCamp = (TileEntitySiegeCamp)te;
 				FACTIONS.onNonCitadelClaimPlaced(siegeCamp, placer);
 				siegeCamp.onPlacedBy(placer);
-				if(placer instanceof EntityPlayerMP)
-				{
-					FACTIONS.requestPlaceFlag((EntityPlayerMP)placer, new DimBlockPos(world.provider.getDimension(), pos));
-				}
+//				if(placer instanceof EntityPlayerMP)
+//				{
+//					FACTIONS.requestPlaceFlag((EntityPlayerMP)placer, new DimBlockPos(world.provider.getDimension(), pos));
+//				}
 			}
 		}
 	}

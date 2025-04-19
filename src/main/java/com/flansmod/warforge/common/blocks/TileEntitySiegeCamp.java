@@ -92,15 +92,15 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 	}
 
 	// called when player flag is removed, but not necessarily when siege ends?
-	@Override
-	public void onServerRemovePlayerFlag(String playerName) {
-		super.onServerRemovePlayerFlag(playerName);
-
-        // can cause crash as placing a siege block, not selecting a target, and then placing your flag at another siege block will call this
-		if(playerFlags.isEmpty() && siegeStatus == SiegeStatus.ACTIVE && siegeTarget != null) {
-            endSiegePrepped(); // if siege block runs out of player flags, siege fails
-        }
-	}
+	//@Override
+//	public void onServerRemovePlayerFlag(String playerName) {
+//		super.onServerRemovePlayerFlag(playerName);
+//
+//        // can cause crash as placing a siege block, not selecting a target, and then placing your flag at another siege block will call this
+//		if(playerFlags.isEmpty() && siegeStatus == SiegeStatus.ACTIVE && siegeTarget != null) {
+//            endSiegePrepped(); // if siege block runs out of player flags, siege fails
+//        }
+//	}
 
 	private enum SiegeStatus {
 		IDLING,

@@ -34,7 +34,7 @@ public class PacketPlaceFlag extends PacketBase
 	@Override
 	public void handleServerSide(EntityPlayerMP player) 
 	{
-		WarForgeMod.FACTIONS.requestPlaceFlag(player, pos);
+		//WarForgeMod.FACTIONS.requestPlaceFlag(player, pos);
 	}
 
 	@Override

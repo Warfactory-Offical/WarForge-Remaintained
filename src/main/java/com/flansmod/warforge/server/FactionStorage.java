@@ -692,7 +692,7 @@ public class FactionStorage {
 		Siege siege = new Siege(attacking.uuid, defendingFactionID, defendingPos);
 		siege.mAttackingSiegeCamps.add(siegeCampPos);
 
-		requestPlaceFlag((EntityPlayerMP)factionOfficer, siegeCampPos);
+		//requestPlaceFlag((EntityPlayerMP)factionOfficer, siegeCampPos);
 		sieges.put(defendingChunk, siege);
 		siegeTE.setSiegeTarget(defendingPos);
 		siege.Start();
@@ -830,17 +830,17 @@ public class FactionStorage {
 		return true;
 	}
 
-	public boolean requestPlaceFlag(EntityPlayerMP player, DimBlockPos pos) {
-		Faction faction = getFactionOfPlayer(player.getUniqueID());
-		if(faction == null) {
-			player.sendMessage(new TextComponentString("You are not in a faction"));
-			return false;
-		}
-
-		sendAllSiegeInfoToNearby();
-
-		return faction.placeFlag(player, pos);
-	}
+//	public boolean requestPlaceFlag(EntityPlayerMP player, DimBlockPos pos) {
+//		Faction faction = getFactionOfPlayer(player.getUniqueID());
+//		if(faction == null) {
+//			player.sendMessage(new TextComponentString("You are not in a faction"));
+//			return false;
+//		}
+//
+//		sendAllSiegeInfoToNearby();
+//
+//		return faction.placeFlag(player, pos);
+//	}
 
 	public boolean RequestSetFactionColour(EntityPlayerMP player, int colour) {
 		Faction faction = getFactionOfPlayer(player.getUniqueID());

@@ -234,7 +234,7 @@ public class Faction
 		// Let everyone know
 		messageAll(new TextComponentString(getPlayerName(playerID) + " joined " + name));
 		
-		placeFlag(WarForgeMod.MC_SERVER.getPlayerList().getPlayerByUUID(playerID), citadelPos);
+		//placeFlag(WarForgeMod.MC_SERVER.getPlayerList().getPlayerByUUID(playerID), citadelPos);
 
 		// re-check number of online players
 		onlinePlayerCount = getOnlinePlayers(entityPlayer -> true).size();
@@ -359,62 +359,62 @@ public class Faction
 		claims.put(new DimBlockPos(pos.mDim, pos.getXStart(), 0, pos.getZStart()), 0);
 	}
 	
-	public boolean placeFlag(EntityPlayer player, DimBlockPos claimPos)
-	{
-		if(!claims.containsKey(claimPos))
-		{
-			player.sendMessage(new TextComponentString("Your faction does not own this claim"));
-			return false;
-		}
-		
-		TileEntity te = WarForgeMod.MC_SERVER.getWorld(claimPos.dim).getTileEntity(claimPos.toRegularPos());
-		if(!(te instanceof IClaim))
-		{
-			player.sendMessage(new TextComponentString("Internal error"));
-			WarForgeMod.LOGGER.error("Faction claim could not get tile entity");
-			return false;
-		}
-		
-		PlayerData data = members.get(player.getUniqueID());
-		if(data == null)
-		{
-			player.sendMessage(new TextComponentString("Your faction member data is corrupt"));
-			return false;
-		}
-		
-		//if(data.mHasMovedFlagToday)
-		if(!canPlayerMoveFlag(player.getUniqueID()))
-		{
-			player.sendMessage(new TextComponentString("You have already moved your flag today. Check /f time"));
-			return false;
-		}
-		
-		if(data.flagPosition.equals(claimPos))
-		{
-			player.sendMessage(new TextComponentString("Your flag is already here"));
-			return false;
-		}
-		
-		// Clean up old pos
-		if(!data.flagPosition.equals(DimBlockPos.ZERO))
-		{
-			TileEntity oldTE = WarForgeMod.MC_SERVER.getWorld(data.flagPosition.dim)
-					.getTileEntity(data.flagPosition.toRegularPos());
-			if(oldTE instanceof IClaim)
-			{
-				((IClaim)oldTE).onServerRemovePlayerFlag(player.getName());
-			}
-		}
-		
-		data.flagPosition = claimPos;
-		//data.mHasMovedFlagToday = true;
-		data.addCooldown();
-		((IClaim)te).onServerSetPlayerFlag(player.getName());
-		messageAll(new TextComponentString(player.getName() + " placed their flag at " + claimPos.toFancyString()));
-		player.sendMessage(new TextComponentString("Your flag can move again on the next siege day"));
-		
-		return true;
-	}
+//	public boolean placeFlag(EntityPlayer player, DimBlockPos claimPos)
+//	{
+//		if(!claims.containsKey(claimPos))
+//		{
+//			player.sendMessage(new TextComponentString("Your faction does not own this claim"));
+//			return false;
+//		}
+//
+//		TileEntity te = WarForgeMod.MC_SERVER.getWorld(claimPos.dim).getTileEntity(claimPos.toRegularPos());
+//		if(!(te instanceof IClaim))
+//		{
+//			player.sendMessage(new TextComponentString("Internal error"));
+//			WarForgeMod.LOGGER.error("Faction claim could not get tile entity");
+//			return false;
+//		}
+//
+//		PlayerData data = members.get(player.getUniqueID());
+//		if(data == null)
+//		{
+//			player.sendMessage(new TextComponentString("Your faction member data is corrupt"));
+//			return false;
+//		}
+//
+//		//if(data.mHasMovedFlagToday)
+//		if(!canPlayerMoveFlag(player.getUniqueID()))
+//		{
+//			player.sendMessage(new TextComponentString("You have already moved your flag today. Check /f time"));
+//			return false;
+//		}
+//
+//		if(data.flagPosition.equals(claimPos))
+//		{
+//			player.sendMessage(new TextComponentString("Your flag is already here"));
+//			return false;
+//		}
+//
+//		// Clean up old pos
+//		if(!data.flagPosition.equals(DimBlockPos.ZERO))
+//		{
+//			TileEntity oldTE = WarForgeMod.MC_SERVER.getWorld(data.flagPosition.dim)
+//					.getTileEntity(data.flagPosition.toRegularPos());
+//			if(oldTE instanceof IClaim)
+//			{
+//				((IClaim)oldTE).onServerRemovePlayerFlag(player.getName());
+//			}
+//		}
+//
+//		data.flagPosition = claimPos;
+//		//data.mHasMovedFlagToday = true;
+//		data.addCooldown();
+//		((IClaim)te).onServerSetPlayerFlag(player.getName());
+//		messageAll(new TextComponentString(player.getName() + " placed their flag at " + claimPos.toFancyString()));
+//		player.sendMessage(new TextComponentString("Your flag can move again on the next siege day"));
+//
+//		return true;
+//	}
 	
 	// Messaging
 	public void messageAll(ITextComponent chat)

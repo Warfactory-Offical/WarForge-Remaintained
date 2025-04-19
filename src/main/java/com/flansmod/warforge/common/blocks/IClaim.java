@@ -17,11 +17,11 @@ public interface IClaim
 	public int getAttackStrength();
 	public int getDefenceStrength();
 	public int getSupportStrength();
-	public List<String> getPlayerFlags();
+	//public List<String> getPlayerFlags();
 	
 	public void onServerSetFaction(Faction faction);
-	public void onServerSetPlayerFlag(String playerName);
-	public void onServerRemovePlayerFlag(String playerName);
+//	public void onServerSetPlayerFlag(String playerName);
+//	public void onServerRemovePlayerFlag(String playerName);
 	
 	// Server side uuid - means nothing to a client
 	public UUID getFaction();

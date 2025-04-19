@@ -30,7 +30,7 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 	public int colour = 0xFF_FF_FF;
 	public String factionName = "";
 	
-	public ArrayList<String> playerFlags = new ArrayList<String>();
+	//public ArrayList<String> playerFlags = new ArrayList<String>();
 	
 	// IClaim
 	@Override
@@ -57,32 +57,32 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 	public boolean canBeSieged() { return true; }
 	@Override
 	public String getClaimDisplayName() { return factionName; }
-	@Override
-	public List<String> getPlayerFlags() { return playerFlags; }
+//	@Override
+//	public List<String> getPlayerFlags() { return playerFlags; }
 	//-----------
 	
 	
-	@Override
-	public void onServerSetPlayerFlag(String playerName)
-	{
-		playerFlags.add(playerName);
-		
-		world.markBlockRangeForRenderUpdate(pos, pos);
-		world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 3);
-		world.scheduleBlockUpdate(pos, this.getBlockType(), 0, 0);
-		markDirty();
-	}
-	
-	@Override
-	public void onServerRemovePlayerFlag(String playerName)
-	{
-		playerFlags.remove(playerName);
-		
-		world.markBlockRangeForRenderUpdate(pos, pos);
-		world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 3);
-		world.scheduleBlockUpdate(pos, this.getBlockType(), 0, 0);
-		markDirty();
-	}
+//	@Override
+//	public void onServerSetPlayerFlag(String playerName)
+//	{
+//		playerFlags.add(playerName);
+//
+//		world.markBlockRangeForRenderUpdate(pos, pos);
+//		world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 3);
+//		world.scheduleBlockUpdate(pos, this.getBlockType(), 0, 0);
+//		markDirty();
+//	}
+//
+//	@Override
+//	public void onServerRemovePlayerFlag(String playerName)
+//	{
+//		playerFlags.remove(playerName);
+//
+//		world.markBlockRangeForRenderUpdate(pos, pos);
+//		world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 3);
+//		world.scheduleBlockUpdate(pos, this.getBlockType(), 0, 0);
+//		markDirty();
+//	}
 	
 	@Override
 	public void onServerSetFaction(Faction faction)
@@ -140,7 +140,7 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 		factionUUID = nbt.getUniqueId("faction");
 
 		// Read player flags
-		playerFlags.clear();
+		//playerFlags.clear();
 		/*
 		NBTTagList list = nbt.getTagList("flags", 8); // String
 		if(list != null)
@@ -164,15 +164,15 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 			{
 				colour = faction.colour;
 				factionName = faction.name;
-				for(HashMap.Entry<UUID, PlayerData> kvp : faction.members.entrySet())
-				{
-					if(kvp.getValue().flagPosition.equals(this.getClaimPos()))
-					{
-						GameProfile profile = WarForgeMod.MC_SERVER.getPlayerProfileCache().getProfileByUUID(kvp.getKey());
-						if(profile != null)
-							playerFlags.add(profile.getName());
-					}
-				}
+				//for(HashMap.Entry<UUID, PlayerData> kvp : faction.members.entrySet())
+				//{
+					//if(kvp.getValue().flagPosition.equals(this.getClaimPos()))
+					//{
+						//GameProfile profile = WarForgeMod.MC_SERVER.getPlayerProfileCache().getProfileByUUID(kvp.getKey());
+						//if(profile != null)
+							//playerFlags.add(profile.getName());
+					//}
+				//}
 			}
 		}
 		else
@@ -207,11 +207,11 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 		tags.setInteger("colour", colour);
 		tags.setString("name", factionName);
 		
-		NBTTagList list = new NBTTagList();
-        for (String playerFlag : playerFlags) {
-            list.appendTag(new NBTTagString(playerFlag));
-        }
-		tags.setTag("flags", list);
+//		NBTTagList list = new NBTTagList();
+//        for (String playerFlag : playerFlags) {
+//            list.appendTag(new NBTTagString(playerFlag));
+//        }
+//		tags.setTag("flags", list);
 		
 		return tags;
 	}
@@ -225,12 +225,12 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 		
 		
 		// Read player flags
-		playerFlags.clear();
-		NBTTagList list = tags.getTagList("flags", 8); // String
-		for(NBTBase base : list)
-		{
-			playerFlags.add(((NBTTagString)base).getString());
-		}
+//		playerFlags.clear();
+//		NBTTagList list = tags.getTagList("flags", 8); // String
+//		for(NBTBase base : list)
+//		{
+//			playerFlags.add(((NBTTagString)base).getString());
+//		}
 	}
 	
 	@Override

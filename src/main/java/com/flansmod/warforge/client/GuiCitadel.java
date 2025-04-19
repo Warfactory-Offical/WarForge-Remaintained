@@ -21,7 +21,7 @@ public class GuiCitadel extends GuiContainer
 	private static final int BUTTON_INFO = 0;
 	private static final int BUTTON_DISBAND = 1;
 	private static final int BUTTON_CREATE = 2;
-	private static final int BUTTON_PLACE_FLAG = 3;
+	private static final int BUTTON_UPGRADE = 3;
 	private static final int BUTTON_CHANGE_COLOUR = 4;
 	
 	public ContainerCitadel citadelContainer;
@@ -48,7 +48,7 @@ public class GuiCitadel extends GuiContainer
 		buttonList.add(createButton);
 		
 		//Place Flag Button
-		GuiButton placeFlagButton = new GuiButton(BUTTON_PLACE_FLAG, width / 2 - 20, height / 2 - 48, 100, 20, "Place Flag");
+		GuiButton placeFlagButton = new GuiButton(BUTTON_UPGRADE, width / 2 - 20, height / 2 - 48, 100, 20, "Upgrade Citadel");
 		placeFlagButton.enabled = hasFactionSet;
 		buttonList.add(placeFlagButton);
 		
@@ -101,13 +101,13 @@ public class GuiCitadel extends GuiContainer
 				mc.player.closeScreen();
 				break;
 			}
-			case BUTTON_PLACE_FLAG:
+			case BUTTON_UPGRADE:
 			{
-				PacketPlaceFlag packet = new PacketPlaceFlag();
-				packet.pos = citadelContainer.citadel.getClaimPos();
-				WarForgeMod.NETWORK.sendToServer(packet);
-				
-				Minecraft.getMinecraft().displayGuiScreen(null);
+//				PacketPlaceFlag packet = new PacketPlaceFlag();
+//				packet.pos = citadelContainer.citadel.getClaimPos();
+//				WarForgeMod.NETWORK.sendToServer(packet);
+//
+//				Minecraft.getMinecraft().displayGuiScreen(null);
 				break;
 			}
 			case BUTTON_CHANGE_COLOUR:
@@ -154,7 +154,7 @@ public class GuiCitadel extends GuiContainer
 			float scale = 1f/256f;
 			float red = scale * ((citadelContainer.citadel.colour >> 16) & 0xff);
 			float green = scale * ((citadelContainer.citadel.colour >> 8) & 0xff);
-			float blue = scale * ((citadelContainer.citadel.colour >> 0) & 0xff);
+			float blue = scale * ((citadelContainer.citadel.colour) & 0xff);
 			GlStateManager.color(red, green, blue);
 			drawTexturedModalRect(72, 25, 0, 0, 12, 12);
 			
