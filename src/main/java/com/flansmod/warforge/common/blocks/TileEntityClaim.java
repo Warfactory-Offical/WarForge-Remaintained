@@ -185,7 +185,7 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 	@Override
 	public SPacketUpdateTileEntity getUpdatePacket()
 	{
-		return new SPacketUpdateTileEntity(getClaimPos(), getBlockMetadata(), getUpdateTag());
+		return new SPacketUpdateTileEntity(getPos(), getBlockMetadata(), getUpdateTag());
 	}
 	
 	@Override
