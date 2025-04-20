@@ -101,9 +101,7 @@ public class BlockCitadel extends Block implements ITileEntityProvider
 		{
 			Faction playerFaction = WarForgeMod.FACTIONS.getFactionOfPlayer(player.getUniqueID());
 			TileEntityCitadel citadel = (TileEntityCitadel)world.getTileEntity(pos);
-			citadel.markDirty();
-			world.notifyBlockUpdate(pos, state, state, 3);
-			
+
 			// If the player has no faction and is the placer, they can open the UI
 			if(playerFaction == null && player.getUniqueID().equals(citadel.placer))
 			{
