@@ -36,7 +36,10 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 	@Override
 	public UUID getFaction() { return factionUUID; }
 	@Override 
-	public void updateColour(int colour) { this.colour = colour; }
+	public void updateColour(int colour) { this.colour = colour;
+		updateTileEntity();
+
+	}
 	@Override
 	public int getColour() { return colour; }
 	@Override
@@ -97,14 +100,18 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim
 			colour = faction.colour;
 			factionName = faction.name;
 		}
-		
+
+		updateTileEntity();
+	}
+
+	private void updateTileEntity() {
 		world.markBlockRangeForRenderUpdate(pos, pos);
 		world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 3);
 		world.scheduleBlockUpdate(pos, this.getBlockType(), 0, 0);
 		markDirty();
 	}
-	
-	
+
+
 	// This is so weird
 	private World worldCreate;
 	@Override

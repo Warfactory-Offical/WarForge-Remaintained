@@ -1,14 +1,8 @@
 package com.flansmod.warforge.common;
 
-import java.util.HashMap;
-import java.util.UUID;
-
-import javax.annotation.Nonnull;
-
 import com.flansmod.warforge.common.WarForgeConfig.ProtectionConfig;
 import com.flansmod.warforge.server.Faction;
 import com.flansmod.warforge.server.FactionStorage;
-
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MoverType;
@@ -25,6 +19,10 @@ import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.event.world.WorldEvent.PotentialSpawns;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+
+import javax.annotation.Nonnull;
+import java.util.HashMap;
+import java.util.UUID;
 
 public class ProtectionsModule 
 {
