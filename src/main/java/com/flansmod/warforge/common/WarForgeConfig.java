@@ -160,7 +160,7 @@ public class WarForgeConfig {
     public static boolean BLOCK_ENDER_CHEST = false;
     public static boolean SHOW_YIELD_TIMERS = true;
     public static int CITADEL_MOVE_NUM_DAYS = 7;
-    public static boolean DO_FANCY_RENDERING = true;
+    public static boolean DO_FANCY_RENDERING = false;
     public static boolean SHOW_OPPONENT_BORDERS = true;
     public static boolean SHOW_ALLY_BORDERS = true;
     public static boolean ENABLE_F_HOME_COMMAND = true;

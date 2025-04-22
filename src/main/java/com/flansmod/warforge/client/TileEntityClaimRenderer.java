@@ -42,46 +42,46 @@ public class TileEntityClaimRenderer extends TileEntitySpecialRenderer<TileEntit
         
         double poleH = /*flags.size()*/ 1 * 1.2d + 1.2d;
         
-        GlStateManager.pushMatrix();
-        {
-        	GlStateManager.disableTexture2D();
-            GlStateManager.enableLighting();
-        	GlStateManager.enableCull();
-        	GlStateManager.color(0.9f, 0.9f, 0.9f);
-        	GlStateManager.translate(0.5F, 0.0F, 0.5F);
-        	
-        	buff.begin(6, DefaultVertexFormats.POSITION_NORMAL);
-	        buff.pos(-0.1, 0, 0.1).normal(0,0,1).endVertex();
-	        buff.pos(0.1, 0, 0.1).normal(0,0,1).endVertex();
-	        buff.pos(0.1, poleH, 0.1).normal(0,0,1).endVertex();
-	        buff.pos(-0.1, poleH, 0.1).normal(0,0,1).endVertex();
-	        tessellator.draw();
-	       
-	        buff.begin(6, DefaultVertexFormats.POSITION_NORMAL);
-	        buff.pos(0.1, poleH, -0.1).normal(0,0,-1).endVertex();
-	        buff.pos(0.1, 0, -0.1).normal(0,0,-1).endVertex();
-	        buff.pos(-0.1, 0, -0.1).normal(0,0,-1).endVertex();
-	        buff.pos(-0.1, poleH, -0.1).normal(0,0,-1).endVertex();
-	        tessellator.draw();
-	        
-	        GlStateManager.color(0.85f, 0.85f, 0.85f);
-	        
-	        buff.begin(6, DefaultVertexFormats.POSITION_NORMAL);
-	        buff.pos(0.1, poleH, 0.1).normal(1,0,0).endVertex();
-	        buff.pos(0.1, 0, 0.1).normal(1,0,0).endVertex();
-	        buff.pos(0.1, 0, -0.1).normal(1,0,0).endVertex();
-	        buff.pos(0.1, poleH, -0.1).normal(1,0,0).endVertex();
-	        tessellator.draw();
-	        
-	        buff.begin(6, DefaultVertexFormats.POSITION_NORMAL);
-	        buff.pos(-0.1, poleH, 0.1).normal(-1,0,0).endVertex();
-	        buff.pos(-0.1, poleH, -0.1).normal(-1,0,0).endVertex();
-	        buff.pos(-0.1, 0, -0.1).normal(-1,0,0).endVertex();
-	        buff.pos(-0.1, 0, 0.1).normal(-1,0,0).endVertex();
-	        tessellator.draw();
-	        
-        }
-        GlStateManager.popMatrix();
+//        GlStateManager.pushMatrix();
+//        {
+//        	GlStateManager.disableTexture2D();
+//            GlStateManager.enableLighting();
+//        	GlStateManager.enableCull();
+//        	GlStateManager.color(0.9f, 0.9f, 0.9f);
+//        	GlStateManager.translate(0.5F, 0.0F, 0.5F);
+//
+//        	buff.begin(6, DefaultVertexFormats.POSITION_NORMAL);
+//	        buff.pos(-0.1, 0, 0.1).normal(0,0,1).endVertex();
+//	        buff.pos(0.1, 0, 0.1).normal(0,0,1).endVertex();
+//	        buff.pos(0.1, poleH, 0.1).normal(0,0,1).endVertex();
+//	        buff.pos(-0.1, poleH, 0.1).normal(0,0,1).endVertex();
+//	        tessellator.draw();
+//
+//	        buff.begin(6, DefaultVertexFormats.POSITION_NORMAL);
+//	        buff.pos(0.1, poleH, -0.1).normal(0,0,-1).endVertex();
+//	        buff.pos(0.1, 0, -0.1).normal(0,0,-1).endVertex();
+//	        buff.pos(-0.1, 0, -0.1).normal(0,0,-1).endVertex();
+//	        buff.pos(-0.1, poleH, -0.1).normal(0,0,-1).endVertex();
+//	        tessellator.draw();
+//
+//	        GlStateManager.color(0.85f, 0.85f, 0.85f);
+//
+//	        buff.begin(6, DefaultVertexFormats.POSITION_NORMAL);
+//	        buff.pos(0.1, poleH, 0.1).normal(1,0,0).endVertex();
+//	        buff.pos(0.1, 0, 0.1).normal(1,0,0).endVertex();
+//	        buff.pos(0.1, 0, -0.1).normal(1,0,0).endVertex();
+//	        buff.pos(0.1, poleH, -0.1).normal(1,0,0).endVertex();
+//	        tessellator.draw();
+//
+//	        buff.begin(6, DefaultVertexFormats.POSITION_NORMAL);
+//	        buff.pos(-0.1, poleH, 0.1).normal(-1,0,0).endVertex();
+//	        buff.pos(-0.1, poleH, -0.1).normal(-1,0,0).endVertex();
+//	        buff.pos(-0.1, 0, -0.1).normal(-1,0,0).endVertex();
+//	        buff.pos(-0.1, 0, 0.1).normal(-1,0,0).endVertex();
+//	        tessellator.draw();
+//
+//        }
+//        GlStateManager.popMatrix();
         
         // Flag backgrounds
         GlStateManager.pushMatrix();

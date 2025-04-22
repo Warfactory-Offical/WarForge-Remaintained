@@ -4,10 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import com.flansmod.warforge.common.DimBlockPos;
-import com.flansmod.warforge.common.DimChunkPos;
-import com.flansmod.warforge.common.WarForgeConfig;
-import com.flansmod.warforge.common.WarForgeMod;
+import com.flansmod.warforge.common.*;
 import com.flansmod.warforge.common.blocks.IClaim;
 import com.flansmod.warforge.common.blocks.TileEntityCitadel;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
@@ -23,15 +20,13 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.EnumDyeColor;
-import net.minecraft.item.ItemBanner;
-import net.minecraft.item.ItemBlock;
-import net.minecraft.item.ItemStack;
+import net.minecraft.item.*;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.BannerPattern;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
@@ -68,284 +63,307 @@ public class ClientTickHandler
 	{
 		tess = Tessellator.getInstance();
 	}
-	
+
 	@SubscribeEvent
 	public void onTick(ClientTickEvent tick)
 	{
+		// Handle client packets and perform the client-side tick
 		WarForgeMod.NETWORK.handleClientPackets();
 		WarForgeMod.proxy.TickClient();
-		ArrayList<DimBlockPos> expired = new ArrayList<DimBlockPos>();
-		for(HashMap.Entry<DimBlockPos, SiegeCampProgressInfo> kvp : ClientProxy.sSiegeInfo.entrySet())
+
+		// Use a more efficient approach for expired siege info removal
+		ArrayList<DimBlockPos> expired = null;
+
+		// Iterate over entries and mark completed ones for removal
+		for (HashMap.Entry<DimBlockPos, SiegeCampProgressInfo> kvp : ClientProxy.sSiegeInfo.entrySet())
 		{
-			kvp.getValue().ClientTick();
-			if(kvp.getValue().Completed())
+			SiegeCampProgressInfo siegeInfo = kvp.getValue();
+			siegeInfo.ClientTick();
+			if (siegeInfo.Completed())
 			{
+				if (expired == null) expired = new ArrayList<>();
 				expired.add(kvp.getKey());
 			}
 		}
-		
-		for(DimBlockPos pos : expired)
+
+		// Remove completed siege camps from the map
+		if (expired != null)
 		{
-			ClientProxy.sSiegeInfo.remove(pos);
-		}
-		
-		if(newAreaToastTime > 0.0f)
-			newAreaToastTime--;
-		
-		if(Minecraft.getMinecraft().player != null && Minecraft.getMinecraft().player.ticksExisted % 200 == 0)
-			CLAIMS_DIRTY = true;
-		
-		if(WarForgeConfig.SHOW_NEW_AREA_TIMER > 0.0f)
-		{
-			EntityPlayerSP player = Minecraft.getMinecraft().player;
-			if(player != null)
+			for (DimBlockPos pos : expired)
 			{
-				DimChunkPos standing = new DimChunkPos(player.dimension, player.getPosition());
-				
-				if(!standing.equals(playerChunkPos))
-				{
-					IClaim preClaim = null;
-					IClaim postClaim = null;
-					
-					// Try and find the claim we left and the claim we entered
-					for(TileEntity te : player.world.loadedTileEntityList)
-					{
-						if(te instanceof IClaim)
-						{
-							DimChunkPos tePos = ((IClaim) te).getClaimPos().toChunkPos();
-							if(tePos.equals(playerChunkPos))
-								preClaim = (IClaim)te;
-							
-							if(tePos.equals(standing))
-								postClaim = (IClaim)te;
-						}
-					}
-					
-					if(preClaim == null)
-					{
-                        if (postClaim != null) {
-                            // We've entered a new claim
-                            areaMessage = "Entering " + postClaim.getClaimDisplayName();
-                            areaMessageColour = postClaim.getColour();
-                            newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
-                        }
-                    }
-					else // We've left somewhere 
-					{
-						if(postClaim == null) 
-						{
-							// Gone to nowhere, bye
-							areaMessage = "Leaving " + preClaim.getClaimDisplayName();
-							areaMessageColour = preClaim.getColour();
-							newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
-						}
-						else
-						{
-							// We've gone to another place. 
-                            if (!preClaim.getFaction().equals(postClaim.getFaction())) {
-                                areaMessage = "Leaving " + preClaim.getClaimDisplayName() + ", Entering " + postClaim.getClaimDisplayName();
-                                areaMessageColour = postClaim.getColour();
-                                newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
-                            }
-                        }
-					}
-					
-					playerChunkPos = standing;
-				}
+				ClientProxy.sSiegeInfo.remove(pos);
 			}
 		}
-	}
-	
-	@SubscribeEvent
-	public void onRenderHUD(RenderGameOverlayEvent event)
-	{
-		if(event.getType() == ElementType.BOSSHEALTH)
+
+		// Handle new area toast time
+		if (newAreaToastTime > 0.0f)
 		{
-			Minecraft mc = Minecraft.getMinecraft();
-			EntityPlayerSP player = Minecraft.getMinecraft().player;
-			if(player != null)
+			newAreaToastTime--;
+		}
+
+		// Avoid calling Minecraft.getMinecraft() multiple times
+		EntityPlayerSP player = Minecraft.getMinecraft().player;
+		if (player != null && player.ticksExisted % 200 == 0)
+		{
+			CLAIMS_DIRTY = true;
+		}
+
+		// Show new area timer if configured
+		if (WarForgeConfig.SHOW_NEW_AREA_TIMER > 0.0f && player != null)
+		{
+			DimChunkPos standing = new DimChunkPos(player.dimension, player.getPosition());
+
+			// Only perform claim checks if the player has moved to a new chunk
+			if (!standing.equals(playerChunkPos))
 			{
-				// Timer info
-				if(WarForgeConfig.SHOW_YIELD_TIMERS)
+				IClaim preClaim = null;
+				IClaim postClaim = null;
+
+				// Iterate only through the necessary tile entities (avoid loading all entities unnecessarily)
+				for (TileEntity te : player.world.loadedTileEntityList)
 				{
-					// Anchor point = top left of screen
-					int j = 0;
-					int k = 0;
-					
-					long msRemaining = nextSiegeDayMs - System.currentTimeMillis();
-					long s = msRemaining / 1000;
-					long m = s / 60;
-					long h = m / 60;
-					long d = h / 24;
-					
-					mc.fontRenderer.drawStringWithShadow("Siege Progress: "
-					+ (d > 0 ? (d) + " days, " : "")
-					+ String.format("%02d", (h % 24))  + ":"
-					+ String.format("%02d", (m % 60)) + ":"
-					+ String.format("%02d", (s % 60)),
-					j + 4,
-					k + 4,
-					0xffffff);
-					
-					msRemaining = nextYieldDayMs - System.currentTimeMillis();
-					s = msRemaining / 1000;
-					m = s / 60;
-					h = m / 60;
-					d = h / 24;
-					
-					mc.fontRenderer.drawStringWithShadow("Next yields: "
-					+ (d > 0 ? (d) + " days, " : "")
-					+ String.format("%02d", (h % 24))  + ":"
-					+ String.format("%02d", (m % 60)) + ":"
-					+ String.format("%02d", (s % 60)),
-					j + 4,
-					k + 14,
-					0xffffff);
-				}
-				
-				// Siege camp info
-				SiegeCampProgressInfo infoToRender = null;
-				double bestDistanceSq = Double.MAX_VALUE;
-				
-				for(SiegeCampProgressInfo info : ClientProxy.sSiegeInfo.values())
-				{
-					double distSq = info.defendingPos.distanceSq(player.posX, player.posY, player.posZ);
-					if(info.defendingPos.dim == player.dimension
-					&& distSq < WarForgeConfig.SIEGE_INFO_RADIUS * WarForgeConfig.SIEGE_INFO_RADIUS)
+					if (te instanceof IClaim)
 					{
-						if(distSq < bestDistanceSq)
+						DimChunkPos tePos = ((IClaim) te).getClaimPos().toChunkPos();
+						if (tePos.equals(playerChunkPos))
 						{
-							bestDistanceSq = distSq;
-							infoToRender = info;
+							preClaim = (IClaim) te;
+						}
+						if (tePos.equals(standing))
+						{
+							postClaim = (IClaim) te;
 						}
 					}
 				}
 
-				// Render siege overlay
-				if(infoToRender != null)
+				// Generate area message only if needed (reduce redundant logic)
+				if (preClaim == null)
 				{
-					GlStateManager.enableAlpha();
-					GlStateManager.enableBlend();
-					
-	                float attackR = (float)(infoToRender.attackingColour >> 16 & 255) / 255.0F;
-	                float attackG = (float)(infoToRender.attackingColour >> 8 & 255) / 255.0F;
-	                float attackB = (float)(infoToRender.attackingColour & 255) / 255.0F;
-	                float defendR = (float)(infoToRender.defendingColour >> 16 & 255) / 255.0F;
-	                float defendG = (float)(infoToRender.defendingColour >> 8 & 255) / 255.0F;
-	                float defendB = (float)(infoToRender.defendingColour & 255) / 255.0F;
-					
-					// Render background, bars etc
-					int xSize = 256;
-					int ySize = 30;
-					
-					// Anchor point = top middle of screen
-					int xText = event.getResolution().getScaledWidth() / 2 - xSize / 2;
-					int yText = 0;
-
-					float scroll = mc.getFrameTimer().getIndex() +  + event.getPartialTicks();
-					scroll *= 0.25f;
-					scroll = scroll % 10;
-
-					mc.renderEngine.bindTexture(siegeprogress);
-					GlStateManager.color(1f, 1f, 1f, 1f);
-					drawTexturedModalRect(xText, yText, 0, 0, xSize, ySize);
-					
-					float siegeLength = infoToRender.completionPoint + 5;
-					float barLengthPx = 224;
-					float notchDistance = barLengthPx / siegeLength;
-					
-					// Draw filled bar
-					int firstPx = 0;
-					int lastPx = 0;
-					boolean isIncreasing = infoToRender.progress > infoToRender.mPreviousProgress;
-					
-					if(infoToRender.progress > 0)
+					if (postClaim != null)
 					{
-						firstPx = (int)(notchDistance * 5);
-						lastPx = (int)(notchDistance * (infoToRender.progress + 5));
+						// Entered a new claim
+						areaMessage = "Entering " + postClaim.getClaimDisplayName();
+						areaMessageColour = postClaim.getColour();
+						newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
+					}
+				}
+				else // Left a claim
+				{
+					if (postClaim == null)
+					{
+						// Gone to nowhere
+						areaMessage = "Leaving " + preClaim.getClaimDisplayName();
+						areaMessageColour = preClaim.getColour();
+						newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
 					}
 					else
 					{
-						firstPx = (int)(notchDistance * (5 + infoToRender.progress));
-						lastPx = (int)(notchDistance * 5);
+						// Entered another claim, possibly different faction
+						if (!preClaim.getFaction().equals(postClaim.getFaction()))
+						{
+							areaMessage = "Leaving " + preClaim.getClaimDisplayName() + ", Entering " + postClaim.getClaimDisplayName();
+							areaMessageColour = postClaim.getColour();
+							newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
+						}
 					}
-						
-					if(isIncreasing)
-					{
-						GlStateManager.color(attackR, attackG, attackB, 1.0F);
-						drawTexturedModalRect(xText + 16 + firstPx, yText + 17, 16 + (10 - scroll), 44, lastPx - firstPx, 8);
-					}
-					else 
-					{
-						GlStateManager.color(defendR, defendG, defendB, 1.0F);
-						drawTexturedModalRect(xText + 16 + firstPx, yText + 17, 16 + scroll, 54, lastPx - firstPx, 8);
-					}
-					
-					
-					
-					// Draw shield at -5 (successful defence)
-					GlStateManager.color(defendR, defendG, defendB, 1.0F);
-					drawTexturedModalRect(xText + 4, yText + 16, 4, 31, 10, 11);
-					
-					// Draw sword at +CompletionPoint (successful attack)
-					GlStateManager.color(attackR, attackG, attackB, 1.0F);
-					drawTexturedModalRect(xText + 241, yText + 15, 241, 31, 12, 11);
-					
-					GlStateManager.color(1f, 1f, 1f, 1f);
-					// Draw notches at each integer interval
-					for(int i = -4; i < infoToRender.completionPoint; i++)
-					{
-						int x = (int)((i + 5) * notchDistance + 16);
-						if(i == 0)
-							drawTexturedModalRect(xText + x - 2, yText + 17, 6, 43, 5, 8);
-						else 
-							drawTexturedModalRect(xText + x - 2, yText + 17, 1, 43, 4, 8);
-					}
-					
-					// Draw text
-					mc.fontRenderer.drawStringWithShadow(infoToRender.defendingName, xText + 6, yText + 6, infoToRender.defendingColour);
-					mc.fontRenderer.drawStringWithShadow("VS", xText + xSize / 2 - mc.fontRenderer.getStringWidth("VS") / 2, yText + 6, 0xffffff);
-					mc.fontRenderer.drawStringWithShadow(infoToRender.attackingName, xText + xSize - 6 - mc.fontRenderer.getStringWidth(infoToRender.attackingName), yText + 6, infoToRender.attackingColour);
-					
-					String toWin = (infoToRender.progress < infoToRender.completionPoint) ? (infoToRender.completionPoint - infoToRender.progress) + " to win" : "Station siege to win";
-					String toDefend = (infoToRender.progress + 5) + " to defend";
-					mc.fontRenderer.drawStringWithShadow(toWin, xText + xSize - 8 - mc.fontRenderer.getStringWidth(toWin), yText + 32, infoToRender.attackingColour);
-					mc.fontRenderer.drawStringWithShadow(toDefend, xText + 8, yText + 32, infoToRender.attackingColour);
 				}
-				
-				if(newAreaToastTime > 0.0f)
-				{
-					//mShowNewAreaTicksRemaining -= event.getPartialTicks();
-					
-					// Anchor point = top middle of screen
-					int xText = event.getResolution().getScaledWidth() / 2;
-					int yText = 0;
-					
-					int stringWidth = mc.fontRenderer.getStringWidth(areaMessage);
-					
-					float fadeOut = 2.0f * newAreaToastTime / WarForgeConfig.SHOW_NEW_AREA_TIMER;
-					if(fadeOut > 1.0f)
-						fadeOut = 1.0f;
-					
-					int colour = areaMessageColour | ((int)(fadeOut * 255f) << 24);
-					
-					GlStateManager.enableAlpha();
-					GlStateManager.enableBlend();
-					GlStateManager.color(1f, 1f, 1f, fadeOut);
-					GlStateManager.disableTexture2D();
-					drawTexturedModalRect(xText - stringWidth / 2 - 50, yText + 42, 0, 0, stringWidth + 100, 1);
-					drawTexturedModalRect(xText - stringWidth / 2 - 25, yText + 65, 0, 0, stringWidth + 50, 1);
-					GlStateManager.enableTexture2D();
-					
-					mc.fontRenderer.drawStringWithShadow(areaMessage, xText - stringWidth / 2, yText + 50, colour);
-					GlStateManager.disableBlend();
-					GlStateManager.disableAlpha();
-				}
+
+				playerChunkPos = standing;
 			}
-			
 		}
 	}
-	
+
+
+
+	@SubscribeEvent
+	public void onRenderHUD(RenderGameOverlayEvent event)
+	{
+		if (event.getType() == ElementType.BOSSHEALTH)
+		{
+			Minecraft mc = Minecraft.getMinecraft();
+			EntityPlayerSP player = mc.player;
+
+			if (player != null)
+			{
+				// Timer info
+				if (WarForgeConfig.SHOW_YIELD_TIMERS)
+				{
+					renderTimers(mc);
+				}
+
+				// Siege camp info
+				SiegeCampProgressInfo infoToRender = getClosestSiegeCampInfo(player);
+
+				if (infoToRender != null)
+				{
+					renderSiegeOverlay(mc, infoToRender, event);
+				}
+
+				// New Area Toast
+				if (newAreaToastTime > 0.0f)
+				{
+					renderNewAreaToast(mc, event);
+				}
+			}
+		}
+	}
+
+	private void renderTimers(Minecraft mc)
+	{
+		int j = 0, k = 0;
+
+		// Siege progress
+		long msRemaining = nextSiegeDayMs - System.currentTimeMillis();
+		mc.fontRenderer.drawStringWithShadow("Siege Progress: " + formatTime(msRemaining),
+				j + 4, k + 4, 0xffffff);
+
+		// Next yields
+		msRemaining = nextYieldDayMs - System.currentTimeMillis();
+		mc.fontRenderer.drawStringWithShadow("Next yields: " + formatTime(msRemaining),
+				j + 4, k + 14, 0xffffff);
+	}
+
+	private String formatTime(long msRemaining)
+	{
+		long s = msRemaining / 1000;
+		long m = s / 60;
+		long h = m / 60;
+		long d = h / 24;
+
+		return (d > 0 ? (d) + " days, " : "")
+				+ String.format("%02d", (h % 24)) + ":"
+				+ String.format("%02d", (m % 60)) + ":"
+				+ String.format("%02d", (s % 60));
+	}
+
+	private SiegeCampProgressInfo getClosestSiegeCampInfo(EntityPlayerSP player)
+	{
+		SiegeCampProgressInfo closestInfo = null;
+		double bestDistanceSq = Double.MAX_VALUE;
+
+		for (SiegeCampProgressInfo info : ClientProxy.sSiegeInfo.values())
+		{
+			double distSq = info.defendingPos.distanceSq(player.posX, player.posY, player.posZ);
+			if (info.defendingPos.dim == player.dimension
+					&& distSq < WarForgeConfig.SIEGE_INFO_RADIUS * WarForgeConfig.SIEGE_INFO_RADIUS)
+			{
+				if (distSq < bestDistanceSq)
+				{
+					bestDistanceSq = distSq;
+					closestInfo = info;
+				}
+			}
+		}
+
+		return closestInfo;
+	}
+
+	private void renderSiegeOverlay(Minecraft mc, SiegeCampProgressInfo infoToRender, RenderGameOverlayEvent event)
+	{
+		GlStateManager.enableAlpha();
+		GlStateManager.enableBlend();
+
+		// Colors for attacking and defending
+		float attackR = (float)(infoToRender.attackingColour >> 16 & 255) / 255.0F;
+		float attackG = (float)(infoToRender.attackingColour >> 8 & 255) / 255.0F;
+		float attackB = (float)(infoToRender.attackingColour & 255) / 255.0F;
+		float defendR = (float)(infoToRender.defendingColour >> 16 & 255) / 255.0F;
+		float defendG = (float)(infoToRender.defendingColour >> 8 & 255) / 255.0F;
+		float defendB = (float)(infoToRender.defendingColour & 255) / 255.0F;
+
+		// Render Background and Bars
+		int xText = event.getResolution().getScaledWidth() / 2 - 128; // Centered
+		int yText = 0;
+
+		float scroll = (mc.getFrameTimer().getIndex() + event.getPartialTicks()) * 0.25f;
+		scroll = scroll % 10;
+
+		mc.renderEngine.bindTexture(siegeprogress);
+		GlStateManager.color(1f, 1f, 1f, 1f);
+		drawTexturedModalRect(xText, yText, 0, 0, 256, 30);
+
+		renderSiegeProgressBar(mc, infoToRender, xText, yText, attackR, attackG, attackB, defendR, defendG, defendB, scroll);
+		renderSiegeNotches(mc, infoToRender, xText, yText);
+
+		renderSiegeText(mc, infoToRender, xText, yText);
+	}
+
+	private void renderSiegeProgressBar(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText,
+										float attackR, float attackG, float attackB, float defendR, float defendG, float defendB, float scroll)
+	{
+		int xSize = 256;
+		float siegeLength = infoToRender.completionPoint + 5;
+		float notchDistance = 224 / siegeLength;
+
+		int firstPx = (int) (notchDistance * (infoToRender.progress > 0 ? 5 : 5 + infoToRender.progress));
+		int lastPx = (int) (notchDistance * (infoToRender.progress > 0 ? (infoToRender.progress + 5) : 5));
+
+		boolean isIncreasing = infoToRender.progress > infoToRender.mPreviousProgress;
+
+		if (isIncreasing)
+		{
+			GlStateManager.color(attackR, attackG, attackB, 1.0F);
+			drawTexturedModalRect(xText + 16 + firstPx, yText + 17, 16 + (10 - scroll), 44, lastPx - firstPx, 8);
+		}
+		else
+		{
+			GlStateManager.color(defendR, defendG, defendB, 1.0F);
+			drawTexturedModalRect(xText + 16 + firstPx, yText + 17, 16 + scroll, 54, lastPx - firstPx, 8);
+		}
+	}
+
+	private void renderSiegeNotches(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText)
+	{
+		float notchDistance = 224 / (infoToRender.completionPoint + 5);
+
+		for (int i = -4; i < infoToRender.completionPoint; i++)
+		{
+			int x = (int) ((i + 5) * notchDistance + 16);
+			if (i == 0)
+				drawTexturedModalRect(xText + x - 2, yText + 17, 6, 43, 5, 8);
+			else
+				drawTexturedModalRect(xText + x - 2, yText + 17, 1, 43, 4, 8);
+		}
+	}
+
+	private void renderSiegeText(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText)
+	{
+		mc.fontRenderer.drawStringWithShadow(infoToRender.defendingName, xText + 6, yText + 6, infoToRender.defendingColour);
+		mc.fontRenderer.drawStringWithShadow("VS", xText + 128 - mc.fontRenderer.getStringWidth("VS") / 2, yText + 6, 0xffffff);
+		mc.fontRenderer.drawStringWithShadow(infoToRender.attackingName, xText + 256 - 6 - mc.fontRenderer.getStringWidth(infoToRender.attackingName), yText + 6, infoToRender.attackingColour);
+
+		String toWin = (infoToRender.progress < infoToRender.completionPoint) ? (infoToRender.completionPoint - infoToRender.progress) + " to win" : "Station siege to win";
+		String toDefend = (infoToRender.progress + 5) + " to defend";
+		mc.fontRenderer.drawStringWithShadow(toWin, xText + 256 - 8 - mc.fontRenderer.getStringWidth(toWin), yText + 32, infoToRender.attackingColour);
+		mc.fontRenderer.drawStringWithShadow(toDefend, xText + 8, yText + 32, infoToRender.attackingColour);
+	}
+
+	private void renderNewAreaToast(Minecraft mc, RenderGameOverlayEvent event)
+	{
+		int xText = event.getResolution().getScaledWidth() / 2;
+		int yText = 0;
+
+		int stringWidth = mc.fontRenderer.getStringWidth(areaMessage);
+		float fadeOut = 2.0f * newAreaToastTime / WarForgeConfig.SHOW_NEW_AREA_TIMER;
+		fadeOut = Math.min(fadeOut, 1.0f);
+
+		int colour = areaMessageColour | ((int)(fadeOut * 255f) << 24);
+
+		GlStateManager.enableAlpha();
+		GlStateManager.enableBlend();
+		GlStateManager.color(1f, 1f, 1f, fadeOut);
+		GlStateManager.disableTexture2D();
+		drawTexturedModalRect(xText - stringWidth / 2 - 50, yText + 42, 0, 0, stringWidth + 100, 1);
+		drawTexturedModalRect(xText - stringWidth / 2 - 25, yText + 65, 0, 0, stringWidth + 50, 1);
+		GlStateManager.enableTexture2D();
+
+		mc.fontRenderer.drawStringWithShadow(areaMessage, xText - stringWidth / 2, yText + 50, colour);
+		GlStateManager.disableBlend();
+		GlStateManager.disableAlpha();
+	}
+
+
+
 	private void drawTexturedModalRect(int x, int y, float u, float v, int w, int h)
 	{
 		float texScale = 1f / 256f;
@@ -369,18 +387,18 @@ public class ClientTickHandler
     private void renderZAlignedSquare(int x, int y, double z, int ori)
     {
 		tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-		tess.getBuffer().pos(x + 0, y + 0, z).tex(((ori + 0) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
-		tess.getBuffer().pos(x + 1, y + 0, z).tex(((ori + 1) / 2) % 2, ((ori + 0) / 2) % 2).endVertex();
+		tess.getBuffer().pos(x, y, z).tex(((ori) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
+		tess.getBuffer().pos(x + 1, y, z).tex(((ori + 1) / 2) % 2, ((ori) / 2) % 2).endVertex();
 		tess.getBuffer().pos(x + 1, y + 1, z).tex(((ori + 2) / 2) % 2, ((ori + 1) / 2) % 2).endVertex();
-		tess.getBuffer().pos(x + 0, y + 1, z).tex(((ori + 3) / 2) % 2, ((ori + 2) / 2) % 2).endVertex();
+		tess.getBuffer().pos(x, y + 1, z).tex(((ori + 3) / 2) % 2, ((ori + 2) / 2) % 2).endVertex();
 		tess.draw();
     }
 
 	private void renderZAlignedRecangle(double x, int y, double z, int ori, double width)
 	{
 		tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-		tess.getBuffer().pos(x + 0 - width, y + 0, z).tex(((ori + 0) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
-		tess.getBuffer().pos(x + 1, y + 0, z).tex(((ori + 1) / 2) % 2, ((ori + 0) / 2) % 2).endVertex();
+		tess.getBuffer().pos(x + 0 - width, y, z).tex(((ori) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
+		tess.getBuffer().pos(x + 1, y, z).tex(((ori + 1) / 2) % 2, ((ori) / 2) % 2).endVertex();
 		tess.getBuffer().pos(x + 1, y + 1, z).tex(((ori + 2) / 2) % 2, ((ori + 1) / 2) % 2).endVertex();
 		tess.getBuffer().pos(x + 0 - width, y + 1, z).tex(((ori + 3) / 2) % 2, ((ori + 2) / 2) % 2).endVertex();
 		tess.draw();
@@ -389,18 +407,18 @@ public class ClientTickHandler
     private void renderXAlignedSquare(double x, int y, int z, int ori)
     {
 		tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-		tess.getBuffer().pos(x, y + 0, z + 0).tex(((ori + 0) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
-		tess.getBuffer().pos(x, y + 0, z + 1).tex(((ori + 1) / 2) % 2, ((ori + 0) / 2) % 2).endVertex();
+		tess.getBuffer().pos(x, y, z).tex(((ori) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
+		tess.getBuffer().pos(x, y, z + 1).tex(((ori + 1) / 2) % 2, ((ori) / 2) % 2).endVertex();
 		tess.getBuffer().pos(x, y + 1, z + 1).tex(((ori + 2) / 2) % 2, ((ori + 1) / 2) % 2).endVertex();
-		tess.getBuffer().pos(x, y + 1, z + 0).tex(((ori + 3) / 2) % 2, ((ori + 2) / 2) % 2).endVertex();
+		tess.getBuffer().pos(x, y + 1, z).tex(((ori + 3) / 2) % 2, ((ori + 2) / 2) % 2).endVertex();
 		tess.draw();
     }
 
 	private void renderXAlignedRecangle(double x, int y, double z, int ori, double width)
 	{
 		tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-		tess.getBuffer().pos(x, y + 0, z + 0 - width).tex(((ori + 0) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
-		tess.getBuffer().pos(x, y + 0, z + 1).tex(((ori + 1) / 2) % 2, ((ori + 0) / 2) % 2).endVertex();
+		tess.getBuffer().pos(x, y, z + 0 - width).tex(((ori) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
+		tess.getBuffer().pos(x, y, z + 1).tex(((ori + 1) / 2) % 2, ((ori) / 2) % 2).endVertex();
 		tess.getBuffer().pos(x, y + 1, z + 1).tex(((ori + 2) / 2) % 2, ((ori + 1) / 2) % 2).endVertex();
 		tess.getBuffer().pos(x, y + 1, z + 0 - width).tex(((ori + 3) / 2) % 2, ((ori + 2) / 2) % 2).endVertex();
 		tess.draw();
@@ -668,7 +686,7 @@ public class ClientTickHandler
 	// Helper for rendering horizontal edges (along X-axis)
 	private void renderZEdge(World world, int x, int y, int z, double align, boolean air0, boolean air1, int dir) {
 		if (!air0 && air1)
-			renderZAlignedSquare(x + 1, y, align, 0 + dir); // Entering air
+			renderZAlignedSquare(x + 1, y, align, dir); // Entering air
 		if (air0 && !air1)
 			renderZAlignedSquare(x, y, align, 2 + dir);     // Exiting air
 	}
@@ -677,7 +695,7 @@ public class ClientTickHandler
 	// Similarly for X-aligned edges
 	private void renderXEdge(World world, int x, int y, int z, double align, boolean air0, boolean air1, int dir) {
 		if (!air0 && air1)
-			renderXAlignedSquare(align, y, z + 1, 0 + dir);
+			renderXAlignedSquare(align, y, z + 1, dir);
 		if (air0 && !air1)
 			renderXAlignedSquare(align, y, z, 2 + dir);
 	}
@@ -713,263 +731,214 @@ public class ClientTickHandler
 	@SubscribeEvent
 	public void onRenderLast(RenderWorldLastEvent event)
 	{
-		// Get the player
-		EntityPlayer player = Minecraft.getMinecraft().player;
-		if(player == null)
-			return;
-		
-		//Get the camera frustrum for clipping
-		Entity camera = Minecraft.getMinecraft().getRenderViewEntity();
+		// Cache Minecraft instance
+		Minecraft mc = Minecraft.getMinecraft();
+		EntityPlayer player = mc.player;
+		if (player == null) return;
+
+		// Get the camera position
+		Entity camera = mc.getRenderViewEntity();
 		double x = camera.lastTickPosX + (camera.posX - camera.lastTickPosX) * event.getPartialTicks();
 		double y = camera.lastTickPosY + (camera.posY - camera.lastTickPosY) * event.getPartialTicks();
 		double z = camera.lastTickPosZ + (camera.posZ - camera.lastTickPosZ) * event.getPartialTicks();
-		
-		//Push
+
+		// Push OpenGL matrix and attributes
 		GlStateManager.pushMatrix();
 		GlStateManager.pushAttrib();
-		{
-			//Setup lighting
-			Minecraft.getMinecraft().entityRenderer.enableLightmap();
-			GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-			GlStateManager.disableLighting();
-			GlStateManager.enableTexture2D();
-			GlStateManager.disableCull();
-			Minecraft.getMinecraft().entityRenderer.disableLightmap();
-			
-			if(WarForgeConfig.DO_FANCY_RENDERING)
-			{
-				Minecraft.getMinecraft().renderEngine.bindTexture(texture);
-				GlStateManager.enableAlpha();
-				GlStateManager.enableBlend();
-			}
-			else
-			{
-				Minecraft.getMinecraft().renderEngine.bindTexture(fastTexture);
-			}
-			
-			
-		
-			double skyRenderDistance = 80d;
-			double groundRenderDistance = 64d;
-			int resolution = 1;
-	
-			if(CLAIMS_DIRTY)
-			{
-				updateRenderData();
-				CLAIMS_DIRTY = false;
-			}
-			
-			// Slower update speed on fast graphics
-			if(player.world.rand.nextInt(WarForgeConfig.RANDOM_BORDER_REDRAW_DENOMINATOR) == 0)
-				updateRandomMesh();
-			
-			// Render each chunk we have border data for
-			for(HashMap.Entry<DimChunkPos, BorderRenderData> kvp : renderData.entrySet())
-			{
-				DimChunkPos pos = kvp.getKey();
-				BorderRenderData data = kvp.getValue();
-	
-				if(data.renderList >= 0)
-				{
-					GlStateManager.pushMatrix();
-					
-					int colour = data.claim.getColour();
-		            float f = (float)(colour >> 16 & 255) / 255.0F;
-		            float f1 = (float)(colour >> 8 & 255) / 255.0F;
-		            float f2 = (float)(colour & 255) / 255.0F;
-					GlStateManager.color(f, f1, f2, 1.0F);
-					GlStateManager.translate(pos.x * 16 - x, 0 - y, pos.z * 16 - z);
-		            GlStateManager.callList(data.renderList);
-		            GlStateManager.popMatrix();
-				}
-			}
-	
-			// Player CanPlace? Overlay
-			if(player.getHeldItemMainhand().getItem() instanceof ItemBlock)
-			{
-				boolean shouldRender = false;
-				Block holding = ((ItemBlock)player.getHeldItemMainhand().getItem()).getBlock();
-				if(holding == WarForgeMod.CONTENT.basicClaimBlock
-				|| holding == WarForgeMod.CONTENT.citadelBlock
-				|| holding == WarForgeMod.CONTENT.reinforcedClaimBlock)
-				{
-					shouldRender = true;
-				}
-				
-				// Ray trace player hand to see which chunk they looking at
-				DimChunkPos playerPos = new DimChunkPos(player.dimension, player.getPosition());
-				RayTraceResult result = player.rayTrace(10.0f, event.getPartialTicks());
-				if(result != null && result.typeOfHit == RayTraceResult.Type.BLOCK)
-				{
-					playerPos = new DimChunkPos(player.dimension, result.getBlockPos());
-				}
-				
-				boolean canPlace = true;
-				List<DimChunkPos> siegeablePositions = new ArrayList<DimChunkPos>();
-				for(TileEntity te : Minecraft.getMinecraft().world.loadedTileEntityList)
-				{
-					if(te instanceof IClaim)
-					{
 
-						DimBlockPos blockPos = ((IClaim) te).getClaimPos();
-						DimChunkPos chunkPos = blockPos.toChunkPos();
-						
-						if(playerPos.x == chunkPos.x && playerPos.z == chunkPos.z)
-						{
-							canPlace = false;
-						}
-						if(((IClaim)te).canBeSieged())
-							siegeablePositions.add(chunkPos);
-					}
-				}
-				if(holding == WarForgeMod.CONTENT.siegeCampBlock)
-				{
-					shouldRender = true;
-					if(canPlace)
-					{
-						canPlace = false;
-						for(EnumFacing facing : EnumFacing.HORIZONTALS)
-						{
-							if(siegeablePositions.contains(playerPos.Offset(facing, 1)))
-							{
-								canPlace = true;
-							}
-						}
-					}
-				}
-				
-				if(shouldRender)
-				{					
-					// Render overlay
-					if(canPlace)
-						GlStateManager.color(0f, 1f, 0f, 1.0F);
-					else
-						GlStateManager.color(1f, 0f, 0f, 1.0F);
-						
-					Minecraft.getMinecraft().renderEngine.bindTexture(overlayTex);
-					
-					GlStateManager.translate(playerPos.x * 16 - x, 0 - y, playerPos.z * 16 - z);
-					for(int i = 0; i < 16; i++)
-					{
-						for(int k = 0; k < 16; k++)
-						{
-							BlockPos pos = new BlockPos(playerPos.x * 16 + i, player.posY, playerPos.z * 16 + k);
-							
-							//pos = player.world.getHeight(pos);
-//							for(; pos.getY() > 0 && player.world.isAirBlock(pos); pos = pos.down())
-//							{
-//							}
-							
-							tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-							
-							tess.getBuffer().pos(i + 0, pos.getY() + 1.5d, k + 0).tex(0f, 0f).endVertex();
-							tess.getBuffer().pos(i + 1, pos.getY() + 1.5d, k + 0).tex(1f, 0f).endVertex();
-							tess.getBuffer().pos(i + 1, pos.getY() + 1.5d, k + 1).tex(1f, 1f).endVertex();
-							tess.getBuffer().pos(i + 0, pos.getY() + 1.5d, k + 1).tex(0f, 1f).endVertex();
-	
-							tess.draw();
-						}
-					}
-				}
-			}
-		
-			// Flag rendering
-			
-			GlStateManager.disableLighting();
-			GlStateManager.disableAlpha();
-			GlStateManager.enableTexture2D();
-			GlStateManager.disableBlend();
-			GlStateManager.enableCull();
-			GlStateManager.color(1f, 1f, 1f);
-			
-			for(TileEntity te : Minecraft.getMinecraft().world.loadedTileEntityList)
-			{
-				if(te instanceof TileEntityCitadel citadel)
-				{
-                    DimBlockPos blockPos = ((IClaim) te).getClaimPos();
-					
-					double distance = Math.sqrt((blockPos.getX() - x)*(blockPos.getX() - x)+(blockPos.getY() - y)*(blockPos.getY() - y)+(blockPos.getZ() - z)*(blockPos.getZ() - z));					
-					double groundLevelBlend = (skyRenderDistance - distance) / (skyRenderDistance - groundRenderDistance);
-					
-					if(groundLevelBlend < 0.0d)
-						groundLevelBlend = 0.0d;
-					
-					if(groundLevelBlend > 1.0d)
-						groundLevelBlend = 1.0d;
-					
-					groundLevelBlend = groundLevelBlend * groundLevelBlend * (3 - 2 * groundLevelBlend);
-				
-					
-					ItemStack bannerStack = citadel.getStackInSlot(TileEntityCitadel.BANNER_SLOT_INDEX);
-					if(bannerTextures.containsKey(bannerStack))
-					{
-						Minecraft.getMinecraft().renderEngine.bindTexture(bannerTextures.get(bannerStack));
-					}
-					else if(bannerStack.getItem() instanceof ItemBanner)
-					{
-						ItemBanner banner = (ItemBanner)bannerStack.getItem();
-					    
-			        	// Start with base colour
-						EnumDyeColor baseColour = ItemBanner.getBaseColor(bannerStack);
-			        	StringBuilder patternResourceLocation = new StringBuilder("b" + baseColour.getDyeDamage());
-						List<BannerPattern> patternList = new ArrayList<>();
-						List<EnumDyeColor> colorList = new ArrayList<>();
-					    
-		                patternList.add(BannerPattern.BASE);
-		                colorList.add(baseColour);
-					    
-			        	// Then append patterns
-				        if (bannerStack.hasTagCompound() && bannerStack.getTagCompound().hasKey("Patterns", 9))
-				        {
-				        	NBTTagList patterns = bannerStack.getTagCompound().getTagList("Patterns", 10).copy();
-                            for (int p = 0; p < patterns.tagCount(); p++) {
-                                NBTTagCompound nbttagcompound = patterns.getCompoundTagAt(p);
-                                BannerPattern bannerpattern = BannerPattern.byHash(nbttagcompound.getString("Pattern"));
+		// Setup lighting and textures
+		mc.entityRenderer.enableLightmap();
+		GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+		GlStateManager.disableLighting();
+		GlStateManager.enableTexture2D();
+		GlStateManager.disableCull();
+		mc.entityRenderer.disableLightmap();
 
-                                if (bannerpattern != null) {
-                                    patternList.add(bannerpattern);
-                                    int j = nbttagcompound.getInteger("Color");
-                                    colorList.add(EnumDyeColor.byDyeDamage(j));
-                                    patternResourceLocation.append(bannerpattern.getHashname()).append(j);
-                                }
-                            }
-                        }
-				        
-				        
-						ResourceLocation resLoc = BannerTextures.BANNER_DESIGNS.getResourceLocation(patternResourceLocation.toString(), patternList, colorList);
-						bannerTextures.put(bannerStack, resLoc);
-						Minecraft.getMinecraft().renderEngine.bindTexture(resLoc);
-						
-						 GlStateManager.pushMatrix();
-				            
-			            double deltaX = te.getPos().getX() - x;
-			            double deltaZ = te.getPos().getZ() - z;
-			            
-			            float angle = (float)Math.atan2(deltaZ, deltaX) * 180f / (float)Math.PI + 90f;
-			            
-			            double yPos = te.getPos().getY() + 2d;
-			            yPos = 256 + (yPos - 256) * groundLevelBlend;
-			            float scale = (float)(1d * groundLevelBlend + 10d * (1d - groundLevelBlend));
-			            
-			            GlStateManager.translate(0.5d + te.getPos().getX() - x, yPos - y, 0.5d + te.getPos().getZ() - z);
-			            GlStateManager.scale(scale, -scale, -scale);
-			            GlStateManager.rotate(angle, 0f, 1f, 0f);
-			            this.bannerModel.renderBanner();
-			            GlStateManager.popMatrix();
-					}
-				}
-			}
-		
-			//Reset Lighting
-			GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-			GlStateManager.disableLighting();
+		// Choose textures based on rendering config
+		if (WarForgeConfig.DO_FANCY_RENDERING) {
+			mc.renderEngine.bindTexture(texture);
+			GlStateManager.enableAlpha();
+			GlStateManager.enableBlend();
+		} else {
+			mc.renderEngine.bindTexture(fastTexture);
 		}
+
+		// Update render data if necessary
+		if (CLAIMS_DIRTY) {
+			updateRenderData();
+			CLAIMS_DIRTY = false;
+		}
+
+		// Slower update speed on fast graphics
+		if (player.world.rand.nextInt(WarForgeConfig.RANDOM_BORDER_REDRAW_DENOMINATOR) == 0) {
+			updateRandomMesh();
+		}
+
+		// Render chunk borders
+		renderChunkBorders(x, y, z);
+
+		// Render player placement overlay (if necessary)
+		renderPlayerPlacementOverlay(player, x, y, z, event.getPartialTicks());
+
+		// Render flags (Citadels)
+		//renderCitadelFlags(x, y, z);
+
+		// Reset OpenGL state
+		GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+		GlStateManager.disableLighting();
 		GlStateManager.popAttrib();
 		GlStateManager.popMatrix();
 	}
-	
 
-	
+	private void renderChunkBorders(double x, double y, double z) {
+		for (HashMap.Entry<DimChunkPos, BorderRenderData> kvp : renderData.entrySet()) {
+			DimChunkPos pos = kvp.getKey();
+			BorderRenderData data = kvp.getValue();
+
+			if (data.renderList >= 0) {
+				GlStateManager.pushMatrix();
+
+				int colour = data.claim.getColour();
+				float r = (float)(colour >> 16 & 255) / 255.0F;
+				float g = (float)(colour >> 8 & 255) / 255.0F;
+				float b = (float)(colour & 255) / 255.0F;
+				GlStateManager.color(r, g, b, 1.0F);
+
+				GlStateManager.translate(pos.x * 16 - x, 0 - y, pos.z * 16 - z);
+				GlStateManager.callList(data.renderList);
+
+				GlStateManager.popMatrix();
+			}
+		}
+	}
+
+	private void renderPlayerPlacementOverlay(EntityPlayer player, double x, double y, double z, float partialTicks) {
+		if (player.getHeldItemMainhand().getItem() instanceof ItemBlock) {
+			boolean shouldRender = false;
+			Block holding = ((ItemBlock)player.getHeldItemMainhand().getItem()).getBlock();
+
+			// Check if the block being held is one that should render the placement overlay
+			if (holding == Content.basicClaimBlock || holding == Content.citadelBlock || holding == Content.reinforcedClaimBlock) {
+				shouldRender = true;
+			}
+
+			// If we need to render, check for ray tracing and render accordingly
+			if (shouldRender) {
+				renderPlacementOverlay(player, x, y, z, partialTicks);
+			}
+		}
+	}
+
+	private void renderPlacementOverlay(EntityPlayer player, double x, double y, double z, float partialTicks) {
+		DimChunkPos playerPos = new DimChunkPos(player.dimension, player.getPosition());
+		RayTraceResult result = player.rayTrace(10.0f, partialTicks);
+		if (result != null && result.typeOfHit == RayTraceResult.Type.BLOCK) {
+			playerPos = new DimChunkPos(player.dimension, result.getBlockPos());
+		}
+
+		boolean canPlace = checkPlacementValidity(playerPos, player.getHeldItem(EnumHand.MAIN_HAND).getItem(), player.getHorizontalFacing());
+		GlStateManager.color(canPlace ? 0f : 1f, canPlace ? 1f : 0f, 0f, 1.0F);
+		Minecraft.getMinecraft().renderEngine.bindTexture(overlayTex);
+		GlStateManager.translate(playerPos.x * 16 - x, 0 - y, playerPos.z * 16 - z);
+
+		for (int i = 0; i < 16; i++) {
+			for (int k = 0; k < 16; k++) {
+				BlockPos pos = new BlockPos(playerPos.x * 16 + i, player.posY, playerPos.z * 16 + k);
+				tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
+				tess.getBuffer().pos(i, pos.getY() + 1.5d, k).tex(0f, 0f).endVertex();
+				tess.getBuffer().pos(i + 1, pos.getY() + 1.5d, k).tex(1f, 0f).endVertex();
+				tess.getBuffer().pos(i + 1, pos.getY() + 1.5d, k + 1).tex(1f, 1f).endVertex();
+				tess.getBuffer().pos(i, pos.getY() + 1.5d, k + 1).tex(0f, 1f).endVertex();
+				tess.draw();
+			}
+		}
+	}
+
+	private boolean checkPlacementValidity(DimChunkPos playerPos, Item holding, EnumFacing facing) {
+		boolean canPlace = true;
+		List<DimChunkPos> siegeablePositions = new ArrayList<>();
+
+		for (TileEntity te : Minecraft.getMinecraft().world.loadedTileEntityList) {
+			if (te instanceof IClaim) {
+				DimBlockPos blockPos = ((IClaim) te).getClaimPos();
+				DimChunkPos chunkPos = blockPos.toChunkPos();
+
+				if (playerPos.x == chunkPos.x && playerPos.z == chunkPos.z) {
+					canPlace = false;
+				}
+				if (((IClaim) te).canBeSieged()) {
+					siegeablePositions.add(chunkPos);
+				}
+			}
+		}
+
+		// If holding siege camp block, allow placement if adjacent to siegable positions
+		if (holding == Content.siegeCampBlockItem) {
+			canPlace = canPlace && siegeablePositions.contains(playerPos.Offset(facing, 1));
+		}
+
+		return canPlace;
+	}
+
+//	private void renderCitadelFlags(double x, double y, double z) {
+//		for (TileEntity te : Minecraft.getMinecraft().world.loadedTileEntityList) {
+//			if (te instanceof TileEntityCitadel citadel) {
+//				DimBlockPos blockPos = ((IClaim) te).getClaimPos();
+//				double distance = Math.sqrt(Math.pow(blockPos.getX() - x, 2) + Math.pow(blockPos.getY() - y, 2) + Math.pow(blockPos.getZ() - z, 2));
+//				double groundLevelBlend = Math.max(0.0d, Math.min(1.0d, (skyRenderDistance - distance) / (skyRenderDistance - groundRenderDistance)));
+//				groundLevelBlend = groundLevelBlend * groundLevelBlend * (3 - 2 * groundLevelBlend);
+//
+//				ItemStack bannerStack = citadel.getStackInSlot(TileEntityCitadel.BANNER_SLOT_INDEX);
+//				if (bannerTextures.containsKey(bannerStack)) {
+//					Minecraft.getMinecraft().renderEngine.bindTexture(bannerTextures.get(bannerStack));
+//				} else {
+//					loadAndRenderBanner(citadel, bannerStack, groundLevelBlend, x, y, z);
+//				}
+//			}
+//		}
+//	}
+
+//	private void loadAndRenderBanner(TileEntityCitadel citadel, ItemStack bannerStack, double groundLevelBlend, double x, double y, double z) {
+//		ItemBanner banner = (ItemBanner) bannerStack.getItem();
+//		EnumDyeColor baseColour = ItemBanner.getBaseColor(bannerStack);
+//		List<BannerPattern> patternList = new ArrayList<>();
+//		List<EnumDyeColor> colorList = new ArrayList<>();
+//		patternList.add(BannerPattern.BASE);
+//		colorList.add(baseColour);
+//
+//		if (bannerStack.hasTagCompound() && bannerStack.getTagCompound().hasKey("Patterns", 9)) {
+//			NBTTagList patterns = bannerStack.getTagCompound().getTagList("Patterns", 10).copy();
+//			for (int p = 0; p < patterns.tagCount(); p++) {
+//				NBTTagCompound nbttagcompound = patterns.getCompoundTagAt(p);
+//				BannerPattern bannerpattern = BannerPattern.byHash(nbttagcompound.getString("Pattern"));
+//				if (bannerpattern != null) {
+//					patternList.add(bannerpattern);
+//					colorList.add(EnumDyeColor.byDyeDamage(nbttagcompound.getInteger("Color")));
+//				}
+//			}
+//		}
+//
+//		StringBuilder patternResourceLocation = new StringBuilder("b" + baseColour.getDyeDamage());
+//		ResourceLocation resLoc = BannerTextures.BANNER_DESIGNS.getResourceLocation(patternResourceLocation.toString(), patternList, colorList);
+//		bannerTextures.put(bannerStack, resLoc);
+//		Minecraft.getMinecraft().renderEngine.bindTexture(resLoc);
+//
+//		GlStateManager.pushMatrix();
+//		double deltaX = citadel.getPos().getX() - x;
+//		double deltaZ = citadel.getPos().getZ() - z;
+//		float angle = (float) Math.atan2(deltaZ, deltaX) * 180f / (float) Math.PI + 90f;
+//		double yPos = citadel.getPos().getY() + 2d;
+//		yPos = 256 + (yPos - 256) * groundLevelBlend;
+//		float scale = (float) (1d * groundLevelBlend + 10d * (1d - groundLevelBlend));
+//		GlStateManager.translate(0.5d + citadel.getPos().getX() - x, yPos - y, 0.5d + citadel.getPos().getZ() - z);
+//		GlStateManager.rotate(angle, 0.0F, 1.0F, 0.0F);
+//		this.bannerModel.renderBanner(1.0f);
+//		GlStateManager.popMatrix();
+//	}
+
+
+
+
 	private void vertexAt(DimChunkPos chunkPos, World world, int x, int z, double groundLevelBlend, double playerHeight)
 	{
 		double topHeight = playerHeight + 128;

@@ -1,26 +1,12 @@
 package com.flansmod.warforge.common;
 
-import com.flansmod.warforge.common.blocks.BlockAdminClaim;
-import com.flansmod.warforge.common.blocks.BlockBasicClaim;
-import com.flansmod.warforge.common.blocks.BlockCitadel;
-import com.flansmod.warforge.common.blocks.BlockLeaderboard;
-import com.flansmod.warforge.common.blocks.BlockSiegeCamp;
-import com.flansmod.warforge.common.blocks.BlockYieldProvider;
-import com.flansmod.warforge.common.blocks.TileEntityAdminClaim;
-import com.flansmod.warforge.common.blocks.TileEntityBasicClaim;
-import com.flansmod.warforge.common.blocks.TileEntityCitadel;
-import com.flansmod.warforge.common.blocks.TileEntityLeaderboard;
-import com.flansmod.warforge.common.blocks.TileEntityReinforcedClaim;
-import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
+import com.flansmod.warforge.common.blocks.*;
 import com.flansmod.warforge.server.Leaderboard.FactionStat;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
@@ -30,14 +16,14 @@ import net.minecraftforge.registries.IForgeRegistry;
 
 public class Content 
 {
-	public Block citadelBlock, basicClaimBlock, reinforcedClaimBlock, siegeCampBlock;
-	public Item citadelBlockItem, basicClaimBlockItem, reinforcedClaimBlockItem, siegeCampBlockItem;
+	static public Block citadelBlock, basicClaimBlock, reinforcedClaimBlock, siegeCampBlock, statue, dummyTranslusent;
+	static public Item citadelBlockItem, basicClaimBlockItem, reinforcedClaimBlockItem, siegeCampBlockItem;
 	
-	public Block adminClaimBlock;
-	public Item adminClaimBlockItem;
+	static public Block adminClaimBlock;
+	static public Item adminClaimBlockItem;
 	
-	public Block topLeaderboardBlock, notorietyLeaderboardBlock, wealthLeaderboardBlock, legacyLeaderboardBlock;
-	public Item topLeaderboardItem, notorietyLeaderboardItem, wealthLeaderboardItem, legacyLeaderboardItem;
+	static public Block topLeaderboardBlock, notorietyLeaderboardBlock, wealthLeaderboardBlock, legacyLeaderboardBlock;
+	static public Item topLeaderboardItem, notorietyLeaderboardItem, wealthLeaderboardItem, legacyLeaderboardItem;
 	
 	
 	public void preInit()
@@ -58,6 +44,13 @@ public class Content
         siegeCampBlock = new BlockSiegeCamp(Material.ROCK).setRegistryName("siegecampblock").setTranslationKey("siegecampblock");
         siegeCampBlockItem = new ItemBlock(siegeCampBlock).setRegistryName("siegecampblock").setTranslationKey("siegecampblock");
         GameRegistry.registerTileEntity(TileEntitySiegeCamp.class, new ResourceLocation(WarForgeMod.MODID, "siegecamp"));
+
+		//Dummy Block
+		statue = new BlockDummy().setRegistryName("dummy").setTranslationKey("dummy");
+		dummyTranslusent = new BlockDummyTransparent().setRegistryName("dummy_translusent").setTranslationKey("dummy_translusent");
+		GameRegistry.registerTileEntity(TileEntityDummy.class, new ResourceLocation(WarForgeMod.MODID, "tileentity_dummy"));
+
+
  
         // Admin claim block
         adminClaimBlock = new BlockAdminClaim().setRegistryName("adminclaimblock").setTranslationKey("adminclaimblock");
@@ -86,7 +79,7 @@ public class Content
 		final Item[] items = {
 				citadelBlockItem, basicClaimBlockItem, reinforcedClaimBlockItem, siegeCampBlockItem, adminClaimBlockItem,
 				topLeaderboardItem, wealthLeaderboardItem, notorietyLeaderboardItem,
-				legacyLeaderboardItem
+				legacyLeaderboardItem,
 		};
 		IForgeRegistry<Item> registry = event.getRegistry();
 		for(Item item : items) {
@@ -101,7 +94,7 @@ public class Content
 		final Block[] blocks = {
 			citadelBlock, basicClaimBlock, reinforcedClaimBlock, siegeCampBlock, adminClaimBlock,
 			topLeaderboardBlock, wealthLeaderboardBlock, notorietyLeaderboardBlock,
-			legacyLeaderboardBlock
+			legacyLeaderboardBlock, statue, dummyTranslusent
 		};
 		IForgeRegistry<Block> registry = event.getRegistry();
 		for(Block block : blocks) {

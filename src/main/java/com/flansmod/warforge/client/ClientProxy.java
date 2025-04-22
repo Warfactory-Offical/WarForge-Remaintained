@@ -3,16 +3,12 @@ package com.flansmod.warforge.client;
 import java.util.HashMap;
 import java.util.UUID;
 
+import com.flansmod.warforge.common.blocks.*;
 import org.lwjgl.input.Keyboard;
 
 import com.flansmod.warforge.common.CommonProxy;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
-import com.flansmod.warforge.common.blocks.TileEntityBasicClaim;
-import com.flansmod.warforge.common.blocks.TileEntityCitadel;
-import com.flansmod.warforge.common.blocks.TileEntityLeaderboard;
-import com.flansmod.warforge.common.blocks.TileEntityReinforcedClaim;
-import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
 import com.flansmod.warforge.common.network.PacketRequestFactionInfo;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
 
@@ -57,7 +53,9 @@ public class ClientProxy extends CommonProxy
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityBasicClaim.class, new TileEntityClaimRenderer());
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityReinforcedClaim.class, new TileEntityClaimRenderer());
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntitySiegeCamp.class, new TileEntityClaimRenderer());
-		
+
+		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityDummy.class, new RenderTileEntityDummy());
+
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityLeaderboard.class, new TileEntityLeaderboardRenderer());
 	}
 	
@@ -100,7 +98,7 @@ public class ClientProxy extends CommonProxy
 	
 	@SubscribeEvent
 	public void registerModels(ModelRegistryEvent event)
-	{		
+	{
 		RegisterModel(WarForgeMod.CONTENT.citadelBlockItem);
 		RegisterModel(WarForgeMod.CONTENT.basicClaimBlockItem);
 		RegisterModel(WarForgeMod.CONTENT.reinforcedClaimBlockItem);

@@ -1,0 +1,10 @@
+{
+  "parent": "warforge:block/base/statue_combined",
+  "textures": {
+    "0": "warforge:blocks/statue_king",
+    "1": "warforge:blocks/flagpole_basicclaim_bottom",
+    "2": "warforge:blocks/flagpole_middle",
+    "particle": "warforge:blocks/flagpole_basicclaim_bottom"
+  }
+}
+

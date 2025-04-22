@@ -2,10 +2,7 @@ package com.flansmod.warforge.common.blocks;
 
 import java.util.UUID;
 
-import com.flansmod.warforge.common.CommonProxy;
-import com.flansmod.warforge.common.DimBlockPos;
-import com.flansmod.warforge.common.DimChunkPos;
-import com.flansmod.warforge.common.WarForgeMod;
+import com.flansmod.warforge.common.*;
 import com.flansmod.warforge.common.network.PacketFactionInfo;
 import com.flansmod.warforge.server.Faction;
 
@@ -22,7 +19,6 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
@@ -31,7 +27,9 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
-public class BlockCitadel extends Block implements ITileEntityProvider
+import static com.flansmod.warforge.common.blocks.BlockDummy.MODEL;
+
+public class BlockCitadel extends Block implements ITileEntityProvider, IMultiBlock
 {
 	public BlockCitadel(Material materialIn) 
 	{
@@ -40,17 +38,18 @@ public class BlockCitadel extends Block implements ITileEntityProvider
 		this.setBlockUnbreakable();
 		this.setResistance(30000000f);
 	}
-	
+
+
 	@Override
     public boolean isOpaqueCube(IBlockState state) { return false; }
 	@Override
     public boolean isFullCube(IBlockState state) { return false; }
 	@Override
     public EnumBlockRenderType getRenderType(IBlockState state) { return EnumBlockRenderType.MODEL; }
-	@Override
-	public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
-		return layer == BlockRenderLayer.TRANSLUCENT;
-	}
+//	@Override
+//	public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
+//		return layer == BlockRenderLayer.TRANSLUCENT;
+//	}
 
 	/* Unused code that errors #3
 	@SideOnly(Side.CLIENT)
@@ -70,9 +69,10 @@ public class BlockCitadel extends Block implements ITileEntityProvider
 		UUID existingClaim = WarForgeMod.FACTIONS.getClaim(new DimChunkPos(world.provider.getDimension(), pos));
 		if(!existingClaim.equals(Faction.nullUuid))
 			return false;
-		
 		// Can only place on a solid surface
-        return world.getBlockState(pos.add(0, -1, 0)).isSideSolid(world, pos.add(0, -1, 0), EnumFacing.UP);
+		if(!world.getBlockState(pos.add(0, -1, 0)).isSideSolid(world, pos.add(0, -1, 0), EnumFacing.UP))
+			return false;
+        return world.isAirBlock(pos.up()) && world.isAirBlock(pos.up());
     }
 	
 	@Override
@@ -83,6 +83,22 @@ public class BlockCitadel extends Block implements ITileEntityProvider
 		{
 			TileEntityCitadel citadel = (TileEntityCitadel)te;
 			citadel.onPlacedBy(placer);
+			if(world.isRemote) return;
+			world.setBlockState(pos.up(), Content.statue.getDefaultState().withProperty(MODEL, BlockDummy.modelEnum.KNIGHT), 3);
+			world.notifyBlockUpdate(pos.up(), state, state, 3);
+
+			TileEntity teMiddle = world.getTileEntity(pos.up());
+			if (teMiddle instanceof TileEntityDummy) {
+				((TileEntityDummy) teMiddle).setMaster(pos);
+			}
+
+			world.setBlockState(pos.up(2), Content.dummyTranslusent.getDefaultState().withProperty(MODEL, BlockDummy.modelEnum.TRANSLUCENT ),3 );
+			world.notifyBlockUpdate(pos.up(2), state, state, 3);
+
+			TileEntity teTop = world.getTileEntity(pos.up(2));
+			if (teTop instanceof TileEntityDummy) {
+				((TileEntityDummy) teMiddle).setMaster(pos);
+			}
 		}
     }
 	
@@ -155,6 +171,8 @@ public class BlockCitadel extends Block implements ITileEntityProvider
             InventoryHelper.dropInventoryItems(worldIn, pos, (TileEntityYieldCollector)tileentity);
             worldIn.updateComparatorOutputLevel(pos, this);
         }
+		worldIn.setBlockToAir(pos.up());
+		worldIn.setBlockToAir(pos.up(2));
 
         super.breakBlock(worldIn, pos, state);
     }

@@ -377,7 +377,7 @@ public class FactionStorage {
         sieges.remove(chunkPos);
     }
 
-    public boolean RequestCreateFaction(TileEntityCitadel citadel, EntityPlayer player, String factionName, int colour) {
+    public boolean requestCreateFaction(TileEntityCitadel citadel, EntityPlayer player, String factionName, int colour) {
         if (citadel == null) {
             player.sendMessage(new TextComponentString("You can't create a faction without a citadel"));
             return false;

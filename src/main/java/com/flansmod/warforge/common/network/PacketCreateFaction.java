@@ -51,7 +51,7 @@ public class PacketCreateFaction extends PacketBase
 			TileEntity te = playerEntity.world.getTileEntity(mCitadelPos.toRegularPos());
 			if(te != null && te instanceof TileEntityCitadel)
 			{
-				WarForgeMod.FACTIONS.RequestCreateFaction((TileEntityCitadel)te, playerEntity, mFactionName, mColour);
+				WarForgeMod.FACTIONS.requestCreateFaction((TileEntityCitadel)te, playerEntity, mFactionName, mColour);
 			}
 		}
 	}
