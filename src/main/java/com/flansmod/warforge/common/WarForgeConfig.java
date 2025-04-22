@@ -155,12 +155,12 @@ public class WarForgeConfig {
     public static String[] VAULT_BLOCK_IDS = new String[]{"minecraft:gold_block"};
     public static ArrayList<Block> VAULT_BLOCKS = new ArrayList<Block>();
     public static float SHOW_NEW_AREA_TIMER = 200.0f;
-    public static int RANDOM_BORDER_REDRAW_DENOMINATOR = 5;
+    public static int RANDOM_BORDER_REDRAW_DENOMINATOR = 60;
     public static int FACTION_NAME_LENGTH_MAX = 32;
     public static boolean BLOCK_ENDER_CHEST = false;
     public static boolean SHOW_YIELD_TIMERS = true;
     public static int CITADEL_MOVE_NUM_DAYS = 7;
-    public static boolean DO_FANCY_RENDERING = false;
+    public static boolean DO_FANCY_RENDERING = true;
     public static boolean SHOW_OPPONENT_BORDERS = true;
     public static boolean SHOW_ALLY_BORDERS = true;
     public static boolean ENABLE_F_HOME_COMMAND = true;
