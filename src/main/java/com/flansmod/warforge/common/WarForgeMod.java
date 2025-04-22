@@ -1,5 +1,6 @@
 package com.flansmod.warforge.common;
 
+import com.flansmod.warforge.common.blocks.IMultiBlockInit;
 import com.flansmod.warforge.common.network.PacketSiegeCampProgressUpdate;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
 import com.flansmod.warforge.server.*;
@@ -153,6 +154,10 @@ public class WarForgeMod implements ILateMixinLoader
 		WarForgeConfig.CLAIM_FOE.findBlocks();
 		WarForgeConfig.SIEGECAMP_SIEGER.findBlocks();
 		WarForgeConfig.SIEGECAMP_OTHER.findBlocks();
+		IMultiBlockInit.registerMaps();
+
+
+
 	}
     
     public long getSiegeDayLengthMS()
