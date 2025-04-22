@@ -146,7 +146,7 @@ public class TileEntityDummy extends TileEntity implements IBlockDummy {
     public AxisAlignedBB getRenderBoundingBox() {
         if(canRenderLaser) {
             BlockPos pos = getPos();
-            return new AxisAlignedBB(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1, 256, pos.getZ() + 1);
+            return new AxisAlignedBB(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 0.5, 256, pos.getZ() + 0.5);
         }
         return super.getRenderBoundingBox();
     }

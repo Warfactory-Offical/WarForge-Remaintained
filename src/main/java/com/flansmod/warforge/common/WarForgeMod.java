@@ -529,7 +529,9 @@ public class WarForgeMod implements ILateMixinLoader
 		return !matchesAnyInvalidBlocks && (block.equals(CONTENT.citadelBlock)
 				|| block.equals(CONTENT.basicClaimBlock)
 				|| block.equals(CONTENT.reinforcedClaimBlock)
-				|| block.equals(CONTENT.siegeCampBlock));
+				|| block.equals(CONTENT.siegeCampBlock)
+				|| block.equals(CONTENT.statue)
+				|| block.equals(CONTENT.dummyTranslusent));
 	}
 
 	public static String formatTime(long ms) {
