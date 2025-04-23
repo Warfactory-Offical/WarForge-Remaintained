@@ -29,7 +29,6 @@ import net.minecraft.world.World;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 import static com.flansmod.warforge.common.Content.dummyTranslusent;
@@ -47,7 +46,7 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
     }
 
     public void initMap() {
-         mbmap = Collections.unmodifiableMap(new HashMap<IBlockState, Vec3i>() {{
+         multiBlockMap = Collections.unmodifiableMap(new HashMap<IBlockState, Vec3i>() {{
             put(statue.getDefaultState().withProperty(MODEL, KING), new Vec3i(0, 1, 0));
             put(dummyTranslusent.getDefaultState().withProperty(MODEL, TRANSLUCENT), new Vec3i(0, 2, 0));
         }});

@@ -2,7 +2,7 @@ package com.flansmod.warforge.common.blocks;
 
 import com.flansmod.warforge.common.Content;
 import net.minecraft.block.Block;
-import net.minecraft.block.material.MapColor;
+import net.minecraft.block.material.EnumPushReaction;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
@@ -18,7 +18,7 @@ import static com.flansmod.warforge.common.blocks.BlockDummy.MODEL;
 
 public abstract class MultiBlockColumn extends Block implements IMultiBlockInit {
 
-    protected Map<IBlockState, Vec3i> mbmap;
+    protected Map<IBlockState, Vec3i> multiBlockMap;
 
     public MultiBlockColumn(Material materialIn) {
         super(materialIn);
@@ -26,10 +26,14 @@ public abstract class MultiBlockColumn extends Block implements IMultiBlockInit 
     }
 
     public boolean canPlaceBlockAt(World world, BlockPos pos) {
-        for (Vec3i relativePos : mbmap.values())
+        for (Vec3i relativePos : multiBlockMap.values())
             if (!world.isAirBlock(pos.add(relativePos))) return false;
         return true;
 
+    }
+
+    public EnumPushReaction getPushReaction(IBlockState state) {
+        return EnumPushReaction.BLOCK;
     }
 
 
@@ -54,9 +58,9 @@ public abstract class MultiBlockColumn extends Block implements IMultiBlockInit 
 
 
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-        for (Vec3i offset : mbmap.values()) {
+        for (Vec3i offset : multiBlockMap.values()) {
             BlockPos offsetPos = pos.add(offset);
-                worldIn.setBlockToAir(offsetPos);
+            worldIn.setBlockToAir(offsetPos);
         }
         super.breakBlock(worldIn, pos, state);
     }

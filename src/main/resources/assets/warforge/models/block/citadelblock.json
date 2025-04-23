@@ -1,12 +1,12 @@
 {
   "parent": "block/cube",
   "textures": {
-    "down": "warforge:blocks/pedestal_bottom",
-    "up": "warforge:blocks/pedestal_top",
-    "north": "warforge:blocks/pedestal_front",
-    "south": "warforge:blocks/pedestal_side_alt",
-    "west": "warforge:blocks/pedestal_side_alt",
-    "east": "warforge:blocks/pedestal_side_alt"
+    "down": "warforge:blocks/pedestal_bottom_light",
+    "up": "warforge:blocks/pedestal_top_light",
+    "north": "warforge:blocks/pedestal_front_light",
+    "south": "warforge:blocks/pedestal_side_alt_light",
+    "west": "warforge:blocks/pedestal_side_alt_light",
+    "east": "warforge:blocks/pedestal_side_alt_light"
   }
 }
 

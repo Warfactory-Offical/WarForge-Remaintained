@@ -18,6 +18,7 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagIntArray;
@@ -25,6 +26,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
@@ -32,6 +34,7 @@ import net.minecraft.world.World;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class FactionStorage {
     // SafeZone and WarZone
@@ -446,6 +449,33 @@ public class FactionStorage {
 
         return true;
     }
+   public boolean requestLevelUp(EntityPlayerMP officer, UUID factionID){
+       Faction faction = getFaction(factionID);
+       if (faction == null) {
+           officer.sendMessage(new TextComponentString("That faction doesn't exist"));
+           return false;
+       }
+
+       if (!faction.isPlayerInFaction(officer.getUniqueID())) {
+           officer.sendMessage(new TextComponentString("You are not in that faction"));
+           return false;
+       }
+       if(!faction.isPlayerRoleInFaction(officer.getUniqueID(), Role.OFFICER) && !faction.isPlayerRoleInFaction(officer.getUniqueID(), Role.LEADER)){
+           officer.sendMessage(new TextComponentString("You must be officer or higher to upgrade citadel"));
+           return false;
+       }
+
+       //NonNullList<StackComparable> requiredItems = UpgradeHandler.levels.get(faction.citadelLevel+1);
+       List<ItemStack> invCopy = officer.inventory.mainInventory.stream()
+               .map(ItemStack::copy)
+               .toList(); //Copy for safety
+
+
+
+        return true;
+   }
+
+
 
     public boolean requestRemovePlayerFromFaction(ICommandSender remover, UUID factionID, UUID toRemove) {
         Faction faction = getFaction(factionID);
@@ -484,8 +514,7 @@ public class FactionStorage {
                 faction.messageAll(new TextComponentString(userProfile.getName() + " left " + faction.name));
                 if (faction.getMemberCount() <= 1)
                     faction.messageAll(new TextComponentString(faction.name + "was abandoned and disbanded."));
-            }
-            else
+            } else
                 faction.messageAll(new TextComponentString(userProfile.getName() + " was kicked from " + faction.name));
         } else {
             remover.sendMessage(new TextComponentString("Error: Could not get user profile"));

@@ -79,7 +79,7 @@ public class TileEntityDummy extends TileEntity implements IBlockDummy {
             WarForgeMod.LOGGER.error("TileEntityDummy at " + this.pos + "had null Master pos, attempting to locate it");
             for (int i = 1; i <= 3; i++) {
                 Block block = world.getBlockState(pos.down(i)).getBlock();
-                if (block instanceof IMultiBlock) {
+                if (block instanceof MultiBlockColumn) {
                     setMaster(pos.down(i));
                     WarForgeMod.LOGGER.info("TileEntityDummy at " + this.pos + " found master at " + pos.down(i));
                     markDirty();
@@ -125,7 +125,8 @@ public class TileEntityDummy extends TileEntity implements IBlockDummy {
         tags.setFloat("r", laserRGB[0]);
         tags.setFloat("g", laserRGB[1]);
         tags.setFloat("b", laserRGB[2]);
-        tags.setLong("master", masterPos.toLong());
+        if(masterPos != null)
+            tags.setLong("master", masterPos.toLong());
 
 
         return tags;

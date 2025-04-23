@@ -1,5 +1,7 @@
 package com.flansmod.warforge.common.blocks;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.UUID;
 
 import com.flansmod.warforge.common.CommonProxy;
@@ -8,7 +10,6 @@ import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketFactionInfo;
 import com.flansmod.warforge.server.Faction;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -25,11 +26,17 @@ import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
-public class BlockBasicClaim extends Block implements ITileEntityProvider
+import static com.flansmod.warforge.common.Content.dummyTranslusent;
+import static com.flansmod.warforge.common.Content.statue;
+import static com.flansmod.warforge.common.blocks.BlockDummy.MODEL;
+import static com.flansmod.warforge.common.blocks.BlockDummy.modelEnum.*;
+
+public class BlockBasicClaim extends MultiBlockColumn implements ITileEntityProvider
 {
 	public BlockBasicClaim(Material materialIn) 
 	{
@@ -40,14 +47,14 @@ public class BlockBasicClaim extends Block implements ITileEntityProvider
 	}
 	
 	@Override
-    public boolean isOpaqueCube(IBlockState state) { return false; }
+    public boolean isOpaqueCube(IBlockState state) { return true; }
 	@Override
-    public boolean isFullCube(IBlockState state) { return false; }
+    public boolean isFullCube(IBlockState state) { return true; }
 	@Override
     public EnumBlockRenderType getRenderType(IBlockState state) { return EnumBlockRenderType.MODEL; }
 	@Override
 	public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
-		return layer == BlockRenderLayer.TRANSLUCENT;
+		return layer == BlockRenderLayer.SOLID;
 	}
 
 
@@ -77,10 +84,11 @@ public class BlockBasicClaim extends Block implements ITileEntityProvider
 				return false;
 					
 			// Can only place on a solid surface
-            return world.getBlockState(pos.add(0, -1, 0)).isSideSolid(world, pos.add(0, -1, 0), EnumFacing.UP);
+            if( !world.getBlockState(pos.add(0, -1, 0)).isSideSolid(world, pos.add(0, -1, 0), EnumFacing.UP))
+				return false;
 		}
 		
-		return true;
+		return super.canPlaceBlockAt(world, pos);
 	}
 
 	@Override
@@ -94,6 +102,7 @@ public class BlockBasicClaim extends Block implements ITileEntityProvider
 				TileEntityBasicClaim claim = (TileEntityBasicClaim)te;
 
 				WarForgeMod.FACTIONS.onNonCitadelClaimPlaced(claim, placer);
+				super.onBlockPlacedBy(world,pos,state,placer,stack);
 			}
 		}
     }
@@ -151,5 +160,12 @@ public class BlockBasicClaim extends Block implements ITileEntityProvider
 
         super.breakBlock(worldIn, pos, state);
     }
-	
+
+	@Override
+	public void initMap() {
+		multiBlockMap = Collections.unmodifiableMap(new HashMap<IBlockState, Vec3i>() {{
+			put(statue.getDefaultState().withProperty(MODEL, KNIGHT), new Vec3i(0, 1, 0));
+			put(dummyTranslusent.getDefaultState().withProperty(MODEL, TRANSLUCENT), new Vec3i(0, 2, 0));
+		}});
+	}
 }
