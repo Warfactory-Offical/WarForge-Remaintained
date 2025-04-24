@@ -101,7 +101,7 @@ public class UpgradeHandler {
             }
         }
 
-        // Ensure claim limits are non-decreasing
+        // Ensure claim limits are non-decreasing, preventing deadlocks
         for (int i = 1; i < claims.size(); i++) {
             if (claims.get(i) != -1 && claims.get(i - 1) != -1 && claims.get(i) < claims.get(i - 1)) {
                 throw new IllegalStateException("Claim limit at level " + i + " is less than previous level");
