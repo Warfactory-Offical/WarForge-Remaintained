@@ -465,12 +465,10 @@ public class FactionStorage {
            return false;
        }
 
-       //NonNullList<StackComparable> requiredItems = UpgradeHandler.levels.get(faction.citadelLevel+1);
+       UpgradeHandler.StackComparable[] requiredItems = WarForgeMod.UPGRADE_HANDLER.getReuquiremetsFor(faction.citadelLevel +1);
        List<ItemStack> invCopy = officer.inventory.mainInventory.stream()
                .map(ItemStack::copy)
                .toList(); //Copy for safety
-
-
 
         return true;
    }

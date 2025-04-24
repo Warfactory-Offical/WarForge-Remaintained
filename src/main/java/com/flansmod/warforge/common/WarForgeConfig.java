@@ -27,71 +27,7 @@ public class WarForgeConfig {
     public static final String CATEGORY_WARPS = "Warps";
     // Config
     public static Configuration configFile;
-    public static boolean ENABLE_WORLD_GEN = false;
-    public static int DENSE_IRON_CELL_SIZE = 64;
-    public static int DENSE_IRON_DEPOSIT_RADIUS = 4;
-    public static int DENSE_IRON_MIN_INSTANCES_PER_CELL = 1;
-    public static int DENSE_IRON_MAX_INSTANCES_PER_CELL = 3;
-    public static int DENSE_IRON_MIN_HEIGHT = 28;
-    public static int DENSE_IRON_MAX_HEIGHT = 56;
-    public static int DENSE_IRON_OUTER_SHELL_RADIUS = 8;
-    public static float DENSE_IRON_OUTER_SHELL_CHANCE = 0.1f;
-    public static int DENSE_GOLD_CELL_SIZE = 128;
-    public static int DENSE_GOLD_DEPOSIT_RADIUS = 3;
-    public static int DENSE_GOLD_MIN_INSTANCES_PER_CELL = 1;
-    public static int DENSE_GOLD_MAX_INSTANCES_PER_CELL = 2;
-    public static int DENSE_GOLD_MIN_HEIGHT = 6;
-    public static int DENSE_GOLD_MAX_HEIGHT = 26;
-    public static int DENSE_GOLD_OUTER_SHELL_RADIUS = 6;
-    public static float DENSE_GOLD_OUTER_SHELL_CHANCE = 0.05f;
-    public static int DENSE_REDSTONE_CELL_SIZE = 1024;
-    public static int DENSE_REDSTONE_DEPOSIT_RADIUS = 12;
-    public static int DENSE_REDSTONE_MIN_INSTANCES_PER_CELL = 1;
-    public static int DENSE_REDSTONE_MAX_INSTANCES_PER_CELL = 1;
-    public static int DENSE_REDSTONE_MIN_HEIGHT = 6;
-    public static int DENSE_REDSTONE_MAX_HEIGHT = 14;
-    public static int DENSE_REDSTONE_OUTER_SHELL_RADIUS = 14;
-    public static float DENSE_REDSTONE_OUTER_SHELL_CHANCE = 0.05f;
-    public static int DENSE_DIAMOND_CELL_SIZE = 128;
-    public static int DENSE_DIAMOND_DEPOSIT_RADIUS = 2;
-    public static int DENSE_DIAMOND_MIN_INSTANCES_PER_CELL = 1;
-    public static int DENSE_DIAMOND_MAX_INSTANCES_PER_CELL = 1;
-    public static int DENSE_DIAMOND_MIN_HEIGHT = 1;
-    public static int DENSE_DIAMOND_MAX_HEIGHT = 4;
-    public static int DENSE_DIAMOND_OUTER_SHELL_RADIUS = 5;
-    public static float DENSE_DIAMOND_OUTER_SHELL_CHANCE = 0.025f;
-    public static int MAGMA_VENT_CELL_SIZE = 64;
-    public static int MAGMA_VENT_DEPOSIT_RADIUS = 2;
-    public static int MAGMA_VENT_MIN_INSTANCES_PER_CELL = 1;
-    public static int MAGMA_VENT_MAX_INSTANCES_PER_CELL = 1;
-    public static int MAGMA_VENT_MIN_HEIGHT = 1;
-    public static int MAGMA_VENT_MAX_HEIGHT = 4;
-    public static int MAGMA_VENT_OUTER_SHELL_RADIUS = 0;
-    public static float MAGMA_VENT_OUTER_SHELL_CHANCE = 1.0f;
-    public static int ANCIENT_OAK_CELL_SIZE = 256;
-    public static float ANCIENT_OAK_CHANCE = 0.1f;
-    public static float ANCIENT_OAK_HOLE_RADIUS = 24f;
-    public static float ANCIENT_OAK_MAX_TRUNK_RADIUS = 8f;
-    public static float ANCIENT_OAK_CORE_RADIUS = 2f;
-    public static float ANCIENT_OAK_MAX_HEIGHT = 128f;
-    public static int SLIME_POOL_CELL_SIZE = 512;
-    public static int SLIME_POOL_LAKE_RADIUS = 16;
-    public static int SLIME_POOL_LAKE_CEILING_HEIGHT = 8;
-    public static int SLIME_POOL_MIN_INSTANCES_PER_CELL = 1;
-    public static int SLIME_POOL_MAX_INSTANCES_PER_CELL = 2;
-    public static int SLIME_POOL_MIN_HEIGHT = 15;
-    public static int SLIME_POOL_MAX_HEIGHT = 30;
-    public static int SHULKER_FOSSIL_CELL_SIZE = 256;
-    public static float SHULKER_FOSSIL_MIN_ROTATIONS = 16f;
-    public static float SHULKER_FOSSIL_MAX_ROTATIONS = 8f;
-    public static float SHULKER_FOSSIL_RADIUS_PER_ROTATION = 3f;
-    public static int SHULKER_FOSSIL_MIN_INSTANCES_PER_CELL = 1;
-    public static int SHULKER_FOSSIL_MAX_INSTANCES_PER_CELL = 2;
-    public static float SHULKER_FOSSIL_DISC_THICKNESS = 8f;
-    public static int SHULKER_FOSSIL_MIN_HEIGHT = 12;
-    public static int SHULKER_FOSSIL_MAX_HEIGHT = 106;
-    public static int CLAY_POOL_CHANCE = 32;
-    public static int QUARTZ_PILLAR_CHANCE = 128;
+    public static boolean ENABLE_CITADEL_UPGRADES = false;
     public static int[] CLAIM_DIM_WHITELIST = new int[]{0};
     public static int CLAIM_STRENGTH_CITADEL = 15;
     public static int CLAIM_STRENGTH_REINFORCED = 10;
@@ -258,6 +194,7 @@ public class WarForgeConfig {
         SUPPORT_STRENGTH_REINFORCED = configFile.getInt("Reinforced Support Strength", CATEGORY_CLAIMS, SUPPORT_STRENGTH_REINFORCED, 1, 1024, "The support strength a reinforced claim gives to adjacent claims");
         SUPPORT_STRENGTH_BASIC = configFile.getInt("Basic Support Strength", CATEGORY_CLAIMS, SUPPORT_STRENGTH_BASIC, 1, 1024, "The support strength a basic claim gives to adjacent claims");
         CITADEL_MOVE_NUM_DAYS = configFile.getInt("Days Between Citadel Moves", CATEGORY_CLAIMS, CITADEL_MOVE_NUM_DAYS, 0, 1024, "How many days a faction has to wait to move their citadel again");
+        ENABLE_CITADEL_UPGRADES = configFile.getBoolean("Enable Citadel Upgrade System", CATEGORY_CLAIMS, false, "Applies claim limits that require upgrading to extend your faction's claim limit");
 
         // Siege Camp Settings
         ATTACK_STRENGTH_SIEGE_CAMP = configFile.getInt("Siege Camp Attack Strength", CATEGORY_SIEGES, ATTACK_STRENGTH_SIEGE_CAMP, 1, 1024, "How much attack pressure a siege camp exerts on adjacent enemy claims");
@@ -405,6 +342,7 @@ public class WarForgeConfig {
         }
 
         public void SyncConfig(String name, String desc) {
+
             BREAK_BLOCKS = configFile.getBoolean(name + " - Break Blocks", name, BREAK_BLOCKS, "Can players break blocks in " + desc);
             PLACE_BLOCKS = configFile.getBoolean(name + " - Place Blocks", name, PLACE_BLOCKS, "Can players place blocks in " + desc);
             BLOCK_REMOVAL = configFile.getBoolean(name + " - Block Removal", name, BLOCK_REMOVAL, "Can blocks be removed at all in (including from explosions, mobs etc) " + desc);

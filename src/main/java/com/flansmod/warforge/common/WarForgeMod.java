@@ -81,6 +81,7 @@ public class WarForgeMod implements ILateMixinLoader
 	public static final ProtectionsModule PROTECTIONS = new ProtectionsModule();
 	public static final TeleportsModule TELEPORTS = new TeleportsModule();
 	public static final PotionsModule POTIONS = new PotionsModule();
+	public static final UpgradeHandler UPGRADE_HANDLER = new UpgradeHandler();
 	
 	public static MinecraftServer MC_SERVER = null;
 	public static Random rand = new Random();
