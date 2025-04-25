@@ -30,6 +30,7 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
@@ -48,7 +49,10 @@ import net.minecraftforge.fml.common.network.NetworkRegistry;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
@@ -156,6 +160,15 @@ public class WarForgeMod implements ILateMixinLoader
 		WarForgeConfig.SIEGECAMP_SIEGER.findBlocks();
 		WarForgeConfig.SIEGECAMP_OTHER.findBlocks();
 		IMultiBlockInit.registerMaps();
+		if(WarForgeConfig.ENABLE_CITADEL_UPGRADES){
+			Path configFile = Paths.get("config/" + WarForgeMod.MODID + "/upgrade_levels.cfg");
+			try {
+				UpgradeHandler.writeStubIfEmpty(configFile);
+				UpgradeHandler.parseConfig(configFile);
+			} catch (IOException e){
+				e.printStackTrace();
+			}
+		}
 
 
 
@@ -468,6 +481,12 @@ public class WarForgeMod implements ILateMixinLoader
     			event.setCanceled(true);
     			return;
     		}
+
+			if(WarForgeConfig.ENABLE_CITADEL_UPGRADES && !playerFaction.canPlaceClaim()){
+				player.sendMessage(new TextComponentString("Your faction reached it's level's claim limit, upgrade the level to incrase the limit"));
+				event.setCanceled(true);
+				return;
+			}
     	}
     	else // Must be siege block
     	{

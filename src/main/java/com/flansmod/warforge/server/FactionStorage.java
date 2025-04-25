@@ -26,7 +26,6 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.NonNullList;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
@@ -465,10 +464,12 @@ public class FactionStorage {
            return false;
        }
 
-       UpgradeHandler.StackComparable[] requiredItems = WarForgeMod.UPGRADE_HANDLER.getReuquiremetsFor(faction.citadelLevel +1);
+       Map<UpgradeHandler.StackComparable, Integer> requiredItems = WarForgeMod.UPGRADE_HANDLER.getRequirementsFor(faction.citadelLevel +1);
        List<ItemStack> invCopy = officer.inventory.mainInventory.stream()
                .map(ItemStack::copy)
-               .toList(); //Copy for safety
+               .collect(Collectors.toList());
+                //Copy for safety
+
 
         return true;
    }

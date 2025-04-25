@@ -9,6 +9,7 @@ import net.minecraftforge.oredict.OreDictionary;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -16,110 +17,156 @@ import java.util.regex.Pattern;
 public class UpgradeHandler {
 
 
-    public StackComparable[][] LEVELS;
-    public int[] LIMITS;
-    public static final List<String> DEFAULT_CONFIG = Arrays.asList(
+    public static final List<String> STUB = Arrays.asList(
             "# Upgrade Levels Configuration",
             "# Each level starts with 'level:<number>[<claim limit>]'",
             "# Claim Limit must be a positive number above 0, -1 in claim limits denotes infinite claims",
-            "# Followed by one or more 'item:<entry>' lines",
+            "# Followed by one or more '(ore | item):<entry>[count]' lines",
+            "# Lack of count will assume 1",
             "# Entries can be:",
-            "#   - OreDict name (e.g. item:oreIron)",
-            "#   - Registry name (e.g. item:minecraft:diamond)",
+            "#   - OreDict name (e.g. ore:oreIron[64])",
+            "#   - Registry name (e.g. item:minecraft:diamond[1])",
             "#   - Registry with metadata (e.g. item:modid:some_item:2)",
             "############################################################################################",
             "# Example:",
             "level:0[5]",
-            "item:oreIron",
+            "level:1[10]",
+            "ore:ingotIron[64]",
             "item:minecraft:diamond",
             "",
-            "level:1[10]",
+            "level:2[15]",
             "item:modid:custom_item:3"
     );
+    protected HashMap<StackComparable, Integer>[] LEVELS;
+    protected int[] LIMITS;
+
+    public static void writeStubIfEmpty(Path filePath) throws IOException {
+        if (Files.notExists(filePath) || Files.size(filePath) == 0) {
+            Files.createDirectories(filePath.getParent());
+            Files.write(
+                    filePath,
+                    STUB,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE
+            );
+        }
+    }
 
     public static void parseConfig(Path path) throws IOException {
-        List<List<StackComparable>> levels = new ArrayList<>();
-        List<StackComparable> current = null;
+        List<Map<StackComparable, Integer>> levels = new ArrayList<>();
         List<Integer> claims = new ArrayList<>();
 
-        // Initialize claims with a default value (-1 for infinite)
-        claims.add(-1); // Level 0 default claim
+        // Always initialize level 0 as free, empty
+        levels.add(new HashMap<>());
+        claims.add(-1); // Default claim limit for level 0
+
+        Map<StackComparable, Integer> current = null;
+        int currentLevel = 0;
 
         for (String line : Files.readAllLines(path)) {
             line = line.trim();
             if (line.isEmpty() || line.startsWith("#")) continue;
 
-            // Parse level and claims
             if (line.startsWith("level:")) {
                 String levelSpec = line.substring(6).trim();
                 Matcher matcher = Pattern.compile("(\\d+)\\[(\\d+|-1)]").matcher(levelSpec);
                 if (!matcher.matches()) {
                     throw new IllegalArgumentException("Invalid level format: " + line);
                 }
-                int level = Integer.parseInt(matcher.group(1));
+
+                currentLevel = Integer.parseInt(matcher.group(1));
                 int claimsAtLevel = Integer.parseInt(matcher.group(2));
 
                 if (claimsAtLevel != -1 && claimsAtLevel <= 0)
                     throw new IllegalArgumentException("Claims must be > 0 or -1");
 
-                while (levels.size() <= level) {
-                    levels.add(new ArrayList<>());
-                    claims.add(-1); // Default claim value
+                while (levels.size() <= currentLevel) {
+                    levels.add(new HashMap<>());
+                    claims.add(-1); // Default to -1 if not defined yet
                 }
 
-                current = levels.get(level);
-                claims.set(level, claimsAtLevel);
-            } else if (line.startsWith("item:")) {
-                if (current == null) throw new IllegalStateException("Item defined before any level");
+                claims.set(currentLevel, claimsAtLevel);
+                current = levels.get(currentLevel);
+            } else {
+                if (current == null) {
+                    throw new IllegalStateException("Item defined before any level");
+                }
 
-                String spec = line.substring(5).trim();
-                String[] parts = spec.split(":");
+                if (currentLevel == 0) {
+                    WarForgeMod.LOGGER.warn("Ignoring item/ore line at level 0: " + line);
+                    continue;
+                }
+
+                String type = null;
+                if (line.startsWith("item:")) {
+                    type = "item";
+                } else if (line.startsWith("ore:")) {
+                    type = "ore";
+                } else {
+                    throw new IllegalArgumentException("Unknown entry type: " + line);
+                }
+
+                String content = line.substring(type.length() + 1).trim();
+                Matcher matcher = Pattern.compile("(.+?)(\\[(\\d+)])?$").matcher(content);
+                if (!matcher.matches()) {
+                    throw new IllegalArgumentException("Invalid format for line: " + line);
+                }
+
+                String rawEntry = matcher.group(1);
+                int count = matcher.group(3) != null ? Integer.parseInt(matcher.group(3)) : 1;
 
                 StackComparable sc;
-                if (parts.length == 1) {
-                    // OreDict entry
-                    sc = new StackComparable(parts[0]);
-                } else if (parts.length == 2) {
-                    // registryName only
-                    sc = new StackComparable(parts[0] + ":" + parts[1]);
-                } else if (parts.length == 3) {
-                    // registryName + meta
-                    sc = new StackComparable(parts[0] + ":" + parts[1], Integer.parseInt(parts[2]));
-                } else {
-                    throw new IllegalArgumentException("Invalid item format: " + spec);
-                }
 
-                // Check if the item exists in the registry
-                if (sc.registryName != null) {
+                if ("ore".equals(type)) {
+                    sc = new StackComparable(rawEntry);
+                } else {
+                    String[] parts = rawEntry.split(":");
+                    if (parts.length == 2) {
+                        sc = new StackComparable(parts[0] + ":" + parts[1]);
+                    } else if (parts.length == 3) {
+                        sc = new StackComparable(parts[0] + ":" + parts[1], Integer.parseInt(parts[2]));
+                    } else {
+                        throw new IllegalArgumentException("Invalid item format: " + rawEntry);
+                    }
+
                     ResourceLocation id = new ResourceLocation(sc.registryName);
                     if (!ForgeRegistries.ITEMS.containsKey(id)) {
-                        WarForgeMod.LOGGER.warn("UpgradeHandler config: Item " + id + " does not exist. Level " + levels.indexOf(current) + " may become inaccessible.");
+                        WarForgeMod.LOGGER.warn("UpgradeHandler config: Item " + id + " does not exist. Level " + currentLevel + " may become inaccessible.");
                     }
                 }
 
-                current.add(sc);
+                current.put(sc, count);
             }
         }
 
-        // Ensure claim limits are non-decreasing, preventing deadlocks
+        // Validate monotonic increasing claim limits
         for (int i = 1; i < claims.size(); i++) {
             if (claims.get(i) != -1 && claims.get(i - 1) != -1 && claims.get(i) < claims.get(i - 1)) {
                 throw new IllegalStateException("Claim limit at level " + i + " is less than previous level");
             }
         }
 
-        // Convert List<List<>> to array[][]
-        WarForgeMod.UPGRADE_HANDLER.LEVELS = new StackComparable[levels.size()][];
-        WarForgeMod.UPGRADE_HANDLER.LIMITS = new int[levels.size()];
-        for (int i = 0; i < levels.size(); i++) {
-            WarForgeMod.UPGRADE_HANDLER.LEVELS[i] = levels.get(i).toArray(new StackComparable[0]);
+        int size = levels.size();
+        WarForgeMod.UPGRADE_HANDLER.LEVELS = new HashMap[size];
+        WarForgeMod.UPGRADE_HANDLER.LIMITS = new int[size];
+        for (int i = 0; i < size; i++) {
+            WarForgeMod.UPGRADE_HANDLER.LEVELS[i] = new HashMap<>(levels.get(i));
             WarForgeMod.UPGRADE_HANDLER.LIMITS[i] = claims.get(i);
         }
     }
 
 
-    public StackComparable[] getReuquiremetsFor(int level) {
+
+    public HashMap<StackComparable, Integer> getRequirementsFor(int level) {
         return LEVELS[level];
+    }
+
+    public int getClaimLimitForLevel(int level) {
+        if (level > LIMITS.length || level < 0)
+            return -1;
+        else
+            return LIMITS[level];
     }
 
     public static class StackComparable {

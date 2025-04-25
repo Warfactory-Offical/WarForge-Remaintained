@@ -85,7 +85,6 @@ public class Faction {
     }
 
 
-
     public void update() {
         UUID uuidToRemove = nullUuid;
         for (HashMap.Entry<UUID, Float> entry : pendingInvites.entrySet()) {
@@ -236,6 +235,14 @@ public class Faction {
 
     public boolean isPlayerInFaction(UUID playerID) {
         return members.containsKey(playerID);
+    }
+
+    public boolean canPlaceClaim() {
+        int claimLimitForLevel = WarForgeMod.UPGRADE_HANDLER.getClaimLimitForLevel(citadelLevel);
+        if (claimLimitForLevel == -1)
+            return true;
+        else
+            return claimLimitForLevel > claims.size();
     }
 
     public boolean isPlayerRoleInFaction(UUID playerID, Role role) {
