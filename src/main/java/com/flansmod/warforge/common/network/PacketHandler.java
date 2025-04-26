@@ -1,11 +1,14 @@
 package com.flansmod.warforge.common.network;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import com.flansmod.warforge.common.WarForgeMod;
@@ -84,6 +87,7 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 		{
 			//Define a new buffer to store our data upon encoding
 			ByteBuf encodedData = Unpooled.buffer();
+            ByteBuf tempBuffer = Unpooled.buffer();
 			//Get the packet class
 
 			Class<? extends PacketBase> cl = msg.getClass();
@@ -96,20 +100,35 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 			byte discriminator = (byte)packets.indexOf(cl);
 			encodedData.writeByte(discriminator);
 			//Get the packet class to encode our packet
-			msg.encodeInto(ctx, encodedData);
-//			boolean shouldCompress = msg.canUseCompression() && encodedData.readableBytes() > 256;
-//
-//            if(shouldCompress){
-//                // Now we encode the data normally
-//                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-//                try (GZIPOutputStream gzipOut = new GZIPOutputStream(byteArrayOutputStream))
-//                {
-//                    byte[] data = new byte[encodedData.readableBytes()];
-//                    encodedData.readBytes(data);
-//                    gzipOut.write(data);
-//                }
-//
-//            }
+            msg.encodeInto(ctx, tempBuffer);
+			boolean shouldCompress = msg.canUseCompression() && tempBuffer.readableBytes() > 256;
+            boolean compressionFail = false;
+
+            if(shouldCompress){
+                // Now we encode the data normally
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                try (GZIPOutputStream gzipOut = new GZIPOutputStream(byteArrayOutputStream))
+                {
+                    byte[] data = new byte[tempBuffer.readableBytes()];
+                    tempBuffer.readBytes(data);
+                    gzipOut.write(data);
+
+                } catch (IOException e){
+                    compressionFail = true;
+                    WarForgeMod.LOGGER.error("Compression failed, defaulting to uncompressed data.", e);
+                }
+                if (!compressionFail) {
+                    byte[] compressedData = byteArrayOutputStream.toByteArray();
+					encodedData.writeByte(1);
+                    encodedData.writeBytes(compressedData);
+                }
+
+            }
+            // If compression failed or we don't need compression, send the uncompressed data
+            if(!shouldCompress || compressionFail) {
+				encodedData.writeByte(0); //Termination for uncompressed packets
+                msg.encodeInto(ctx, encodedData);
+            }
 
 
 			//Convert our packet into a Forge packet to get it through the Netty system
@@ -141,7 +160,16 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 
 			//Create an empty packet and decode our packet data into it
 			PacketBase packet = cl.getConstructor().newInstance();
-			packet.decodeInto(ctx, encodedData.slice());
+			byte compressionFlag = encodedData.readByte();
+			if(packet.canUseCompression() && compressionFlag == 1){
+				//Compressed
+				ByteBuf decompressedData = decompress(encodedData.slice());
+				packet.decodeInto(ctx, decompressedData);
+
+			} else {
+				//Uncompressed
+				packet.decodeInto(ctx, encodedData.slice());
+			}
 			//Check the side and handle our packet accordingly
 			switch(FMLCommonHandler.instance().getEffectiveSide())
 			{
@@ -168,6 +196,25 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 			WarForgeMod.LOGGER.error("ERROR decoding packet");
 			WarForgeMod.LOGGER.throwing(e);
 		}
+	}
+
+	private ByteBuf decompress(ByteBuf compressedData) throws IOException {
+		// Create a GZIPInputStream to decompress the data
+		ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(compressedData.array());
+		GZIPInputStream gzipInputStream = new GZIPInputStream(byteArrayInputStream);
+
+		// Use a ByteArrayOutputStream to hold the decompressed data
+		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+		// Create a buffer to read and write data
+		byte[] buffer = new byte[1024];
+		int len;
+		while ((len = gzipInputStream.read(buffer)) > 0) {
+			byteArrayOutputStream.write(buffer, 0, len);
+		}
+
+		// Convert the decompressed data into a ByteBuf and return it
+		return Unpooled.wrappedBuffer(byteArrayOutputStream.toByteArray());
 	}
 
 	@SideOnly(Side.CLIENT)
