@@ -1,5 +1,6 @@
 package com.flansmod.warforge.client;
 
+import com.cleanroommc.modularui.factory.ClientGUI;
 import com.flansmod.warforge.common.CommonProxy;
 import com.flansmod.warforge.common.ContainerCitadel;
 import com.flansmod.warforge.common.WarForgeMod;
@@ -103,6 +104,7 @@ public class GuiCitadel extends GuiContainer
 			}
 			case BUTTON_UPGRADE:
 			{
+				ClientGUI.open(new GuiUpgradePanel());
 //				PacketPlaceFlag packet = new PacketPlaceFlag();
 //				packet.pos = citadelContainer.citadel.getClaimPos();
 //				WarForgeMod.NETWORK.sendToServer(packet);

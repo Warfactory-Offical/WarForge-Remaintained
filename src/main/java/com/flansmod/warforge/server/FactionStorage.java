@@ -464,7 +464,7 @@ public class FactionStorage {
            return false;
        }
 
-       Map<UpgradeHandler.StackComparable, Integer> requiredItems = WarForgeMod.UPGRADE_HANDLER.getRequirementsFor(faction.citadelLevel +1);
+       Map<StackComparable, Integer> requiredItems = WarForgeMod.UPGRADE_HANDLER.getRequirementsFor(faction.citadelLevel +1);
        List<ItemStack> invCopy = officer.inventory.mainInventory.stream()
                .map(ItemStack::copy)
                .collect(Collectors.toList());

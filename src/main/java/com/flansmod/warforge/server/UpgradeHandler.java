@@ -1,10 +1,8 @@
 package com.flansmod.warforge.server;
 
 import com.flansmod.warforge.common.WarForgeMod;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
-import net.minecraftforge.oredict.OreDictionary;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -119,7 +117,7 @@ public class UpgradeHandler {
                 StackComparable sc;
 
                 if ("ore".equals(type)) {
-                    sc = new StackComparable(rawEntry);
+                    sc = new StackComparable().toOredict(rawEntry);
                 } else {
                     String[] parts = rawEntry.split(":");
                     if (parts.length == 2) {
@@ -169,58 +167,4 @@ public class UpgradeHandler {
             return LIMITS[level];
     }
 
-    public static class StackComparable {
-        Set<String> oredict;
-        String registryName = null;
-        short meta;
-
-        public StackComparable(String... oredict) {
-            this.oredict = new HashSet<>(Arrays.asList(oredict));
-            meta = -1;
-        }
-
-        public StackComparable(String registryName) {
-            this.registryName = registryName;
-            meta = -1;
-        }
-
-        public StackComparable(String registryName, int meta) {
-            this.registryName = registryName;
-            this.meta = (short) meta;
-        }
-
-        public static String[] getOreDictNames(ItemStack stack) {
-            int[] ids = OreDictionary.getOreIDs(stack);
-            String[] names = new String[ids.length];
-
-            for (int i = 0; i < ids.length; i++) {
-                names[i] = OreDictionary.getOreName(ids[i]);
-            }
-
-            return names;
-        }
-
-        public boolean equals(ItemStack stack) {
-            //Oredict check
-            if (oredict != null && !oredict.isEmpty()) {
-                String[] stackOreDict = getOreDictNames(stack);
-                for (String stackOreDictEntry : stackOreDict) {
-                    if (oredict.contains(stackOreDictEntry))
-                        return true;
-                }
-
-            }
-
-            //Registry key check
-            if (registryName != null && stack.getItem().getRegistryName().equals(registryName)) {
-                if (meta == -1) {
-                    return true;
-                } else {
-                    return stack.getMetadata() == meta;
-                }
-            }
-            return false;
-        }
-
-    }
 }
