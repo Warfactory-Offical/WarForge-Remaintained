@@ -25,6 +25,9 @@ public class PacketCitadelUpgradeRequirement extends PacketBase {
     }
 
 
+    @SuppressWarnings("unused") //Used in reflection
+    public PacketCitadelUpgradeRequirement(){}
+
     @Override
     public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) {
         data.writeInt(level);
