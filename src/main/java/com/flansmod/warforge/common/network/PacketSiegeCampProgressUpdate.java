@@ -76,4 +76,8 @@ public class PacketSiegeCampProgressUpdate extends PacketBase
 		WarForgeMod.proxy.UpdateSiegeInfo(info);
 	}
 
+	@Override
+	public boolean canUseCompression() {
+		return true;
+	}
 }

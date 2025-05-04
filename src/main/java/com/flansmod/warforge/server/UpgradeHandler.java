@@ -3,6 +3,8 @@ package com.flansmod.warforge.server;
 import com.flansmod.warforge.common.WarForgeMod;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -37,6 +39,25 @@ public class UpgradeHandler {
     );
     protected HashMap<StackComparable, Integer>[] LEVELS;
     protected int[] LIMITS;
+
+    public void setLevelAndLimits(int level, HashMap<StackComparable, Integer> requrements, int limit) {
+        //Only ran once on clientside per join, so whatever
+        if (level >= LEVELS.length) {
+            int newSize = Math.max(level + 1, LEVELS.length * 2);
+
+            // Extend LEVELS
+            HashMap<StackComparable, Integer>[] newLevels = Arrays.copyOf(LEVELS, newSize);
+            LEVELS = newLevels;
+
+            // Extend LIMITS
+            int[] newLimits = Arrays.copyOf(LIMITS, newSize);
+            LIMITS = newLimits;
+        }
+        LEVELS[level] = requrements;
+        LIMITS[level] = limit;
+    }
+
+
 
     public static void writeStubIfEmpty(Path filePath) throws IOException {
         if (Files.notExists(filePath) || Files.size(filePath) == 0) {

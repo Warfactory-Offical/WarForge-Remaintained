@@ -632,6 +632,7 @@ public class WarForgeMod implements ILateMixinLoader
 			NETWORK.sendTo(clearSiegesPacket, (EntityPlayerMP) event.player);
 	    	
 	    	FACTIONS.sendAllSiegeInfoToNearby();
+
     	}
     }
     
