@@ -12,11 +12,18 @@ import net.minecraft.nbt.NBTTagCompound;
 
 import java.util.HashMap;
 
-public class CitadelUpgradeRequirementPacket extends PacketBase {
+public class PacketCitadelUpgradeRequirement extends PacketBase {
 
     public int level;
     public HashMap<StackComparable, Integer> requirements;
     public int limit;
+
+    public PacketCitadelUpgradeRequirement(int level, HashMap<StackComparable, Integer> requirements, int limit) {
+        this.level = level;
+        this.requirements = requirements;
+        this.limit = limit;
+    }
+
 
     @Override
     public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) {

@@ -1,8 +1,7 @@
 package com.flansmod.warforge.common;
 
 import com.flansmod.warforge.common.blocks.IMultiBlockInit;
-import com.flansmod.warforge.common.network.PacketSiegeCampProgressUpdate;
-import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
+import com.flansmod.warforge.common.network.*;
 import com.flansmod.warforge.server.*;
 import com.flansmod.warforge.api.ObjectIntPair;
 import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
@@ -58,8 +57,6 @@ import java.util.*;
 
 import org.apache.logging.log4j.Logger;
 
-import com.flansmod.warforge.common.network.PacketHandler;
-import com.flansmod.warforge.common.network.PacketTimeUpdates;
 import com.flansmod.warforge.common.potions.PotionsModule;
 import com.flansmod.warforge.server.Faction.Role;
 import zone.rong.mixinbooter.ILateMixinLoader;
@@ -632,6 +629,15 @@ public class WarForgeMod implements ILateMixinLoader
 			NETWORK.sendTo(clearSiegesPacket, (EntityPlayerMP) event.player);
 	    	
 	    	FACTIONS.sendAllSiegeInfoToNearby();
+			for (int i = 0; i < UPGRADE_HANDLER.getLEVELS().length; i++) {
+				final int level = i;
+				final HashMap<StackComparable, Integer> requirements = UPGRADE_HANDLER.getLEVELS()[i];
+				final int limit = UPGRADE_HANDLER.getLIMITS()[i];
+
+				SyncQueueHandler.enqueue(() ->
+						NETWORK.sendTo(new PacketCitadelUpgradeRequirement(level, requirements, limit), (EntityPlayerMP) event.player)
+				);
+			}
 
     	}
     }

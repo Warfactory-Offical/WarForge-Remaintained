@@ -38,6 +38,15 @@ public class UpgradeHandler {
             "item:modid:custom_item:3"
     );
     protected HashMap<StackComparable, Integer>[] LEVELS;
+
+    public int[] getLIMITS() {
+        return LIMITS;
+    }
+
+    public HashMap<StackComparable, Integer>[] getLEVELS() {
+        return LEVELS;
+    }
+
     protected int[] LIMITS;
 
     public void setLevelAndLimits(int level, HashMap<StackComparable, Integer> requrements, int limit) {

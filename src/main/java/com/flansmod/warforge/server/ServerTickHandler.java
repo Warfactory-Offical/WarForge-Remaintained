@@ -2,6 +2,7 @@ package com.flansmod.warforge.server;
 
 import com.flansmod.warforge.common.WarForgeMod;
 
+import com.flansmod.warforge.common.network.SyncQueueHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
 
@@ -16,6 +17,8 @@ public class ServerTickHandler
 		WarForgeMod.TELEPORTS.update();
 		WarForgeMod.proxy.TickServer();
 		WarForgeMod.FACTIONS.update();
+		SyncQueueHandler.sync(tick);
+
 
 		// WarForgeMod.LOGGER.info("Current tick: " + WarForgeMod.ServerTick);
 	}
