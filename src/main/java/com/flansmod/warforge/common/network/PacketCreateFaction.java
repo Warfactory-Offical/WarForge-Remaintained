@@ -15,7 +15,8 @@ public class PacketCreateFaction extends PacketBase
 	public DimBlockPos mCitadelPos;
 	public String mFactionName = "";
 	public int mColour = 0xffffff;
-	
+
+
 	@Override
 	public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) 
 	{

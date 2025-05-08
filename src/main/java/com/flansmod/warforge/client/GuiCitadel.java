@@ -6,6 +6,7 @@ import com.flansmod.warforge.common.ContainerCitadel;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketDisbandFaction;
 import com.flansmod.warforge.common.network.PacketPlaceFlag;
+import com.flansmod.warforge.common.network.PacketRequestUpgradeUI;
 import com.flansmod.warforge.server.Faction;
 
 import net.minecraft.client.Minecraft;
@@ -34,7 +35,7 @@ public class GuiCitadel extends GuiContainer
 		
 		ySize = 182;
 	}
-	
+
 	@Override
 	public void initGui()
 	{
@@ -104,10 +105,15 @@ public class GuiCitadel extends GuiContainer
 			}
 			case BUTTON_UPGRADE:
 			{
-				ClientGUI.open(new GuiUpgradePanel());
+				PacketRequestUpgradeUI packet = new PacketRequestUpgradeUI();
+				packet.mFactionIDRequest = citadelContainer.citadel.getFaction();
+				packet.mFactionNameRequest = citadelContainer.citadel.factionName;
+
+				//ClientGUI.open(new GuiUpgradePanel());
+
 //				PacketPlaceFlag packet = new PacketPlaceFlag();
 //				packet.pos = citadelContainer.citadel.getClaimPos();
-//				WarForgeMod.NETWORK.sendToServer(packet);
+				WarForgeMod.NETWORK.sendToServer(packet);
 //
 //				Minecraft.getMinecraft().displayGuiScreen(null);
 				break;
