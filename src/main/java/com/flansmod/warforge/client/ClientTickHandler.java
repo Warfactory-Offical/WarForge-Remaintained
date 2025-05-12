@@ -4,16 +4,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import com.flansmod.warforge.api.Vein;
 import com.flansmod.warforge.common.*;
 import com.flansmod.warforge.common.blocks.IClaim;
-import com.flansmod.warforge.common.blocks.TileEntityCitadel;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
+import com.flansmod.warforge.client.*;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.model.ModelBanner;
-import net.minecraft.client.renderer.BannerTextures;
 import net.minecraft.client.renderer.GLAllocation;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
@@ -21,9 +21,6 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.*;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.tileentity.BannerPattern;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
@@ -36,7 +33,6 @@ import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
-import org.lwjgl.opengl.GL11;
 
 public class ClientTickHandler 
 {
@@ -60,8 +56,9 @@ public class ClientTickHandler
 	private HashMap<DimChunkPos, BorderRenderData> renderData = new HashMap<DimChunkPos, BorderRenderData>();
 	private final int renderList = GLAllocation.generateDisplayLists(1);
 
-	public ClientTickHandler()
-	{
+	public static HashMap<DimChunkPos, Vein> chunkVeinMap = new HashMap<>(16);
+
+	public ClientTickHandler() {
 		tess = Tessellator.getInstance();
 	}
 
@@ -368,9 +365,9 @@ public class ClientTickHandler
 	private void drawTexturedModalRect(int x, int y, float u, float v, int w, int h)
 	{
 		float texScale = 1f / 256f;
-		
+
 		tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-		
+
 		tess.getBuffer().pos(x, y + h, -90d)		.tex(u * texScale, (v + h) * texScale).endVertex();
 		tess.getBuffer().pos(x + w, y + h, -90d)	.tex((u + w) * texScale, (v + h) * texScale).endVertex();
 		tess.getBuffer().pos(x + w, y, -90d)		.tex((u + w) * texScale, (v) * texScale).endVertex();
@@ -378,22 +375,22 @@ public class ClientTickHandler
 
 		tess.draw();
 	}
-	
+
 	private static class BorderRenderData
 	{
 		public IClaim claim;
 		public int renderList = -1;
 	}
 
-    private void renderZAlignedSquare(int x, int y, double z, int ori)
-    {
+	private void renderZAlignedSquare(int x, int y, double z, int ori)
+	{
 		tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 		tess.getBuffer().pos(x, y, z).tex(((ori) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
 		tess.getBuffer().pos(x + 1, y, z).tex(((ori + 1) / 2) % 2, ((ori) / 2) % 2).endVertex();
 		tess.getBuffer().pos(x + 1, y + 1, z).tex(((ori + 2) / 2) % 2, ((ori + 1) / 2) % 2).endVertex();
 		tess.getBuffer().pos(x, y + 1, z).tex(((ori + 3) / 2) % 2, ((ori + 2) / 2) % 2).endVertex();
 		tess.draw();
-    }
+	}
 
 	private void renderZAlignedRecangle(double x, int y, double z, int ori, double width)
 	{
@@ -404,16 +401,16 @@ public class ClientTickHandler
 		tess.getBuffer().pos(x + 0 - width, y + 1, z).tex(((ori + 3) / 2) % 2, ((ori + 2) / 2) % 2).endVertex();
 		tess.draw();
 	}
-    
-    private void renderXAlignedSquare(double x, int y, int z, int ori)
-    {
+
+	private void renderXAlignedSquare(double x, int y, int z, int ori)
+	{
 		tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 		tess.getBuffer().pos(x, y, z).tex(((ori) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
 		tess.getBuffer().pos(x, y, z + 1).tex(((ori + 1) / 2) % 2, ((ori) / 2) % 2).endVertex();
 		tess.getBuffer().pos(x, y + 1, z + 1).tex(((ori + 2) / 2) % 2, ((ori + 1) / 2) % 2).endVertex();
 		tess.getBuffer().pos(x, y + 1, z).tex(((ori + 3) / 2) % 2, ((ori + 2) / 2) % 2).endVertex();
 		tess.draw();
-    }
+	}
 
 	private void renderXAlignedRecangle(double x, int y, double z, int ori, double width)
 	{
@@ -427,16 +424,16 @@ public class ClientTickHandler
 
 
 
-    
+
 	private void updateRenderData()
 	{
 		World world = Minecraft.getMinecraft().world;
 		if(world == null)
 			return;
-		
-		// Update our list from the old one		
+
+		// Update our list from the old one
 		HashMap<DimChunkPos, BorderRenderData> tempData = new HashMap<DimChunkPos, BorderRenderData>();
-		
+
 		// Find all our data entries first
 		for(TileEntity te : world.loadedTileEntityList)
 		{
@@ -444,7 +441,7 @@ public class ClientTickHandler
 			{
 				DimBlockPos blockPos = ((IClaim) te).getClaimPos();
 				DimChunkPos chunkPos = blockPos.toChunkPos();
-			
+
 				if(renderData.containsKey(chunkPos))
 				{
 					tempData.put(chunkPos, renderData.get(chunkPos));
@@ -457,20 +454,20 @@ public class ClientTickHandler
 				}
 			}
 		}
-		
+
 		renderData = tempData;
-		
+
 	}
 	final static double alignment = 0.25d;
 	final static double smaller_alignment = alignment - 0.125d;
 
 	private void updateRandomMesh()
-	{	
+	{
 		World world = Minecraft.getMinecraft().world;
 		if(world == null || renderData.isEmpty())
 			return;
 		int index = world.rand.nextInt(renderData.size());
-				
+
 		// Then construct the mesh for one random entry
 		for(HashMap.Entry<DimChunkPos, BorderRenderData> kvp : renderData.entrySet())
 		{
@@ -482,117 +479,117 @@ public class ClientTickHandler
 
 			DimChunkPos pos = kvp.getKey();
 			BorderRenderData data = kvp.getValue();
-			
-			data.renderList = GLAllocation.generateDisplayLists(1);
-	        GlStateManager.glNewList(data.renderList, 4864);
-	        
-	        boolean renderNorth = true, renderEast = true, renderWest = true, renderSouth = true;
-	        if(renderData.containsKey(pos.North()))
-	        	renderNorth = !renderData.get(pos.North()).claim.getFaction().equals(data.claim.getFaction());
-	        if(renderData.containsKey(pos.East()))
-	        	renderEast = !renderData.get(pos.East()).claim.getFaction().equals(data.claim.getFaction());
-	        if(renderData.containsKey(pos.South()))
-	        	renderSouth = !renderData.get(pos.South()).claim.getFaction().equals(data.claim.getFaction());
-	        if(renderData.containsKey(pos.West()))
-	        	renderWest = !renderData.get(pos.West()).claim.getFaction().equals(data.claim.getFaction());
 
-	        // North edge, [0,0] -> [16,0] wall
-    		if(renderNorth)
-    		{
-    			// A smidge of semi-translucent wall from [0,0,0] to [2,256,0] offset by 0.25
-    			if(renderWest)
-    			{
-	    			tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
+			data.renderList = GLAllocation.generateDisplayLists(1);
+			GlStateManager.glNewList(data.renderList, 4864);
+
+			boolean renderNorth = true, renderEast = true, renderWest = true, renderSouth = true;
+			if(renderData.containsKey(pos.North()))
+				renderNorth = !renderData.get(pos.North()).claim.getFaction().equals(data.claim.getFaction());
+			if(renderData.containsKey(pos.East()))
+				renderEast = !renderData.get(pos.East()).claim.getFaction().equals(data.claim.getFaction());
+			if(renderData.containsKey(pos.South()))
+				renderSouth = !renderData.get(pos.South()).claim.getFaction().equals(data.claim.getFaction());
+			if(renderData.containsKey(pos.West()))
+				renderWest = !renderData.get(pos.West()).claim.getFaction().equals(data.claim.getFaction());
+
+			// North edge, [0,0] -> [16,0] wall
+			if(renderNorth)
+			{
+				// A smidge of semi-translucent wall from [0,0,0] to [2,256,0] offset by 0.25
+				if(renderWest)
+				{
+					tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 					tess.getBuffer().pos(0+alignment, 0, alignment).tex(64f, 0.5f).endVertex();
 					tess.getBuffer().pos(2+alignment, 0, alignment).tex(64f, 0f).endVertex();
 					tess.getBuffer().pos(2+alignment, 128, alignment).tex(0f, 0f).endVertex();
 					tess.getBuffer().pos(0+alignment, 128, alignment).tex(0f, 0.5f).endVertex();
 					tess.draw();
-    			}
-				
+				}
+
 				// A smidge of semi-translucent wall from [14,0,0] to [16,256,0] offset by 0.25
-    			if(renderEast)
-    			{
-	    			tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
+				if(renderEast)
+				{
+					tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 					tess.getBuffer().pos(16-alignment, 0, alignment).tex(64f, 0.5f).endVertex();
 					tess.getBuffer().pos(14-alignment, 0, alignment).tex(64f, 0f).endVertex();
 					tess.getBuffer().pos(14-alignment, 128, alignment).tex(0f, 0f).endVertex();
 					tess.getBuffer().pos(16-alignment, 128, alignment).tex(0f, 0.5f).endVertex();
 					tess.draw();
-    			}
-    		}
-    		
-    		// South edge
-    		if(renderSouth)
-    		{
-    			if(renderWest)
-    			{
-	    			tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
+				}
+			}
+
+			// South edge
+			if(renderSouth)
+			{
+				if(renderWest)
+				{
+					tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 					tess.getBuffer().pos(0+alignment, 0, 16d - alignment).tex(64f, 0.5f).endVertex();
 					tess.getBuffer().pos(2+alignment, 0, 16d - alignment).tex(64f, 0f).endVertex();
 					tess.getBuffer().pos(2+alignment, 128, 16d - alignment).tex(0f, 0f).endVertex();
 					tess.getBuffer().pos(0+alignment, 128, 16d - alignment).tex(0f, 0.5f).endVertex();
 					tess.draw();
-    			}
-				
-    			if(renderEast)
-    			{
-	    			tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
+				}
+
+				if(renderEast)
+				{
+					tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 					tess.getBuffer().pos(16-alignment, 0, 16d - alignment).tex(64f, 0.5f).endVertex();
 					tess.getBuffer().pos(14-alignment, 0, 16d - alignment).tex(64f, 0f).endVertex();
 					tess.getBuffer().pos(14-alignment, 128, 16d - alignment).tex(0f, 0f).endVertex();
 					tess.getBuffer().pos(16-alignment, 128, 16d - alignment).tex(0f, 0.5f).endVertex();
 					tess.draw();
-    			}
-    		}
-    		
-    		// East edge, [0,0] -> [0,16] wall
-    		if(renderWest)
-    		{
-    			if(renderNorth)
-    			{
-	    			tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
+				}
+			}
+
+			// East edge, [0,0] -> [0,16] wall
+			if(renderWest)
+			{
+				if(renderNorth)
+				{
+					tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 					tess.getBuffer().pos(alignment, 0, 0+alignment).tex(64f, 0.5f).endVertex();
 					tess.getBuffer().pos(alignment, 0, 2+alignment).tex(64f, 0f).endVertex();
 					tess.getBuffer().pos(alignment, 128, 2+alignment).tex(0f, 0f).endVertex();
 					tess.getBuffer().pos(alignment, 128, 0+alignment).tex(0f, 0.5f).endVertex();
 					tess.draw();
-    			}
-				
-    			if(renderSouth)
-    			{
-	    			tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
+				}
+
+				if(renderSouth)
+				{
+					tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 					tess.getBuffer().pos(alignment, 0, 16-alignment).tex(64f, 0.5f).endVertex();
 					tess.getBuffer().pos(alignment, 0, 14-alignment).tex(64f, 0f).endVertex();
 					tess.getBuffer().pos(alignment, 128, 14-alignment).tex(0f, 0f).endVertex();
 					tess.getBuffer().pos(alignment, 128, 16-alignment).tex(0f, 0.5f).endVertex();
 					tess.draw();
-    			}
-    		}
-    		
-    		// West edge
-    		if(renderEast)
-    		{
-    			if(renderNorth)
-    			{
-	    			tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
+				}
+			}
+
+			// West edge
+			if(renderEast)
+			{
+				if(renderNorth)
+				{
+					tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 					tess.getBuffer().pos(16d - alignment, 0, 0+alignment).tex(64f, 0.5f).endVertex();
 					tess.getBuffer().pos(16d - alignment, 0, 2+alignment).tex(64f, 0f).endVertex();
 					tess.getBuffer().pos(16d - alignment, 128, 2+alignment).tex(0f, 0f).endVertex();
 					tess.getBuffer().pos(16d - alignment, 128, 0+alignment).tex(0f, 0.5f).endVertex();
 					tess.draw();
-    			}
-				
-    			if(renderSouth)
-    			{
-	    			tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
+				}
+
+				if(renderSouth)
+				{
+					tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 					tess.getBuffer().pos(16d - alignment, 0, 16-alignment).tex(64f, 0.5f).endVertex();
 					tess.getBuffer().pos(16d - alignment, 0, 14-alignment).tex(64f, 0f).endVertex();
 					tess.getBuffer().pos(16d - alignment, 128, 14-alignment).tex(0f, 0f).endVertex();
 					tess.getBuffer().pos(16d - alignment, 128, 16-alignment).tex(0f, 0.5f).endVertex();
 					tess.draw();
-    			}
-    		}
+				}
+			}
 			if (renderNorth || renderSouth) {
 				for (int x = 0; x < 16; x++) {
 					for (int y = 0; y < 256; y++) {
@@ -680,9 +677,9 @@ public class ClientTickHandler
 				}
 			}
 
-    		GlStateManager.glEndList();
-    		break;
-		}	
+			GlStateManager.glEndList();
+			break;
+		}
 	}
 	// Helper for rendering horizontal edges (along X-axis)
 	private void renderZEdge(World world, int x, int y, int z, double align, boolean air0, boolean air1, int dir) {
@@ -937,19 +934,16 @@ public class ClientTickHandler
 //		GlStateManager.popMatrix();
 //	}
 
-
-
-
 	private void vertexAt(DimChunkPos chunkPos, World world, int x, int z, double groundLevelBlend, double playerHeight)
 	{
 		double topHeight = playerHeight + 128;
-		
+
 		double maxHeight = world.getHeight(chunkPos.x * 16 + x, chunkPos.z * 16 + z) + 8;
 		if(maxHeight > playerHeight + 16)
 			maxHeight = playerHeight + 16;
 
 		double height = topHeight + (maxHeight - topHeight) * groundLevelBlend;
-		
+
 		tess.getBuffer().pos(x, height, z).tex(z / 16f, x / 16f).endVertex();
 	}
 }

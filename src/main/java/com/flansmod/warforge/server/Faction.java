@@ -32,12 +32,6 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.function.Predicate;
-
 
 /**
  * Data class for faction, responsible for storing faction info
@@ -448,21 +442,22 @@ public class Faction {
     public void setColour(int colour) {
         this.colour = colour;
     }
+
 	public void AwardYields()
 	{
 		//
-		for(HashMap.Entry<DimBlockPos, Integer> kvp : mClaims.entrySet())
+		for(HashMap.Entry<DimBlockPos, Integer> kvp : claims.entrySet())
 		{
 			DimBlockPos pos = kvp.getKey();
-			World world = WarForgeMod.MC_SERVER.getWorld(pos.mDim);
+			World world = WarForgeMod.MC_SERVER.getWorld(pos.dim);
 
 			// If It's loaded, process immediately
 			if(world.isBlockLoaded(pos))
 			{
-				TileEntity te = world.getTileEntity(pos.ToRegularPos());
+				TileEntity te = world.getTileEntity(pos.toRegularPos());
 				if(te instanceof TileEntityYieldCollector)
 				{
-					((TileEntityYieldCollector)te).ProcessYield(1);
+					((TileEntityYieldCollector)te).processYield(1);
 					kvp.setValue(0);  // no claims saved
 				}
 			}
@@ -476,41 +471,41 @@ public class Faction {
 
 	public void Promote(UUID playerID)
 	{
-		PlayerData data = mMembers.get(playerID);
+		PlayerData data = members.get(playerID);
 		if(data != null)
 		{
-			if(data.mRole == Role.MEMBER)
+			if(data.role == Role.MEMBER)
 			{
-				data.mRole = Role.OFFICER;
+				data.role = Role.OFFICER;
 				GameProfile profile = WarForgeMod.MC_SERVER.getPlayerProfileCache().getProfileByUUID(playerID);
 				if(profile != null)
-					MessageAll(new TextComponentString(profile.getName() + " was promoted to officer"));
+					messageAll(new TextComponentString(profile.getName() + " was promoted to officer"));
 			}
 		}
 	}
 
 	public void Demote(UUID playerID)
 	{
-		PlayerData data = mMembers.get(playerID);
+		PlayerData data = members.get(playerID);
 		if(data != null)
 		{
-			if(data.mRole == Role.OFFICER)
+			if(data.role == Role.OFFICER)
 			{
-				data.mRole = Role.MEMBER;
+				data.role = Role.MEMBER;
 				GameProfile profile = WarForgeMod.MC_SERVER.getPlayerProfileCache().getProfileByUUID(playerID);
 				if(profile != null)
-					MessageAll(new TextComponentString(profile.getName() + " was demoted to member"));
+					messageAll(new TextComponentString(profile.getName() + " was demoted to member"));
 			}
 		}
 	}
 
 	public boolean CanPlayerMoveFlag(UUID uniqueID)
 	{
-		PlayerData data = mMembers.get(uniqueID);
+		PlayerData data = members.get(uniqueID);
 		if(data != null)
 		{
 			//return !data.mHasMovedFlagToday;
-		if(data.mMoveFlagCooldown - System.currentTimeMillis() <= 0)
+		if(data.moveFlagCooldown - System.currentTimeMillis() <= 0)
 				return true;
 		}
 		return false;
@@ -518,7 +513,7 @@ public class Faction {
 
 	public void SetColour(int colour)
 	{
-		mColour = colour;
+		colour = colour;
 	}
 
 

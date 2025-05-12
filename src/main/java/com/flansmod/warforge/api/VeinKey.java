@@ -1,5 +1,7 @@
 package com.flansmod.warforge.api;
 
+import akka.japi.Pair;
+import com.flansmod.warforge.common.DimChunkPos;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
@@ -7,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.TreeMap;
 
+import static com.flansmod.warforge.common.WarForgeConfig.VEIN_MAP;
 import static com.flansmod.warforge.common.WarForgeMod.LOGGER;
 
 // used to more efficiently handle lots of veins
@@ -134,11 +137,12 @@ public class VeinKey implements Comparable<VeinKey> {
         Int2IntOpenHashMap all_dims = new Int2IntOpenHashMap();
         all_dims.defaultReturnValue(0);
         for (String entry : vein_entries) {
-            Vein curr_vein = new Vein(entry);  // store all veins provided for later use
+            Vein curr_vein = new Vein(entry, Vein.getNextID());  // store all veins provided for later use
+            all_veins.add(curr_vein);
 
             // determine the dims this vein is present in
             for (int dim : curr_vein.getValidDims()) {
-                all_dims.put(dim, all_dims.get(dim) + 1);  // increment the number of veins this dim has
+                all_dims.put(dim, all_dims.get(dim) + 1);  // increment the number of veins this dim has (unused)
             }
         }
 
@@ -159,5 +163,31 @@ public class VeinKey implements Comparable<VeinKey> {
         hash %= 10000;
 
         return new int[]{hash, quality};
+    }
+
+    public enum Quality {
+        RICH,
+        FAIR,
+        POOR;
+
+        static Quality getQuality(int qualityIndex) {
+            switch (qualityIndex) {
+                case 1:
+                    return FAIR;
+                case 2:
+                    return RICH;
+                default:
+                    return POOR;
+            }
+        }
+    }
+
+    public static Pair<Vein, Quality> getVein(int dim, int chunkX, int chunkZ, long seed) {
+        int[] chunk_hash = generateChunkHash(chunkX, chunkZ, seed);
+        return new Pair<>(VEIN_MAP.get(dim).get(new VeinKey(chunk_hash[0], true)), Quality.getQuality(chunk_hash[1]));
+    }
+
+    public static Pair<Vein, Quality> getVein(DimChunkPos dimChunkPos, long seed) {
+        return getVein(dimChunkPos.mDim, dimChunkPos.x, dimChunkPos.z, seed);
     }
 }

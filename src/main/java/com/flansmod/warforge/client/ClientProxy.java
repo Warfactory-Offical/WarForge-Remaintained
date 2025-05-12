@@ -33,6 +33,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 public class ClientProxy extends CommonProxy
 {
 	public static HashMap<DimBlockPos, SiegeCampProgressInfo> sSiegeInfo = new HashMap<DimBlockPos, SiegeCampProgressInfo>();
+
 	public static KeyBinding factionChatKey = new KeyBinding("key.factionchat.desc",
 			KeyConflictContext.IN_GAME,
 			Keyboard.KEY_Y,

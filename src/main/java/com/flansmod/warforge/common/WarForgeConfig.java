@@ -7,54 +7,17 @@ import net.minecraftforge.common.config.Configuration;
 import java.io.File;
 import java.util.*;
 
-import akka.japi.Pair;
 import com.flansmod.warforge.api.Vein;
 import com.flansmod.warforge.api.VeinKey;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.minecraft.block.Block;
-import net.minecraft.item.Item;
-import net.minecraftforge.common.config.Configuration;
-
-import static com.flansmod.warforge.common.WarForgeMod.LOGGER;
 
 public class WarForgeConfig
 {
 	// Config
 	public static Configuration configFile;
 
-	// World gen
-	public static final String CATEGORY_WORLD_GEN = "WorldGen";
-	public static boolean ENABLE_WORLD_GEN = false;
-	public static int ANCIENT_OAK_CELL_SIZE = 256;
-	public static float ANCIENT_OAK_CHANCE = 0.1f;
-	public static float ANCIENT_OAK_HOLE_RADIUS = 24f;
-	public static float ANCIENT_OAK_MAX_TRUNK_RADIUS = 8f;
-	public static float ANCIENT_OAK_CORE_RADIUS = 2f;
-	public static float ANCIENT_OAK_MAX_HEIGHT = 128f;
-
-	public static int SLIME_POOL_CELL_SIZE = 512;
-	public static int SLIME_POOL_LAKE_RADIUS = 16;
-	public static int SLIME_POOL_LAKE_CEILING_HEIGHT = 8;
-	public static int SLIME_POOL_MIN_INSTANCES_PER_CELL = 1;
-	public static int SLIME_POOL_MAX_INSTANCES_PER_CELL = 2;
-	public static int SLIME_POOL_MIN_HEIGHT = 15;
-	public static int SLIME_POOL_MAX_HEIGHT = 30;
-
-	public static int SHULKER_FOSSIL_CELL_SIZE = 256;
-	public static float SHULKER_FOSSIL_MIN_ROTATIONS = 16f;
-	public static float SHULKER_FOSSIL_MAX_ROTATIONS = 8f;
-	public static float SHULKER_FOSSIL_RADIUS_PER_ROTATION = 3f;
-	public static int SHULKER_FOSSIL_MIN_INSTANCES_PER_CELL = 1;
-	public static int SHULKER_FOSSIL_MAX_INSTANCES_PER_CELL = 2;
-	public static float SHULKER_FOSSIL_DISC_THICKNESS = 8f;
-	public static int SHULKER_FOSSIL_MIN_HEIGHT = 12;
-	public static int SHULKER_FOSSIL_MAX_HEIGHT = 106;
-
-	public static int CLAY_POOL_CHANCE = 32;
-
-	public static final int HIGHEST_YIELD_ASSUMPTION = 64;
-
 	// Claims
+	public static boolean ENABLE_CITADEL_UPGRADES = false;
 	public static final String CATEGORY_CLAIMS = "Claims";
 	public static int[] CLAIM_DIM_WHITELIST = new int[]{0};
 	public static int CLAIM_STRENGTH_CITADEL = 15;
@@ -224,8 +187,19 @@ public class WarForgeConfig
         UNCLAIMED.EXPLOSION_DAMAGE = true;
     }
 
-    public static void syncConfig(File suggestedFile) {
-        configFile = new Configuration(suggestedFile);
+	public static void initializeVeins() {
+		final String VEIN_ENTRY_EXPLANATION = "All veins should be entered in the follow format: \n" +
+				"<translation_key>, {<yield_amount#component item id>}, {<valid dim id's>}, {<vein dim weights 0.0000 - 1.0000>}, {<component weights 0.0000 - 1.0000>}; \n" +
+				"Example: veins.pure_iron, {2#minecraft:iron_ore, 1#minecraft:coal_ore}, {-1, 0, 1}, {0.5, 0.4215, 1}, {1, 0.2}. \n" +
+				"The above is a vein which yields two iron ore and one coal in all dimensions with 3 respective dimension weights and which always gives iron, but only gives coal 20% of the time. \n" +
+				"If component weights entry is left as {} [empty], then all are assumed to have a value of 1. All other fields are mandatory and must have equal counts.";
+
+		String[] vein_entries = configFile.getStringList("Vein list", CATEGORY_YIELDS, new String[0], VEIN_ENTRY_EXPLANATION);  // if the default value is null then the returned result is null which causes a npe
+		VeinKey.populateVeinMap(VEIN_MAP, vein_entries);
+	}
+
+	public static void syncConfig(File suggestedFile) {
+		configFile = new Configuration(suggestedFile);
 
         // Protections
         UNCLAIMED.SyncConfig("Unclaimed", "Unclaimed Chunks");
@@ -310,8 +284,7 @@ public class WarForgeConfig
 				"If component weights entry is left as {} [empty], then all are assumed to have a value of 1. All other fields are mandatory and must have equal counts.";
 
 		YIELD_QUALITY_MULTIPLIER = configFile.getFloat("Yield Quality Multiplier", CATEGORY_YIELDS, YIELD_QUALITY_MULTIPLIER, 1, 10000, "A number to be used to vary yield amounts for every vein's components, dividing by this for poor quality veins and multiplying for high quality. Set to 1 to effectively have no difference.");
-		String[] vein_entries = configFile.getStringList("Vein list", CATEGORY_YIELDS, new String[0], VEIN_ENTRY_EXPLANATION);  // if the default value is null then the returned result is null which causes a npe
-		VeinKey.populateVeinMap(VEIN_MAP, vein_entries);
+		configFile.getStringList("Vein list", CATEGORY_YIELDS, new String[0], VEIN_ENTRY_EXPLANATION);  // if the default value is null then the returned result is null which causes a npe
 
 		// Notoriety
 		NOTORIETY_PER_PLAYER_KILL = configFile.getInt("Notoriety gain per PVP kill", CATEGORY_NOTORIETY, NOTORIETY_PER_PLAYER_KILL, 0, 1024, "How much notoriety a player earns for their faction when killing another player");

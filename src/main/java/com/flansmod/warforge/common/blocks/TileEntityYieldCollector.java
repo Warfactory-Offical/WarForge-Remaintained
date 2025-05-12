@@ -1,42 +1,23 @@
 package com.flansmod.warforge.common.blocks;
 
-import java.nio.ByteBuffer;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.Arrays;
-import java.util.HashMap;
 
-import com.flansmod.warforge.api.IItemYieldProvider;
+import akka.japi.Pair;
 import com.flansmod.warforge.api.Vein;
 import com.flansmod.warforge.api.VeinKey;
-import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.InventoryHelper;
-import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.server.Faction;
 
-import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemBanner;
-import net.minecraft.item.ItemShield;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.network.play.server.SPacketUpdateTileEntity;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
-import net.minecraftforge.fml.relauncher.Side;
 
-import static com.flansmod.warforge.api.VeinKey.generateChunkHash;
 import static com.flansmod.warforge.common.WarForgeConfig.VEIN_MAP;
 import static com.flansmod.warforge.common.WarForgeConfig.YIELD_QUALITY_MULTIPLIER;
 
@@ -55,14 +36,17 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
         Arrays.fill(yieldStacks, ItemStack.EMPTY);
 	}
 			
-	public void ProcessYield(int numYields) {
+	public void processYield(int numYields) {
 		if(world.isRemote) { return; }
 
 		ChunkPos chunk = new ChunkPos(getPos());
+		if (!VEIN_MAP.containsKey(world.provider.getDimension())) { return; }  // if dim doesn't have any veins
 
-		// get vein data [chunk hash is stored as the randomly generated number, then the quality
-		int[] chunk_hash = generateChunkHash(chunk.x, chunk.z, world.getSeed());
-		Vein chunk_vein = VEIN_MAP.get(world.provider.getDimension()).get(new VeinKey(chunk_hash[0], true));
+		// get vein data
+		Pair<Vein, VeinKey.Quality> vein_info = VeinKey.getVein(world.provider.getDimension(), chunk.x, chunk.z, world.getSeed());
+		Vein chunk_vein = vein_info.first();
+		VeinKey.Quality vein_quality = vein_info.second();
+
 		if (chunk_vein.isNullVein()) { return; }  // ignore null vein
 
 		Random rand = new Random((WarForgeMod.currTickTimestamp * world.getSeed()) * 2654435761L);
@@ -74,8 +58,8 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 
 			// determine yield amount based on quality and component base yield
 			int curr_yield = chunk_vein.component_yields[i];
-			if (chunk_hash[1] == 0) { curr_yield /= YIELD_QUALITY_MULTIPLIER; }  // if poor quality, half yield
-			else if (chunk_hash[1] == 2) { curr_yield *= YIELD_QUALITY_MULTIPLIER; }  // if rich quality, double yield
+			if (vein_quality == VeinKey.Quality.POOR) { curr_yield /= YIELD_QUALITY_MULTIPLIER; }  // if poor quality, half yield
+			else if (vein_quality == VeinKey.Quality.RICH) { curr_yield *= YIELD_QUALITY_MULTIPLIER; }  // if rich quality, double yield
 
 			// calculate the number of times to yield this component
 			for (int j = 0; j < numYields; ++j) {

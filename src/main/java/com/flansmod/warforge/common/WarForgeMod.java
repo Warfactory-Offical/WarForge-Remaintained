@@ -29,7 +29,6 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.WorldEvent;
-import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
@@ -83,7 +82,7 @@ public class WarForgeMod implements ILateMixinLoader
 	public static final TeleportsModule TELEPORTS = new TeleportsModule();
 	public static final PotionsModule POTIONS = new PotionsModule();
 	public static final UpgradeHandler UPGRADE_HANDLER = new UpgradeHandler();
-	
+
 	public static MinecraftServer MC_SERVER = null;
 	public static Random rand = new Random();
 	//public static CombatLogHandler COMBAT_LOG = new CombatLogHandler();
@@ -682,7 +681,7 @@ public class WarForgeMod implements ILateMixinLoader
     }
 */
 
-	
+
 
 	private void readFromNBT(NBTTagCompound tags)
 	{
@@ -729,7 +728,9 @@ public class WarForgeMod implements ILateMixinLoader
 		MC_SERVER = event.getServer();
 		CommandHandler handler = ((CommandHandler)MC_SERVER.getCommandManager());
 		handler.registerCommand(new CommandFactions());
-		
+
+		WarForgeConfig.initializeVeins();
+
 		try
 		{
 			// try to read from data or backup, then generates a new file if both fail

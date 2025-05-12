@@ -1,11 +1,14 @@
 package com.flansmod.warforge.api;
 
 
+import com.flansmod.warforge.common.network.PacketBase;
+import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import net.minecraft.util.ResourceLocation;
 
 import javax.annotation.Nonnull;
+import java.util.Objects;
 
 public class Vein {
     public final String translation_key;
@@ -24,9 +27,21 @@ public class Vein {
 
     public static int WEIGHT_FRACTION_DIGIT_COUNT = 4;
 
+    // Packet Data:
+    final private String VEIN_ENTRY;  // used to send over network on join
+    final int ID;
+
+    private static int idCounter = 0;
+
+    public static int getNextID() { return idCounter++; }
+
     // we assume the values are in order as described by the other constructor
     // translation_key, {mc:comp1, mc:comp2}, {-1, 0, 1}, {0.5, 0.5, 1}, {0.4525, 0.5475}
-    public Vein(String vein_entry) {
+    public Vein(final String vein_entry, int id) {
+        VEIN_ENTRY = vein_entry;
+        ID = idCounter;
+        ++idCounter;
+
         // splits on all spaces/ commas in any combination not within curly brackets
         // looks ahead to see if either there are any number of {} combinations, or if there are no }
         // this should return the arguments as string in order
@@ -98,6 +113,8 @@ public class Vein {
 
     // creates a null vein
     public Vein(int dim, int weight) {
+        VEIN_ENTRY = "";
+        ID = -1;
         this.translation_key = null;
         this.component_ids = new ResourceLocation[0];
         this.component_yields = new int[0];
@@ -109,8 +126,13 @@ public class Vein {
 
     public int getDimWeight(int dim) { return dim_weights.get(dim); }
     public IntSet getValidDims() { return dim_weights.keySet(); }
+    public int getID() { return ID; }
 
     public void setDimWeights(int dim, int weight) { dim_weights.put(dim, weight); }
 
-    public boolean isNullVein() { return translation_key == null; }
+    public boolean isNullVein() { return VEIN_ENTRY.equals(""); }
+
+    void writeToBuf(ByteBuf buf) {
+        PacketBase.writeUTF(buf, VEIN_ENTRY);
+    }
 }
