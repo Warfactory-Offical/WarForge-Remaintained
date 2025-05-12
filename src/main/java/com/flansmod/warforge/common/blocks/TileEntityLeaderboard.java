@@ -1,11 +1,9 @@
 package com.flansmod.warforge.common.blocks;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.server.Faction;
-import com.flansmod.warforge.server.Leaderboard.FactionStat;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
@@ -43,13 +41,13 @@ public class TileEntityLeaderboard extends TileEntity
 		NBTTagCompound tags = super.getUpdateTag();
 
 		ArrayList<Faction> tempList = new ArrayList<Faction>();
-		WarForgeMod.LEADERBOARD.GetSortedList(((BlockLeaderboard)getBlockType()).mStat, tempList);
+		WarForgeMod.LEADERBOARD.GetSortedList(((BlockLeaderboard)getBlockType()).stat, tempList);
 		
 		for(int i = 0; i < NUM_ENTRIES; i++)
 		{
 			if(tempList.size() > i)
 			{
-				tags.setString("#" + i, tempList.get(i).mName);
+				tags.setString("#" + i, tempList.get(i).name);
 			}
 			else
 			{

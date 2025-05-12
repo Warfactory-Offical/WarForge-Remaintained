@@ -2,11 +2,8 @@ package com.flansmod.warforge.common.blocks;
 
 import java.util.UUID;
 
-import com.flansmod.warforge.common.CommonProxy;
 import com.flansmod.warforge.common.WarForgeMod;
-import com.flansmod.warforge.common.network.PacketFactionInfo;
 import com.flansmod.warforge.common.network.PacketLeaderboardInfo;
-import com.flansmod.warforge.server.Faction;
 import com.flansmod.warforge.server.Leaderboard.FactionStat;
 
 import net.minecraft.block.Block;
@@ -18,20 +15,16 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class BlockLeaderboard extends Block implements ITileEntityProvider
 {
-	public FactionStat mStat;
+	public FactionStat stat;
 	
 	public BlockLeaderboard(Material materialIn, FactionStat stat) 
 	{
@@ -42,7 +35,7 @@ public class BlockLeaderboard extends Block implements ITileEntityProvider
 		this.setBlockUnbreakable();
 		this.setHardness(300000000F);
 		
-		mStat = stat;
+		this.stat = stat;
 	}
 	
 	@Override
@@ -66,7 +59,7 @@ public class BlockLeaderboard extends Block implements ITileEntityProvider
 		{
 			UUID uuid = player.getUniqueID();
 			PacketLeaderboardInfo packet = new PacketLeaderboardInfo();
-			packet.mInfo = WarForgeMod.LEADERBOARD.CreateInfo(0, mStat, uuid);
+			packet.info = WarForgeMod.LEADERBOARD.CreateInfo(0, stat, uuid);
 			WarForgeMod.NETWORK.sendTo(packet, (EntityPlayerMP)player);
 		}
 		return true;

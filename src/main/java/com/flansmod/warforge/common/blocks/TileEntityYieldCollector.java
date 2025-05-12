@@ -4,6 +4,8 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
 
 import com.flansmod.warforge.api.IItemYieldProvider;
 import com.flansmod.warforge.api.Vein;
@@ -15,16 +17,12 @@ import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.server.Faction;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBanner;
 import net.minecraft.item.ItemShield;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
@@ -47,17 +45,14 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 	public static final int NUM_YIELD_STACKS = 9;
 	public static final int NUM_BASE_SLOTS = NUM_YIELD_STACKS;
 			
-	protected abstract float GetYieldMultiplier();
+	protected abstract float getYieldMultiplier();
 
 	// The yield stacks are where items arrive when your faction is above a deposit
-	protected ItemStack[] mYieldStacks = new ItemStack[NUM_YIELD_STACKS];
+	protected ItemStack[] yieldStacks = new ItemStack[NUM_YIELD_STACKS];
 
 	public TileEntityYieldCollector()
 	{
-		for(int i = 0; i < NUM_YIELD_STACKS; i++)
-		{
-			mYieldStacks[i] = ItemStack.EMPTY;
-		}
+        Arrays.fill(yieldStacks, ItemStack.EMPTY);
 	}
 			
 	public void ProcessYield(int numYields) {
@@ -117,17 +112,17 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 	{
 		if(!world.isRemote)
 		{
-			Faction faction = WarForgeMod.FACTIONS.GetFaction(mFactionUUID);
+			Faction faction = WarForgeMod.FACTIONS.getFaction(factionUUID);
 			if(faction != null)
 			{
-				int pendingYields = faction.mClaims.get(GetPos());
+				int pendingYields = faction.claims.get(this.getClaimPos());
 				if(pendingYields > 0)
 				{
-					ProcessYield(pendingYields);
+					processYield(pendingYields);
 				}
-				faction.mClaims.replace(GetPos(), 0);
+				faction.claims.replace(this.getClaimPos(), 0);
 			}
-			else if(!mFactionUUID.equals(Faction.NULL))
+			else if(!factionUUID.equals(Faction.nullUuid))
 			{
 				WarForgeMod.LOGGER.error("Loaded YieldCollector with invalid faction");
 			}
@@ -144,7 +139,7 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 		for(int i = 0; i < NUM_YIELD_STACKS; i++)
 		{
 			NBTTagCompound yieldStackTags = new NBTTagCompound();
-			mYieldStacks[i].writeToNBT(yieldStackTags);
+			yieldStacks[i].writeToNBT(yieldStackTags);
 			nbt.setTag("yield_" + i, yieldStackTags);
 		}
 		
@@ -161,16 +156,16 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 		for(int i = 0; i < NUM_YIELD_STACKS; i++)
 		{
 			if(nbt.hasKey("yield_" + i))
-				mYieldStacks[i] = new ItemStack(nbt.getCompoundTag("yield_" + i));
+				yieldStacks[i] = new ItemStack(nbt.getCompoundTag("yield_" + i));
 			else 
-				mYieldStacks[i] = ItemStack.EMPTY;
+				yieldStacks[i] = ItemStack.EMPTY;
 		}
 	}
 	
 	// ----------------------------------------------------------
 	// The GIGANTIC amount of IInventory methods...
 	@Override
-	public String getName() { return mFactionName; }
+	public String getName() { return factionName; }
 	@Override
 	public boolean hasCustomName() { return false; }
 	@Override
@@ -179,7 +174,7 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 	public boolean isEmpty() 
 	{
 		for(int i = 0; i < NUM_YIELD_STACKS; i++)
-			if(!mYieldStacks[i].isEmpty())
+			if(!yieldStacks[i].isEmpty())
 				return false;
 		return true;
 	}
@@ -188,7 +183,7 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 	public ItemStack getStackInSlot(int index) 
 	{
 		if(index < NUM_YIELD_STACKS)
-			return mYieldStacks[index];
+			return yieldStacks[index];
 		return ItemStack.EMPTY;
 	}
 	@Override
@@ -196,10 +191,10 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 	{
 		if(index < NUM_YIELD_STACKS)
 		{
-			int numToTake = Math.max(count, mYieldStacks[index].getCount());
-			ItemStack result = mYieldStacks[index].copy();
+			int numToTake = Math.max(count, yieldStacks[index].getCount());
+			ItemStack result = yieldStacks[index].copy();
 			result.setCount(numToTake);
-			mYieldStacks[index].setCount(mYieldStacks[index].getCount() - numToTake);
+			yieldStacks[index].setCount(yieldStacks[index].getCount() - numToTake);
 			return result;
 		}
 		return ItemStack.EMPTY;
@@ -210,8 +205,8 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 		ItemStack result = ItemStack.EMPTY;
 		if(index < NUM_YIELD_STACKS)
 		{
-			result = mYieldStacks[index];
-			mYieldStacks[index] = ItemStack.EMPTY;			
+			result = yieldStacks[index];
+			yieldStacks[index] = ItemStack.EMPTY;
 		}
 		return result;
 	}
@@ -220,7 +215,7 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 	{
 		if(index < NUM_YIELD_STACKS)
 		{
-			mYieldStacks[index] = stack;
+			yieldStacks[index] = stack;
 		}
 	}
 	@Override
@@ -231,7 +226,7 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 	@Override
 	public boolean isUsableByPlayer(EntityPlayer player) 
 	{
-		return mFactionUUID.equals(Faction.NULL) || WarForgeMod.FACTIONS.IsPlayerInFaction(player.getUniqueID(), mFactionUUID);
+		return factionUUID.equals(Faction.nullUuid) || WarForgeMod.FACTIONS.IsPlayerInFaction(player.getUniqueID(), factionUUID);
 	}
 	@Override
 	public void openInventory(EntityPlayer player) { }
@@ -240,12 +235,8 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 	@Override
 	public boolean isItemValidForSlot(int index, ItemStack stack) 
 	{
-		if(index < NUM_YIELD_STACKS)
-		{
-			return true;
-		}
-		return false;
-	}
+        return index < NUM_YIELD_STACKS;
+    }
 	@Override
 	public int getField(int id)  { return 0; }
 	@Override
@@ -254,9 +245,8 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 	public int getFieldCount() { return 0; }
 	@Override
 	public void clear() 
-	{ 
-		for(int i = 0; i < NUM_YIELD_STACKS; i++)
-			mYieldStacks[i] = ItemStack.EMPTY;
+	{
+        Arrays.fill(yieldStacks, ItemStack.EMPTY);
 	}
 	// ----------------------------------------------------------
 }

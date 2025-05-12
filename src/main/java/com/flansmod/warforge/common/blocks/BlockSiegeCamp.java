@@ -1,8 +1,5 @@
 package com.flansmod.warforge.common.blocks;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.DimChunkPos;
@@ -26,12 +23,17 @@ import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
+import static com.flansmod.warforge.common.Content.dummyTranslusent;
+import static com.flansmod.warforge.common.Content.statue;
 import static com.flansmod.warforge.common.WarForgeMod.FACTIONS;
+import static com.flansmod.warforge.common.blocks.BlockDummy.MODEL;
+import static com.flansmod.warforge.common.blocks.BlockDummy.modelEnum.*;
 
-public class BlockSiegeCamp extends Block implements ITileEntityProvider
+public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvider
 {
 	//25s break time, no effective tool.
 	public BlockSiegeCamp(Material materialIn)
@@ -68,11 +70,7 @@ public class BlockSiegeCamp extends Block implements ITileEntityProvider
 	public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
 		return layer == BlockRenderLayer.TRANSLUCENT;
 	}
-	/* Unused code that errors #5
-	@SideOnly(Side.CLIENT)
-    @Override
-    public BlockRenderLayer getBlockLayer() { return BlockRenderLayer.CUTOUT; }
-	*/
+
 
 	// vanilla hasTileEntity check
 	@Override
@@ -99,8 +97,8 @@ public class BlockSiegeCamp extends Block implements ITileEntityProvider
 		// Can't claim a chunk claimed by another faction
 		if(!world.isRemote)
 		{
-			UUID existingClaim = FACTIONS.GetClaim(new DimChunkPos(world.provider.getDimension(), pos));
-			if(!existingClaim.equals(Faction.NULL))
+			UUID existingClaim = FACTIONS.getClaim(new DimChunkPos(world.provider.getDimension(), pos));
+			if(!existingClaim.equals(Faction.nullUuid))
 				return false;
 		}
 
@@ -108,7 +106,7 @@ public class BlockSiegeCamp extends Block implements ITileEntityProvider
 		if(!world.getBlockState(pos.add(0, -1, 0)).isSideSolid(world, pos.add(0, -1, 0), EnumFacing.UP))
 			return false;
 
-		return true;
+		return super.canPlaceBlockAt(world,pos);
 	}
 
 	// called after block place
@@ -121,12 +119,13 @@ public class BlockSiegeCamp extends Block implements ITileEntityProvider
 			if(te != null)
 			{
 				TileEntitySiegeCamp siegeCamp = (TileEntitySiegeCamp)te;
-				FACTIONS.OnNonCitadelClaimPlaced(siegeCamp, placer);
-				siegeCamp.OnPlacedBy(placer);
-				if(placer instanceof EntityPlayerMP)
-				{
-					FACTIONS.RequestPlaceFlag((EntityPlayerMP)placer, new DimBlockPos(world.provider.getDimension(), pos));
-				}
+				FACTIONS.onNonCitadelClaimPlaced(siegeCamp, placer);
+				siegeCamp.onPlacedBy(placer);
+				super.onBlockPlacedBy(world, pos, state, placer, stack);
+//				if(placer instanceof EntityPlayerMP)
+//				{
+//					FACTIONS.requestPlaceFlag((EntityPlayerMP)placer, new DimBlockPos(world.provider.getDimension(), pos));
+//				}
 			}
 		}
 	}
@@ -139,7 +138,7 @@ public class BlockSiegeCamp extends Block implements ITileEntityProvider
 		if(!world.isRemote)
 		{
 			DimChunkPos chunkPos = new DimChunkPos(world.provider.getDimension(), pos);
-			if(FACTIONS.IsSiegeInProgress(chunkPos)) FACTIONS.SendAllSiegeInfoToNearby();
+			if(FACTIONS.IsSiegeInProgress(chunkPos)) FACTIONS.sendAllSiegeInfoToNearby();
 			PacketSiegeCampInfo info = new PacketSiegeCampInfo();
 			info.mPossibleAttacks = CalculatePossibleAttackDirections(world, pos, player);
 			info.mSiegeCampPos = new DimBlockPos(world.provider.getDimension(), pos);
@@ -159,17 +158,17 @@ public class BlockSiegeCamp extends Block implements ITileEntityProvider
 
 		if(siegeCamp != null) {
 			ArrayList<DimChunkPos> validTargets = new ArrayList<>(Arrays.asList(new DimChunkPos[4]));
-			FACTIONS.GetAdjacentClaims(FACTIONS.GetFactionOfPlayer(player.getUniqueID()).mUUID, new DimBlockPos(world.provider.getDimension(), pos), validTargets);
+			FACTIONS.GetAdjacentClaims(FACTIONS.getFactionOfPlayer(player.getUniqueID()).uuid, new DimBlockPos(world.provider.getDimension(), pos), validTargets);
 
 			for (int i = 0; i < validTargets.size(); ++i) {
 				if (validTargets.get(i) == null) continue; // unregistered elements may be null
 				SiegeCampAttackInfo info = new SiegeCampAttackInfo();
-				Faction targetFaction = FACTIONS.GetFaction(FACTIONS.GetClaim(validTargets.get(i)));
+				Faction targetFaction = FACTIONS.getFaction(FACTIONS.getClaim(validTargets.get(i)));
 
 				info.mDirection = EnumFacing.HORIZONTALS[i];
-				info.mFactionUUID = targetFaction.mUUID;
-				info.mFactionName = targetFaction.mName;
-				info.mFactionColour = targetFaction.mColour;
+				info.mFactionUUID = targetFaction.uuid;
+				info.mFactionName = targetFaction.name;
+				info.mFactionColour = targetFaction.colour;
 
 				list.add(info);
 			}
@@ -238,5 +237,14 @@ public class BlockSiegeCamp extends Block implements ITileEntityProvider
 		}
 
 		 */
+	}
+
+	@Override
+	public void initMap() {
+		 multiBlockMap = Collections.unmodifiableMap(new HashMap<IBlockState, Vec3i>() {{
+			put(statue.getDefaultState().withProperty(MODEL, BERSERKER), new Vec3i(0, 1, 0));
+			put(dummyTranslusent.getDefaultState().withProperty(MODEL, TRANSLUCENT), new Vec3i(0, 2, 0));
+		}});
+
 	}
 }

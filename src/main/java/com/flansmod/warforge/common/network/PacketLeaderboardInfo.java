@@ -14,21 +14,21 @@ public class PacketLeaderboardInfo extends PacketBase
 	// Cheeky hack to make it available to the GUI
 	public static LeaderboardInfo sLatestInfo = null;
 	
-	public LeaderboardInfo mInfo;
+	public LeaderboardInfo info;
 
 	@Override
 	public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) 
 	{
-		data.writeInt(mInfo.firstIndex);
-		data.writeInt(mInfo.stat.ordinal());
+		data.writeInt(info.firstIndex);
+		data.writeInt(info.stat.ordinal());
 		
 		PacketFactionInfo subPacket = new PacketFactionInfo();
-		subPacket.mInfo = mInfo.mMyFaction;
+		subPacket.info = info.myFaction;
 		subPacket.encodeInto(ctx, data);
 		
 		for(int i = 0; i < LeaderboardInfo.NUM_LEADERBOARD_ENTRIES_PER_PAGE; i++)
 		{
-			subPacket.mInfo = mInfo.mFactionInfos[i];
+			subPacket.info = info.factionInfos[i];
 			subPacket.encodeInto(ctx, data);
 		}
 	}
@@ -36,19 +36,19 @@ public class PacketLeaderboardInfo extends PacketBase
 	@Override
 	public void decodeInto(ChannelHandlerContext ctx, ByteBuf data) 
 	{
-		mInfo = new LeaderboardInfo();
+		info = new LeaderboardInfo();
 		
-		mInfo.firstIndex = data.readInt();
-		mInfo.stat = FactionStat.values()[data.readInt()];
+		info.firstIndex = data.readInt();
+		info.stat = FactionStat.values()[data.readInt()];
 		
 		PacketFactionInfo subPacket = new PacketFactionInfo();
 		subPacket.decodeInto(ctx, data);
-		mInfo.mMyFaction = subPacket.mInfo;
+		info.myFaction = subPacket.info;
 		
 		for(int i = 0; i < LeaderboardInfo.NUM_LEADERBOARD_ENTRIES_PER_PAGE; i++)
 		{
 			subPacket.decodeInto(ctx, data);
-			mInfo.mFactionInfos[i] = subPacket.mInfo;
+			info.factionInfos[i] = subPacket.info;
 		}
 	}
 
@@ -61,7 +61,7 @@ public class PacketLeaderboardInfo extends PacketBase
 	@Override
 	public void handleClientSide(EntityPlayer clientPlayer) 
 	{
-		sLatestInfo = mInfo;
+		sLatestInfo = info;
 		clientPlayer.openGui(
 				WarForgeMod.INSTANCE, 
 				CommonProxy.GUI_TYPE_LEADERBOARD, 

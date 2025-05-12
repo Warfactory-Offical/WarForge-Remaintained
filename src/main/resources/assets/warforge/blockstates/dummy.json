@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "model=king": { "model": "warforge:dummy/king" },
+        "model=knight": { "model": "warforge:dummy/knight" },
+        "model=berserker": { "model": "warforge:dummy/berserker" }
+    }
+}

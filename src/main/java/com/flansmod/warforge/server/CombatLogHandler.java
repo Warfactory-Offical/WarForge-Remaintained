@@ -4,15 +4,12 @@ import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeConfig;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerProfileCache;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -72,7 +69,7 @@ public class CombatLogHandler {
                 if (playerData != null) {
                     NBTTagList inventoryList = playerData.getTagList("Inventory", 10).copy();
                     DimBlockPos logoffPos = player.logoffPos;
-                    WorldServer world = DimensionManager.getWorld(logoffPos.mDim);
+                    WorldServer world = DimensionManager.getWorld(logoffPos.dim);
 
                     // Clear inventory data
                     playerData.setTag("Inventory", new NBTTagList());

@@ -1,10 +1,15 @@
 package com.flansmod.warforge.common.network;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import com.flansmod.warforge.common.WarForgeMod;
 
@@ -43,13 +48,13 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 	private LinkedList<Class<? extends PacketBase>> packets = new LinkedList<>();
 	//Whether or not Flan's Mod has initialised yet. Once true, no more packets may be registered.
 	private boolean modInitialised = false;
-	
+
 	/**
 	 * Store received packets in these queues and have the main Minecraft threads use these
 	 */
 	private ConcurrentLinkedQueue<PacketBase> receivedPacketsClient = new ConcurrentLinkedQueue<>();
 	private HashMap<String, ConcurrentLinkedQueue<PacketBase>> receivedPacketsServer = new HashMap<>();
-	
+
 	/**
 	 * Registers a packet with the handler
 	 */
@@ -70,11 +75,11 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 			WarForgeMod.LOGGER.warn("Tried to register packet " + cl.getCanonicalName() + " after mod initialisation.");
 			return false;
 		}
-		
+
 		packets.add(cl);
 		return true;
 	}
-	
+
 	@Override
 	protected void encode(ChannelHandlerContext ctx, PacketBase msg, List<Object> out) throws Exception
 	{
@@ -82,19 +87,50 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 		{
 			//Define a new buffer to store our data upon encoding
 			ByteBuf encodedData = Unpooled.buffer();
+            ByteBuf tempBuffer = Unpooled.buffer();
 			//Get the packet class
+
 			Class<? extends PacketBase> cl = msg.getClass();
-			
+
 			//If this packet has not been registered by our handler, reject it
 			if(!packets.contains(cl))
 				throw new NullPointerException("Packet not registered : " + cl.getCanonicalName());
-			
+
 			//Like a packet ID. Stored as the first entry in the packet code for recognition
 			byte discriminator = (byte)packets.indexOf(cl);
 			encodedData.writeByte(discriminator);
 			//Get the packet class to encode our packet
-			msg.encodeInto(ctx, encodedData);
-			
+            msg.encodeInto(ctx, tempBuffer);
+			boolean shouldCompress = msg.canUseCompression() && tempBuffer.readableBytes() > 256;
+            boolean compressionFail = false;
+
+            if(shouldCompress){
+                // Now we encode the data normally
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                try (GZIPOutputStream gzipOut = new GZIPOutputStream(byteArrayOutputStream))
+                {
+                    byte[] data = new byte[tempBuffer.readableBytes()];
+                    tempBuffer.readBytes(data);
+                    gzipOut.write(data);
+
+                } catch (IOException e){
+                    compressionFail = true;
+                    WarForgeMod.LOGGER.error("Compression failed, defaulting to uncompressed data.", e);
+                }
+                if (!compressionFail) {
+                    byte[] compressedData = byteArrayOutputStream.toByteArray();
+					encodedData.writeByte(1);
+                    encodedData.writeBytes(compressedData);
+                }
+
+            }
+            // If compression failed or we don't need compression, send the uncompressed data
+            if(!shouldCompress || compressionFail) {
+				encodedData.writeByte(0); //Termination for uncompressed packets
+                msg.encodeInto(ctx, encodedData);
+            }
+
+
 			//Convert our packet into a Forge packet to get it through the Netty system
 			FMLProxyPacket proxyPacket = new FMLProxyPacket(new PacketBuffer(encodedData.copy()), ctx.channel().attr(NetworkRegistry.FML_CHANNEL).get());
 			//Add our packet to the outgoing packet queue
@@ -106,7 +142,7 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 			WarForgeMod.LOGGER.throwing(e);
 		}
 	}
-	
+
 	@Override
 	protected void decode(ChannelHandlerContext ctx, FMLProxyPacket msg, List<Object> out) throws Exception
 	{
@@ -117,14 +153,23 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 			//Get the class for interpreting this packet
 			byte discriminator = encodedData.readByte();
 			Class<? extends PacketBase> cl = packets.get(discriminator);
-			
+
 			//If this discriminator returns no class, reject it
 			if(cl == null)
 				throw new NullPointerException("Packet not registered for discriminator : " + discriminator);
-			
+
 			//Create an empty packet and decode our packet data into it
 			PacketBase packet = cl.getConstructor().newInstance();
-			packet.decodeInto(ctx, encodedData.slice());
+			byte compressionFlag = encodedData.readByte();
+			if(packet.canUseCompression() && compressionFlag == 1){
+				//Compressed
+				ByteBuf decompressedData = decompress(encodedData.slice());
+				packet.decodeInto(ctx, decompressedData);
+
+			} else {
+				//Uncompressed
+				packet.decodeInto(ctx, encodedData.slice());
+			}
 			//Check the side and handle our packet accordingly
 			switch(FMLCommonHandler.instance().getEffectiveSide())
 			{
@@ -152,7 +197,26 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 			WarForgeMod.LOGGER.throwing(e);
 		}
 	}
-	
+
+	private ByteBuf decompress(ByteBuf compressedData) throws IOException {
+		// Create a GZIPInputStream to decompress the data
+		ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(compressedData.array());
+		GZIPInputStream gzipInputStream = new GZIPInputStream(byteArrayInputStream);
+
+		// Use a ByteArrayOutputStream to hold the decompressed data
+		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+		// Create a buffer to read and write data
+		byte[] buffer = new byte[1024];
+		int len;
+		while ((len = gzipInputStream.read(buffer)) > 0) {
+			byteArrayOutputStream.write(buffer, 0, len);
+		}
+
+		// Convert the decompressed data into a ByteBuf and return it
+		return Unpooled.wrappedBuffer(byteArrayOutputStream.toByteArray());
+	}
+
 	@SideOnly(Side.CLIENT)
 	public void handleClientPackets()
 	{
@@ -162,7 +226,7 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 			packet.handleClientSide(getClientPlayer());
 		}
 	}
-	
+
 	public void handleServerPackets()
 	{
 		for(String playerName : receivedPacketsServer.keySet())
@@ -176,14 +240,14 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 			}
 		}
 	}
-	
+
 	/**
 	 * Initialisation method called from FMLInitializationEvent in WarForgeMod
 	 */
 	public void initialise()
 	{
 		channels = NetworkRegistry.INSTANCE.newChannel("WarForgeMod", this);
-		
+
 		registerPacket(PacketCreateFaction.class);
 		registerPacket(PacketRequestFactionInfo.class);
 		registerPacket(PacketFactionInfo.class);
@@ -198,8 +262,11 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 		registerPacket(PacketTimeUpdates.class);
 		registerPacket(PacketSetFactionColour.class);
 		registerPacket(PacketMoveCitadel.class);
+		registerPacket(PacketCitadelUpgradeRequirement.class);
+		registerPacket(PacketRequestUpgradeUI.class);
+		registerPacket(PacketUpgradeUI.class);
 	}
-	
+
 	/**
 	 * Post-Initialisation method called from FMLPostInitializationEvent in WarForgeMod
 	 * Logically sorts the packets client and server side to ensure a matching ordering
@@ -208,7 +275,7 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 	{
 		if(modInitialised)
 			return;
-		
+
 		modInitialised = true;
 		//Define our comparator on the fly and apply it to our list
 		packets.sort((c1, c2) ->
@@ -219,13 +286,13 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 			return com;
 		});
 	}
-	
+
 	@SideOnly(Side.CLIENT)
 	private EntityPlayer getClientPlayer()
 	{
 		return Minecraft.getMinecraft().player;
 	}
-	
+
 	/**
 	 * Send a packet to all players
 	 */
@@ -234,7 +301,7 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 		channels.get(Side.SERVER).attr(FMLOutboundHandler.FML_MESSAGETARGET).set(FMLOutboundHandler.OutboundTarget.ALL);
 		channels.get(Side.SERVER).writeAndFlush(packet);
 	}
-	
+
 	/**
 	 * Send a packet to a player
 	 */
@@ -244,7 +311,7 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 		channels.get(Side.SERVER).attr(FMLOutboundHandler.FML_MESSAGETARGETARGS).set(player);
 		channels.get(Side.SERVER).writeAndFlush(packet);
 	}
-	
+
 	/**
 	 * Send a packet to all around a point
 	 */
@@ -254,7 +321,7 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 		channels.get(Side.SERVER).attr(FMLOutboundHandler.FML_MESSAGETARGETARGS).set(point);
 		channels.get(Side.SERVER).writeAndFlush(packet);
 	}
-	
+
 	/**
 	 * Send a packet to all in a dimension
 	 */
@@ -264,7 +331,7 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 		channels.get(Side.SERVER).attr(FMLOutboundHandler.FML_MESSAGETARGETARGS).set(dimensionID);
 		channels.get(Side.SERVER).writeAndFlush(packet);
 	}
-	
+
 	/**
 	 * Send a packet to the server
 	 */
@@ -273,9 +340,9 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 		channels.get(Side.CLIENT).attr(FMLOutboundHandler.FML_MESSAGETARGET).set(FMLOutboundHandler.OutboundTarget.TOSERVER);
 		channels.get(Side.CLIENT).writeAndFlush(packet);
 	}
-	
+
 	//Vanilla packets follow
-	
+
 	/**
 	 * Send a packet to all players
 	 */
@@ -283,7 +350,7 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 	{
 		FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendPacketToAllPlayers(packet);
 	}
-	
+
 	/**
 	 * Send a packet to a player
 	 */
@@ -291,7 +358,7 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 	{
 		player.connection.sendPacket(packet);
 	}
-	
+
 	/**
 	 * Send a packet to all around a point
 	 */
@@ -299,7 +366,7 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 	{
 		FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendToAllNearExcept(null, point.x, point.y, point.z, point.range, point.dimension, packet);
 	}
-	
+
 	/**
 	 * Send a packet to all in a dimension
 	 */
@@ -307,7 +374,7 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 	{
 		FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().sendPacketToAllPlayersInDimension(packet, dimensionID);
 	}
-	
+
 	/**
 	 * Send a packet to the server
 	 */
@@ -315,7 +382,7 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 	{
 		Minecraft.getMinecraft().player.connection.sendPacket(packet);
 	}
-	
+
 	/**
 	 * Send a packet to all around a point without having to create one's own TargetPoint
 	 */

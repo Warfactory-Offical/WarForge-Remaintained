@@ -10,58 +10,58 @@ import net.minecraft.entity.player.EntityPlayerMP;
 
 public class PacketSiegeCampProgressUpdate extends PacketBase
 {
-	public SiegeCampProgressInfo mInfo;
+	public SiegeCampProgressInfo info;
 	
 	@Override
 	public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) 
 	{
 		// Attack
-		data.writeInt(mInfo.mAttackingPos.mDim);
-		data.writeInt(mInfo.mAttackingPos.getX());
-		data.writeInt(mInfo.mAttackingPos.getY());
-		data.writeInt(mInfo.mAttackingPos.getZ());
-		data.writeInt(mInfo.mAttackingColour);
-		writeUTF(data, mInfo.mAttackingName);
+		data.writeInt(info.attackingPos.dim);
+		data.writeInt(info.attackingPos.getX());
+		data.writeInt(info.attackingPos.getY());
+		data.writeInt(info.attackingPos.getZ());
+		data.writeInt(info.attackingColour);
+		writeUTF(data, info.attackingName);
 		
 		// Defend
-		data.writeInt(mInfo.mDefendingPos.mDim);
-		data.writeInt(mInfo.mDefendingPos.getX());
-		data.writeInt(mInfo.mDefendingPos.getY());
-		data.writeInt(mInfo.mDefendingPos.getZ());
-		data.writeInt(mInfo.mDefendingColour);
-		writeUTF(data, mInfo.mDefendingName);
+		data.writeInt(info.defendingPos.dim);
+		data.writeInt(info.defendingPos.getX());
+		data.writeInt(info.defendingPos.getY());
+		data.writeInt(info.defendingPos.getZ());
+		data.writeInt(info.defendingColour);
+		writeUTF(data, info.defendingName);
 		
-		data.writeInt(mInfo.mProgress);
-		data.writeInt(mInfo.mPreviousProgress);
-		data.writeInt(mInfo.mCompletionPoint);
+		data.writeInt(info.progress);
+		data.writeInt(info.mPreviousProgress);
+		data.writeInt(info.completionPoint);
 	}
 
 	@Override
 	public void decodeInto(ChannelHandlerContext ctx, ByteBuf data) 
 	{
-		mInfo = new SiegeCampProgressInfo();
+		info = new SiegeCampProgressInfo();
 		
 		// Attacking
 		int dim = data.readInt();
 		int x = data.readInt();
 		int y = data.readInt();
 		int z = data.readInt();
-		mInfo.mAttackingPos = new DimBlockPos(dim, x, y, z);
-		mInfo.mAttackingColour = data.readInt();
-		mInfo.mAttackingName = readUTF(data);
+		info.attackingPos = new DimBlockPos(dim, x, y, z);
+		info.attackingColour = data.readInt();
+		info.attackingName = readUTF(data);
 		
 		// Defending
 		dim = data.readInt();
 		x = data.readInt();
 		y = data.readInt();
 		z = data.readInt();
-		mInfo.mDefendingPos = new DimBlockPos(dim, x, y, z);
-		mInfo.mDefendingColour = data.readInt();
-		mInfo.mDefendingName = readUTF(data);
+		info.defendingPos = new DimBlockPos(dim, x, y, z);
+		info.defendingColour = data.readInt();
+		info.defendingName = readUTF(data);
 		
-		mInfo.mProgress = data.readInt();
-		mInfo.mPreviousProgress = data.readInt();
-		mInfo.mCompletionPoint = data.readInt();
+		info.progress = data.readInt();
+		info.mPreviousProgress = data.readInt();
+		info.completionPoint = data.readInt();
 	}
 
 	@Override
@@ -73,7 +73,11 @@ public class PacketSiegeCampProgressUpdate extends PacketBase
 	@Override
 	public void handleClientSide(EntityPlayer clientPlayer) 
 	{
-		WarForgeMod.proxy.UpdateSiegeInfo(mInfo);
+		WarForgeMod.proxy.UpdateSiegeInfo(info);
 	}
 
+	@Override
+	public boolean canUseCompression() {
+		return true;
+	}
 }

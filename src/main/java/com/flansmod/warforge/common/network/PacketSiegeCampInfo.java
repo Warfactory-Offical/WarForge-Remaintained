@@ -25,7 +25,7 @@ public class PacketSiegeCampInfo extends PacketBase
 	@Override
 	public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) 
 	{
-		data.writeInt(mSiegeCampPos.mDim);
+		data.writeInt(mSiegeCampPos.dim);
 		data.writeInt(mSiegeCampPos.getX());
 		data.writeInt(mSiegeCampPos.getY());
 		data.writeInt(mSiegeCampPos.getZ());

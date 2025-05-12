@@ -1,5 +1,9 @@
 package com.flansmod.warforge.common;
 
+import net.minecraft.block.Block;
+import net.minecraft.item.Item;
+import net.minecraftforge.common.config.Configuration;
+
 import java.io.File;
 import java.util.*;
 
@@ -13,7 +17,7 @@ import net.minecraftforge.common.config.Configuration;
 
 import static com.flansmod.warforge.common.WarForgeMod.LOGGER;
 
-public class WarForgeConfig 
+public class WarForgeConfig
 {
 	// Config
 	public static Configuration configFile;
@@ -137,7 +141,7 @@ public class WarForgeConfig
 	public static final String CATEGORY_CLIENT = "Client";
 	public static float SHOW_NEW_AREA_TIMER = 200.0f;
 	public static int RANDOM_BORDER_REDRAW_DENOMINATOR = 5;
-    public static int FACTION_NAME_LENGTH_MAX = 32;
+	public static int FACTION_NAME_LENGTH_MAX = 32;
 	public static boolean BLOCK_ENDER_CHEST = false;
 	public static boolean SHOW_YIELD_TIMERS = true;
 	public static int CITADEL_MOVE_NUM_DAYS = 7;
@@ -158,219 +162,109 @@ public class WarForgeConfig
 	public static boolean ENABLE_TPA_POTIONS = true;
 
 
-	public static long FACTIONS_BOT_CHANNEL_ID = 799595436154683422L;
+    public static long FACTIONS_BOT_CHANNEL_ID = 799595436154683422L;
+    // Permissions
+    public static ProtectionConfig UNCLAIMED = new ProtectionConfig();
+    public static ProtectionConfig SAFE_ZONE = new ProtectionConfig();
+    public static ProtectionConfig WAR_ZONE = new ProtectionConfig();
+    public static ProtectionConfig CITADEL_FRIEND = new ProtectionConfig();
+    public static ProtectionConfig CITADEL_FOE = new ProtectionConfig();
+    public static ProtectionConfig CLAIM_FRIEND = new ProtectionConfig();
+    public static ProtectionConfig CLAIM_FOE = new ProtectionConfig();
+    public static ProtectionConfig SIEGECAMP_SIEGER = new ProtectionConfig();
+    public static ProtectionConfig SIEGECAMP_OTHER = new ProtectionConfig();
 
-	public static class ProtectionConfig {
-		public boolean BREAK_BLOCKS = true;
-		public boolean PLACE_BLOCKS = true;
-		public boolean INTERACT = true;
-		public boolean USE_ITEM = true;
-		public boolean BLOCK_REMOVAL = true;
-		public boolean EXPLOSION_DAMAGE = false;
-		public boolean PLAYER_TAKE_DAMAGE_FROM_MOB = true;
-		public boolean PLAYER_TAKE_DAMAGE_FROM_PLAYER = true;
-		public boolean PLAYER_TAKE_DAMAGE_FROM_OTHER = true;
-		public boolean PLAYER_DEAL_DAMAGE = true;
-		public boolean ALLOW_MOB_SPAWNS = true;
-		public boolean ALLOW_MOB_ENTRY = true;
-		public boolean ALLOW_MOUNT_ENTITY = true;
-		public boolean ALLOW_DISMOUNT_ENTITY = true;
+    // Init default perms
+    static {
+        SAFE_ZONE.BREAK_BLOCKS = false;
+        SAFE_ZONE.PLACE_BLOCKS = false;
+        SAFE_ZONE.INTERACT = false;
+        SAFE_ZONE.USE_ITEM = false;
+        SAFE_ZONE.PLAYER_TAKE_DAMAGE_FROM_MOB = false;
+        SAFE_ZONE.PLAYER_TAKE_DAMAGE_FROM_PLAYER = false;
+        SAFE_ZONE.PLAYER_TAKE_DAMAGE_FROM_OTHER = false;
+        SAFE_ZONE.PLAYER_DEAL_DAMAGE = false;
+        SAFE_ZONE.BLOCK_REMOVAL = false;
+        SAFE_ZONE.EXPLOSION_DAMAGE = false;
+        SAFE_ZONE.BLOCK_BREAK_EXCEPTION_IDS = new String[]{};
+        SAFE_ZONE.BLOCK_PLACE_EXCEPTION_IDS = new String[]{};
+        SAFE_ZONE.BLOCK_INTERACT_EXCEPTION_IDS = new String[]{"minecraft:ender_chest", "minecraft:lever", "minecraft:button", "warforge:leaderboard"};
+        SAFE_ZONE.ALLOW_MOB_SPAWNS = false;
+        SAFE_ZONE.ALLOW_MOB_ENTRY = false;
+        SAFE_ZONE.ALLOW_MOUNT_ENTITY = false;
+        SAFE_ZONE.ALLOW_DISMOUNT_ENTITY = false;
 
-		private String[] BLOCK_PLACE_EXCEPTION_IDS = new String[] { "minecraft:torch" };
-		private String[] BLOCK_BREAK_EXCEPTION_IDS = new String[] { "minecraft:torch", "warforge:siegecampblock" };
-		private String[] BLOCK_INTERACT_EXCEPTION_IDS = new String[] { "minecraft:ender_chest", "warforge:citadelblock", "warforge:basicclaimblock", "warforge:reinforcedclaimblock", "warforge:siegecampblock"   };
-		private String[] ITEM_USE_EXCEPTION_IDS = new String[] { "minecraft:snowball" };
+        WAR_ZONE.BREAK_BLOCKS = false;
+        WAR_ZONE.PLACE_BLOCKS = false;
+        WAR_ZONE.INTERACT = true;
+        WAR_ZONE.USE_ITEM = true;
+        WAR_ZONE.PLAYER_TAKE_DAMAGE_FROM_MOB = true;
+        WAR_ZONE.PLAYER_TAKE_DAMAGE_FROM_PLAYER = true;
+        WAR_ZONE.PLAYER_TAKE_DAMAGE_FROM_OTHER = true;
+        WAR_ZONE.PLAYER_DEAL_DAMAGE = true;
+        WAR_ZONE.BLOCK_REMOVAL = false;
+        WAR_ZONE.EXPLOSION_DAMAGE = false;
+        WAR_ZONE.BLOCK_BREAK_EXCEPTION_IDS = new String[]{"minecraft:web", "minecraft:tnt", "minecraft:end_crystal"};
+        WAR_ZONE.BLOCK_PLACE_EXCEPTION_IDS = new String[]{"minecraft:web", "minecraft:tnt", "minecraft:end_crystal"};
+        WAR_ZONE.BLOCK_INTERACT_EXCEPTION_IDS = new String[]{"minecraft:ender_chest", "minecraft:lever", "minecraft:button", "warforge:leaderboard"};
 
-		public List<Block> BLOCK_PLACE_EXCEPTIONS;
-		public List<Block> BLOCK_BREAK_EXCEPTIONS;
-		public List<Block> BLOCK_INTERACT_EXCEPTIONS;
-		public List<Item> ITEM_USE_EXCEPTIONS;
+        CITADEL_FOE.BREAK_BLOCKS = false;
+        CITADEL_FOE.PLACE_BLOCKS = false;
+        CITADEL_FOE.INTERACT = false;
+        CITADEL_FOE.USE_ITEM = false;
+        CLAIM_FOE.BREAK_BLOCKS = false;
+        CLAIM_FOE.PLACE_BLOCKS = false;
+        CLAIM_FOE.INTERACT = false;
+        CLAIM_FOE.USE_ITEM = false;
+        CITADEL_FOE.ALLOW_MOUNT_ENTITY = false;
+        CITADEL_FOE.ALLOW_DISMOUNT_ENTITY = false;
+        CLAIM_FOE.ALLOW_MOUNT_ENTITY = false;
+        CLAIM_FOE.ALLOW_DISMOUNT_ENTITY = false;
 
-		private List<Block> FindBlocks(String[] input) {
-			List<Block> output = new ArrayList<Block>(input.length);
-			for(String blockID : input) {
-				Block block = Block.getBlockFromName(blockID);
-				if(block != null)
-					output.add(block);
-			}
-			return output;
-		}
+        UNCLAIMED.EXPLOSION_DAMAGE = true;
+    }
 
-		private List<Item> FindItems(String[] input) {
-			List<Item> output = new ArrayList<Item>(input.length);
-			for(String itemID : input) {
-				Item item = Item.getByNameOrId(itemID);
-				if(item != null)
-					output.add(item);
-			}
-			return output;
-		}
+    public static void syncConfig(File suggestedFile) {
+        configFile = new Configuration(suggestedFile);
 
-		public void FindBlocks() {
-			BLOCK_PLACE_EXCEPTIONS = FindBlocks(BLOCK_PLACE_EXCEPTION_IDS);
-			BLOCK_BREAK_EXCEPTIONS = FindBlocks(BLOCK_BREAK_EXCEPTION_IDS);
-			BLOCK_INTERACT_EXCEPTIONS = FindBlocks(BLOCK_INTERACT_EXCEPTION_IDS);
-			ITEM_USE_EXCEPTIONS = FindItems(ITEM_USE_EXCEPTION_IDS);
-		}
+        // Protections
+        UNCLAIMED.SyncConfig("Unclaimed", "Unclaimed Chunks");
+        SAFE_ZONE.SyncConfig("SafeZone", "Safe Zone");
+        WAR_ZONE.SyncConfig("WarZone", "War Zone");
+        CITADEL_FRIEND.SyncConfig("CitadelFriend", "Citadels of their Faction");
+        CITADEL_FOE.SyncConfig("CitadelFoe", "Citadels of other Factions");
+        CLAIM_FRIEND.SyncConfig("ClaimFriend", "Claims of their Faction");
+        CLAIM_FOE.SyncConfig("ClaimFoe", "Claims of other Factions");
+        //SIEGECAMP_SIEGER.syncConfig("Sieger", "Sieges they started");
+        //SIEGECAMP_OTHER.syncConfig("SiegeOther", "Other sieges, defending or neutral");
 
-		public void SyncConfig(String name, String desc) {
-			String category = name;
-			BREAK_BLOCKS = configFile.getBoolean(name + " - Break Blocks", category, BREAK_BLOCKS, "Can players break blocks in " + desc);
-			PLACE_BLOCKS = configFile.getBoolean(name + " - Place Blocks", category, PLACE_BLOCKS, "Can players place blocks in " + desc);
-			BLOCK_REMOVAL = configFile.getBoolean(name + " - Block Removal", category, BLOCK_REMOVAL, "Can blocks be removed at all in (including from explosions, mobs etc) " + desc);
-			EXPLOSION_DAMAGE = configFile.getBoolean(name + " - Explosion Damage", category, EXPLOSION_DAMAGE, "Can explosions damage blocks in " + desc);
-			INTERACT = configFile.getBoolean(name + " - Interact", category, INTERACT, "Can players interact with blocks and entities in " + desc);
-			USE_ITEM = configFile.getBoolean(name + " - Use Items", category, USE_ITEM, "Can players use items in " + desc);
-			PLAYER_TAKE_DAMAGE_FROM_MOB = configFile.getBoolean(name + " - Take Dmg From Mob", category, PLAYER_TAKE_DAMAGE_FROM_MOB, "Can players take mob damage in " + desc);
-			PLAYER_TAKE_DAMAGE_FROM_PLAYER = configFile.getBoolean(name + " - Take Dmg From Player", category, PLAYER_TAKE_DAMAGE_FROM_PLAYER, "Can players take damage from other players in " + desc);
-			PLAYER_TAKE_DAMAGE_FROM_OTHER = configFile.getBoolean(name + " - Take Any Other Dmg", category, PLAYER_TAKE_DAMAGE_FROM_OTHER, "Can players take damage from any other source in " + desc);
-			PLAYER_DEAL_DAMAGE = configFile.getBoolean(name + " - Deal Damage", category, PLAYER_DEAL_DAMAGE, "Can players deal damage in " + desc);
+        // Claim Settings
+        CLAIM_DIM_WHITELIST = configFile.get(CATEGORY_CLAIMS, "Claim Dimension Whitelist", CLAIM_DIM_WHITELIST, "In which dimensions should player be able to claim chunks").getIntList();
+        CLAIM_STRENGTH_CITADEL = configFile.getInt("Citadel Claim Strength", CATEGORY_CLAIMS, CLAIM_STRENGTH_CITADEL, 1, 1024, "The strength of citadel claims");
+        CLAIM_STRENGTH_REINFORCED = configFile.getInt("Reinforced Claim Strength", CATEGORY_CLAIMS, CLAIM_STRENGTH_REINFORCED, 1, 1024, "The strength of reinforced claims");
+        CLAIM_STRENGTH_BASIC = configFile.getInt("Basic Claim Strength", CATEGORY_CLAIMS, CLAIM_STRENGTH_BASIC, 1, 1024, "The strength of basic claims");
+        SUPPORT_STRENGTH_CITADEL = configFile.getInt("Citadel Support Strength", CATEGORY_CLAIMS, SUPPORT_STRENGTH_CITADEL, 1, 1024, "The support strength a citadel gives to adjacent claims");
+        SUPPORT_STRENGTH_REINFORCED = configFile.getInt("Reinforced Support Strength", CATEGORY_CLAIMS, SUPPORT_STRENGTH_REINFORCED, 1, 1024, "The support strength a reinforced claim gives to adjacent claims");
+        SUPPORT_STRENGTH_BASIC = configFile.getInt("Basic Support Strength", CATEGORY_CLAIMS, SUPPORT_STRENGTH_BASIC, 1, 1024, "The support strength a basic claim gives to adjacent claims");
+        CITADEL_MOVE_NUM_DAYS = configFile.getInt("Days Between Citadel Moves", CATEGORY_CLAIMS, CITADEL_MOVE_NUM_DAYS, 0, 1024, "How many days a faction has to wait to move their citadel again");
+        ENABLE_CITADEL_UPGRADES = configFile.getBoolean("Enable Citadel Upgrade System", CATEGORY_CLAIMS, false, "Applies claim limits that require upgrading to extend your faction's claim limit");
 
-			BLOCK_PLACE_EXCEPTION_IDS = configFile.getStringList(name + " - Place Exceptions", category, BLOCK_PLACE_EXCEPTION_IDS, "The block IDs that can still be placed. Has no effect if block placement is allowed anyway");
-			BLOCK_BREAK_EXCEPTION_IDS = configFile.getStringList(name + " - Break Exceptions", category, BLOCK_BREAK_EXCEPTION_IDS, "The block IDs that can still be broken. Has no effect if block breaking is allowed anyway");
-			BLOCK_INTERACT_EXCEPTION_IDS = configFile.getStringList(name + " - Interact Exceptions", category, BLOCK_INTERACT_EXCEPTION_IDS, "The block IDs that can still be interacted with. Has no effect if interacting is allowed anyway");
-			ITEM_USE_EXCEPTION_IDS = configFile.getStringList(name + " - Use Exceptions", category, ITEM_USE_EXCEPTION_IDS, "The item IDs that can still be used. Has no effect if interacting is allowed anyway");
-
-			ALLOW_MOB_SPAWNS = configFile.getBoolean(name + " - Allow Mob Spawns", category, ALLOW_MOB_SPAWNS, "Can mobs spawn in " + desc);
-			ALLOW_MOB_ENTRY = configFile.getBoolean(name + " - Allow Mob Entry", category, ALLOW_MOB_ENTRY, "Can mobs enter " + desc);
-
-			ALLOW_DISMOUNT_ENTITY = configFile.getBoolean(name + " - Allow Dismount Entity", category, ALLOW_DISMOUNT_ENTITY, "Can players dismount entities " + desc);
-			ALLOW_MOUNT_ENTITY = configFile.getBoolean(name + " - Allow Mount Entity", category, ALLOW_MOUNT_ENTITY, "Can players mount entities " + desc);
-
-		}
-	}
-
-	// Permissions
-	public static ProtectionConfig UNCLAIMED = new ProtectionConfig();
-	public static ProtectionConfig SAFE_ZONE = new ProtectionConfig();
-	public static ProtectionConfig WAR_ZONE = new ProtectionConfig();
-	public static ProtectionConfig CITADEL_FRIEND = new ProtectionConfig();
-	public static ProtectionConfig CITADEL_FOE = new ProtectionConfig();
-	public static ProtectionConfig CLAIM_FRIEND = new ProtectionConfig();
-	public static ProtectionConfig CLAIM_FOE = new ProtectionConfig();
-	public static ProtectionConfig SIEGECAMP_SIEGER = new ProtectionConfig();
-	public static ProtectionConfig SIEGECAMP_OTHER = new ProtectionConfig();
-
-	// Init default perms
-	static {
-		SAFE_ZONE.BREAK_BLOCKS = false;
-		SAFE_ZONE.PLACE_BLOCKS = false;
-		SAFE_ZONE.INTERACT = false;
-		SAFE_ZONE.USE_ITEM = false;
-		SAFE_ZONE.PLAYER_TAKE_DAMAGE_FROM_MOB = false;
-		SAFE_ZONE.PLAYER_TAKE_DAMAGE_FROM_PLAYER = false;
-		SAFE_ZONE.PLAYER_TAKE_DAMAGE_FROM_OTHER = false;
-		SAFE_ZONE.PLAYER_DEAL_DAMAGE = false;
-		SAFE_ZONE.BLOCK_REMOVAL = false;
-		SAFE_ZONE.EXPLOSION_DAMAGE = false;
-		SAFE_ZONE.BLOCK_BREAK_EXCEPTION_IDS = new String[] {};
-		SAFE_ZONE.BLOCK_PLACE_EXCEPTION_IDS = new String[] {};
-		SAFE_ZONE.BLOCK_INTERACT_EXCEPTION_IDS = new String[] { "minecraft:ender_chest", "minecraft:lever", "minecraft:button", "warforge:leaderboard" };
-		SAFE_ZONE.ALLOW_MOB_SPAWNS = false;
-		SAFE_ZONE.ALLOW_MOB_ENTRY = false;
-		SAFE_ZONE.ALLOW_MOUNT_ENTITY = false;
-		SAFE_ZONE.ALLOW_DISMOUNT_ENTITY = false;
-
-		WAR_ZONE.BREAK_BLOCKS = false;
-		WAR_ZONE.PLACE_BLOCKS = false;
-		WAR_ZONE.INTERACT = true;
-		WAR_ZONE.USE_ITEM = true;
-		WAR_ZONE.PLAYER_TAKE_DAMAGE_FROM_MOB = true;
-		WAR_ZONE.PLAYER_TAKE_DAMAGE_FROM_PLAYER = true;
-		WAR_ZONE.PLAYER_TAKE_DAMAGE_FROM_OTHER = true;
-		WAR_ZONE.PLAYER_DEAL_DAMAGE = true;
-		WAR_ZONE.BLOCK_REMOVAL = false;
-		WAR_ZONE.EXPLOSION_DAMAGE = false;
-		WAR_ZONE.BLOCK_BREAK_EXCEPTION_IDS = new String[] { "minecraft:web", "minecraft:tnt", "minecraft:end_crystal" };
-		WAR_ZONE.BLOCK_PLACE_EXCEPTION_IDS = new String[] { "minecraft:web", "minecraft:tnt", "minecraft:end_crystal" };
-		WAR_ZONE.BLOCK_INTERACT_EXCEPTION_IDS = new String[] { "minecraft:ender_chest", "minecraft:lever", "minecraft:button", "warforge:leaderboard" };
-
-		CITADEL_FOE.BREAK_BLOCKS = false;
-		CITADEL_FOE.PLACE_BLOCKS = false;
-		CITADEL_FOE.INTERACT = false;
-		CITADEL_FOE.USE_ITEM = false;
-		CLAIM_FOE.BREAK_BLOCKS = false;
-		CLAIM_FOE.PLACE_BLOCKS = false;
-		CLAIM_FOE.INTERACT = false;
-		CLAIM_FOE.USE_ITEM = false;
-		CITADEL_FOE.ALLOW_MOUNT_ENTITY = false;
-		CITADEL_FOE.ALLOW_DISMOUNT_ENTITY = false;
-		CLAIM_FOE.ALLOW_MOUNT_ENTITY = false;
-		CLAIM_FOE.ALLOW_DISMOUNT_ENTITY = false;
-
-		UNCLAIMED.EXPLOSION_DAMAGE = true;
-	}
-
-	public static void SyncConfig(File suggestedFile) {
-		configFile = new Configuration(suggestedFile);
-
-		// Protections
-		UNCLAIMED.SyncConfig("Unclaimed", "Unclaimed Chunks");
-		SAFE_ZONE.SyncConfig("SafeZone", "Safe Zone");
-		WAR_ZONE.SyncConfig("WarZone", "War Zone");
-		CITADEL_FRIEND.SyncConfig("CitadelFriend", "Citadels of their Faction");
-		CITADEL_FOE.SyncConfig("CitadelFoe", "Citadels of other Factions");
-		CLAIM_FRIEND.SyncConfig("ClaimFriend", "Claims of their Faction");
-		CLAIM_FOE.SyncConfig("ClaimFoe", "Claims of other Factions");
-		//SIEGECAMP_SIEGER.syncConfig("Sieger", "Sieges they started");
-		//SIEGECAMP_OTHER.syncConfig("SiegeOther", "Other sieges, defending or neutral");
-
-		// World Generation Settings - (chunk coords are the NW corner, ie chunk 0,0 is SE from 0,0,0)
-		ENABLE_WORLD_GEN = configFile.getBoolean("Enable worldgen", CATEGORY_WORLD_GEN, false, "Allow for dense ores to spawn");
-
-		ANCIENT_OAK_CELL_SIZE = configFile.getInt("Ancient Oak - Cell Size", CATEGORY_WORLD_GEN, ANCIENT_OAK_CELL_SIZE, 8, 4096, "Divide the world into cells of this size and generate 1 or more deposits per cell");
-		ANCIENT_OAK_HOLE_RADIUS = configFile.getFloat("Ancient Oak - Hole Radius", CATEGORY_WORLD_GEN, ANCIENT_OAK_HOLE_RADIUS, 0f, 100f, "Radius of the hole dug into the ground for the tree");
-		ANCIENT_OAK_MAX_TRUNK_RADIUS = configFile.getFloat("Ancient Oak - Trunk Radius", CATEGORY_WORLD_GEN, ANCIENT_OAK_MAX_TRUNK_RADIUS, 0f, 100f, "Radius of the trunk of regular logs");
-		ANCIENT_OAK_CORE_RADIUS = configFile.getFloat("Ancient Oak - Core Radius", CATEGORY_WORLD_GEN, ANCIENT_OAK_CORE_RADIUS, 0f, 100f, "Radius of the core of ancient oak blocks");
-		ANCIENT_OAK_MAX_HEIGHT = configFile.getFloat("Ancient Oak - Max Height", CATEGORY_WORLD_GEN, ANCIENT_OAK_MAX_HEIGHT, 0f, 256f, "Max height of the tree");
-		ANCIENT_OAK_CHANCE = configFile.getFloat("Ancient Oak - Chance", CATEGORY_WORLD_GEN, ANCIENT_OAK_CHANCE, 0f, 1f, "Chance of the tree spawning in a cell");
-
-		SLIME_POOL_CELL_SIZE = configFile.getInt("Slime Pool - Cell Size", CATEGORY_WORLD_GEN, SLIME_POOL_CELL_SIZE, 8, 4096, "Divide the world into cells of this size and generate 1 or more deposits per cell");
-		SLIME_POOL_LAKE_RADIUS = configFile.getInt("Slime Pool - Lake Radius", CATEGORY_WORLD_GEN, SLIME_POOL_LAKE_RADIUS, 1, 64, "Radius of the lake");
-		SLIME_POOL_LAKE_CEILING_HEIGHT = configFile.getInt("Slime Pool - Lake Ceiling Height", CATEGORY_WORLD_GEN, SLIME_POOL_LAKE_CEILING_HEIGHT, 1, 64, "Height of the lake");
-		SLIME_POOL_MIN_INSTANCES_PER_CELL = configFile.getInt("Slime Pool - Min Deposits Per Cell", CATEGORY_WORLD_GEN, SLIME_POOL_MIN_INSTANCES_PER_CELL, 0, 256, "Minimum number of deposits per cell (overrides max of 0)");
-		SLIME_POOL_MAX_INSTANCES_PER_CELL = configFile.getInt("Slime Pool - Max Deposits Per Cell", CATEGORY_WORLD_GEN, SLIME_POOL_MAX_INSTANCES_PER_CELL, 0, 256, "Maximum number of deposits per cell");
-		SLIME_POOL_MIN_HEIGHT = configFile.getInt("Slime Pool - Min Height", CATEGORY_WORLD_GEN, SLIME_POOL_MIN_HEIGHT, 0, 256, "Minimum height of deposits");
-		SLIME_POOL_MAX_HEIGHT = configFile.getInt("Slime Pool - Max Height", CATEGORY_WORLD_GEN, SLIME_POOL_MAX_HEIGHT, 0, 256, "Maximum height of deposits");
-
-		SHULKER_FOSSIL_CELL_SIZE = configFile.getInt("Shulker Fossil - Cell Size", CATEGORY_WORLD_GEN, SHULKER_FOSSIL_CELL_SIZE, 8, 4096, "Divide the world into cells of this size and generate 1 or more deposits per cell");
-		SHULKER_FOSSIL_MIN_INSTANCES_PER_CELL = configFile.getInt("Shulker Fossil - Min Deposits Per Cell", CATEGORY_WORLD_GEN, SHULKER_FOSSIL_MIN_INSTANCES_PER_CELL, 0, 256, "Minimum number of deposits per cell (overrides max of 0)");
-		SHULKER_FOSSIL_MAX_INSTANCES_PER_CELL = configFile.getInt("Shulker Fossil - Max Deposits Per Cell", CATEGORY_WORLD_GEN, SHULKER_FOSSIL_MAX_INSTANCES_PER_CELL, 0, 256, "Maximum number of deposits per cell");
-		SHULKER_FOSSIL_MIN_HEIGHT = configFile.getInt("Shulker Fossil - Min Height", CATEGORY_WORLD_GEN, SHULKER_FOSSIL_MIN_HEIGHT, 0, 256, "Minimum height of deposits");
-		SHULKER_FOSSIL_MAX_HEIGHT = configFile.getInt("Shulker Fossil - Max Height", CATEGORY_WORLD_GEN, SHULKER_FOSSIL_MAX_HEIGHT, 0, 256, "Maximum height of deposits");
-		SHULKER_FOSSIL_MIN_ROTATIONS = configFile.getFloat("Shulker Fossil - Min Rotations", CATEGORY_WORLD_GEN, SHULKER_FOSSIL_MIN_ROTATIONS, 1f, 16f, "Minimum number of spirals on the fossil");
-		SHULKER_FOSSIL_MAX_ROTATIONS = configFile.getFloat("Shulker Fossil - Max Rotations", CATEGORY_WORLD_GEN, SHULKER_FOSSIL_MAX_ROTATIONS, 1f, 16f, "Maximum number of spirals on the fossil");
-		SHULKER_FOSSIL_RADIUS_PER_ROTATION = configFile.getFloat("Shulker Fossil - Radius Per Rotation", CATEGORY_WORLD_GEN, SHULKER_FOSSIL_RADIUS_PER_ROTATION, 1f, 16f, "The radius added for each spiral");
-		SHULKER_FOSSIL_DISC_THICKNESS = configFile.getFloat("Shulker Fossil - Disc Thickness", CATEGORY_WORLD_GEN, SHULKER_FOSSIL_DISC_THICKNESS, 1f, 16f, "Thickness of the fossil at its widest point");
-
-		CLAY_POOL_CHANCE = configFile.getInt("Clay Pool Rarity", CATEGORY_WORLD_GEN, CLAY_POOL_CHANCE, 1, 1024, "Chance of a clay pool appearing per chunk");
-
-		// Claim Settings
-		CLAIM_DIM_WHITELIST = configFile.get(CATEGORY_CLAIMS, "Claim Dimension Whitelist", CLAIM_DIM_WHITELIST, "In which dimensions should player be able to claim chunks").getIntList();
-		CLAIM_STRENGTH_CITADEL = configFile.getInt("Citadel Claim Strength", CATEGORY_CLAIMS, CLAIM_STRENGTH_CITADEL, 1, 1024, "The strength of citadel claims");
-		CLAIM_STRENGTH_REINFORCED = configFile.getInt("Reinforced Claim Strength", CATEGORY_CLAIMS, CLAIM_STRENGTH_REINFORCED, 1, 1024, "The strength of reinforced claims");
-		CLAIM_STRENGTH_BASIC = configFile.getInt("Basic Claim Strength", CATEGORY_CLAIMS, CLAIM_STRENGTH_BASIC, 1, 1024, "The strength of basic claims");
-		SUPPORT_STRENGTH_CITADEL = configFile.getInt("Citadel Support Strength", CATEGORY_CLAIMS, SUPPORT_STRENGTH_CITADEL, 1, 1024, "The support strength a citadel gives to adjacent claims");
-		SUPPORT_STRENGTH_REINFORCED = configFile.getInt("Reinforced Support Strength", CATEGORY_CLAIMS, SUPPORT_STRENGTH_REINFORCED, 1, 1024, "The support strength a reinforced claim gives to adjacent claims");
-		SUPPORT_STRENGTH_BASIC = configFile.getInt("Basic Support Strength", CATEGORY_CLAIMS, SUPPORT_STRENGTH_BASIC, 1, 1024, "The support strength a basic claim gives to adjacent claims");
-		CITADEL_MOVE_NUM_DAYS = configFile.getInt("Days Between Citadel Moves", CATEGORY_CLAIMS, CITADEL_MOVE_NUM_DAYS, 0, 1024, "How many days a faction has to wait to move their citadel again");
-
-		// Siege Camp Settings
-		ATTACK_STRENGTH_SIEGE_CAMP = configFile.getInt("Siege Camp Attack Strength", CATEGORY_SIEGES, ATTACK_STRENGTH_SIEGE_CAMP, 1, 1024, "How much attack pressure a siege camp exerts on adjacent enemy claims");
-		LEECH_PROPORTION_SIEGE_CAMP = configFile.getFloat("Siege Camp Leech Proportion", CATEGORY_SIEGES, LEECH_PROPORTION_SIEGE_CAMP, 0f, 1f, "What proportion of a claim's yields are leeched when a siege camp is set to leech mode");
-		MAX_SIEGES = configFile.getInt("Siege Camp Max Count Per Faction", CATEGORY_SIEGES, MAX_SIEGES, 1, 1000, "How many sieges each faction is allowed to have, with any additional siege camps being unable to be placed by members");
-		ATTACKER_DESERTION_TIMER = configFile.getInt("Attacker Desertion Timer [s]", CATEGORY_SIEGES, ATTACKER_DESERTION_TIMER, 0, Integer.MAX_VALUE, "The number of seconds a siege can idle with no attackers in it before any action occurs. Setting to 0 results in checks being run every tick.");
-		DEFENDER_DESERTION_TIMER = configFile.getInt("Defender Desertion Timer [s]", CATEGORY_SIEGES, DEFENDER_DESERTION_TIMER, 0, Integer.MAX_VALUE, "The number of seconds a siege can be undefended before any action occurs. Setting to 0 results in checks being run every tick.");
-		ATTACKER_CONQUERED_CHUNK_PERIOD = configFile.getInt("Attacker Conquered Chunk Grace Period [ms]", CATEGORY_SIEGES, ATTACKER_CONQUERED_CHUNK_PERIOD, 0, Integer.MAX_VALUE, "The number of milliseconds to permit placement within a chunk only by the faction who last won a siege on it. Setting to 0 results in no grace period.");
-		DEFENDER_CONQUERED_CHUNK_PERIOD = configFile.getInt("Defender Conquered Chunk Grace Period [ms]", CATEGORY_SIEGES, DEFENDER_CONQUERED_CHUNK_PERIOD, 0, Integer.MAX_VALUE, "The number of milliseconds to deny sieging or claiming in previously sieged chunk in which the siege was won by the defenders. Setting to 0 results in no grace period.");
-		COMBAT_LOG_THRESHOLD = configFile.getInt("Time to Combat Log Action [ms]", CATEGORY_SIEGES, COMBAT_LOG_THRESHOLD, 0, Integer.MAX_VALUE, "The number of milliseconds before enforcement action is taken when a player leaves during a siege on any of their claims.");
-		LIVE_QUIT_TIMER = configFile.getInt("Time to Live Quit Siege [ms]", CATEGORY_SIEGES, LIVE_QUIT_TIMER, 0, Integer.MAX_VALUE, "The number of milliseconds before a defending team which went offline after a siege against them has begun is considered to have quit, forfeiting the siege.");
-		QUITTER_FAIL_TIMER = configFile.getInt("Time to Quitters Failing Offline Siege [ms]", CATEGORY_SIEGES, QUITTER_FAIL_TIMER, 0, Integer.MAX_VALUE, "The number of milliseconds before a defending team which failed a siege defense due to quitting is failed for subsequent sieges, if still offline.");
-		MAX_OFFLINE_PLAYER_COUNT_MINIMUM = configFile.getInt("Max Players Before Online Status", CATEGORY_SIEGES, MAX_OFFLINE_PLAYER_COUNT_MINIMUM, Integer.MIN_VALUE, Integer.MAX_VALUE, "A static minimum for the maximum number of players which can have been online at some point during a siege before the faction online player count dropping to 0 indicates a live quit. Negative values override the percent");
-		MAX_OFFLINE_PLAYER_PERCENT = configFile.getFloat("Max Player % Before Online Status", CATEGORY_SIEGES, MAX_OFFLINE_PLAYER_PERCENT,0, 1.0F, "The maximum percent of players in a faction which can be online at some point during a siege before the online count dropping to 0 indicates a live quit.");
-		VERTICAL_SIEGE_DIST = configFile.getInt("Maximum Vertical Siege Radius [Inclusive]", CATEGORY_SIEGES, VERTICAL_SIEGE_DIST, 0, Integer.MAX_VALUE, "The number of blocks up or down a siege block can be placed from a potential target, inclusively. Sieges may also only be started on targets within this vertical radius.");
-		SIEGE_ATTACKER_RADIUS = configFile.getInt("Attacker Square Chunk Radius From Siege", CATEGORY_SIEGES, SIEGE_ATTACKER_RADIUS, 0, Integer.MAX_VALUE, "The number of chunks in any direction from the siege block that an attacker can be in to prevent siege abandon.");
-		SIEGE_DEFENDER_RADIUS = configFile.getInt("Defender Square Chunk Radius From Siege", CATEGORY_SIEGES, SIEGE_DEFENDER_RADIUS, 0, Integer.MAX_VALUE, "The number of chunks in any direction from the siege block that a defender can be in to prevent siege abandon.");
+        // Siege Camp Settings
+        ATTACK_STRENGTH_SIEGE_CAMP = configFile.getInt("Siege Camp Attack Strength", CATEGORY_SIEGES, ATTACK_STRENGTH_SIEGE_CAMP, 1, 1024, "How much attack pressure a siege camp exerts on adjacent enemy claims");
+        LEECH_PROPORTION_SIEGE_CAMP = configFile.getFloat("Siege Camp Leech Proportion", CATEGORY_SIEGES, LEECH_PROPORTION_SIEGE_CAMP, 0f, 1f, "What proportion of a claim's yields are leeched when a siege camp is set to leech mode");
+        MAX_SIEGES = configFile.getInt("Siege Camp Max Count Per Faction", CATEGORY_SIEGES, MAX_SIEGES, 1, 1000, "How many sieges each faction is allowed to have, with any additional siege camps being unable to be placed by members");
+        ATTACKER_DESERTION_TIMER = configFile.getInt("Attacker Desertion Timer [s]", CATEGORY_SIEGES, ATTACKER_DESERTION_TIMER, 0, Integer.MAX_VALUE, "The number of seconds a siege can idle with no attackers in it before any action occurs. Setting to 0 results in checks being run every tick.");
+        DEFENDER_DESERTION_TIMER = configFile.getInt("Defender Desertion Timer [s]", CATEGORY_SIEGES, DEFENDER_DESERTION_TIMER, 0, Integer.MAX_VALUE, "The number of seconds a siege can be undefended before any action occurs. Setting to 0 results in checks being run every tick.");
+        ATTACKER_CONQUERED_CHUNK_PERIOD = configFile.getInt("Attacker Conquered Chunk Grace Period [ms]", CATEGORY_SIEGES, ATTACKER_CONQUERED_CHUNK_PERIOD, 0, Integer.MAX_VALUE, "The number of milliseconds to permit placement within a chunk only by the faction who last won a siege on it. Setting to 0 results in no grace period.");
+        DEFENDER_CONQUERED_CHUNK_PERIOD = configFile.getInt("Defender Conquered Chunk Grace Period [ms]", CATEGORY_SIEGES, DEFENDER_CONQUERED_CHUNK_PERIOD, 0, Integer.MAX_VALUE, "The number of milliseconds to deny sieging or claiming in previously sieged chunk in which the siege was won by the defenders. Setting to 0 results in no grace period.");
+        COMBAT_LOG_THRESHOLD = configFile.getInt("Time to Combat Log Action [ms]", CATEGORY_SIEGES, COMBAT_LOG_THRESHOLD, 0, Integer.MAX_VALUE, "The number of milliseconds before enforcement action is taken when a player leaves during a siege on any of their claims.");
+        LIVE_QUIT_TIMER = configFile.getInt("Time to Live Quit Siege [ms]", CATEGORY_SIEGES, LIVE_QUIT_TIMER, 0, Integer.MAX_VALUE, "The number of milliseconds before a defending team which went offline after a siege against them has begun is considered to have quit, forfeiting the siege.");
+        QUITTER_FAIL_TIMER = configFile.getInt("Time to Quitters Failing Offline Siege [ms]", CATEGORY_SIEGES, QUITTER_FAIL_TIMER, 0, Integer.MAX_VALUE, "The number of milliseconds before a defending team which failed a siege defense due to quitting is failed for subsequent sieges, if still offline.");
+        MAX_OFFLINE_PLAYER_COUNT_MINIMUM = configFile.getInt("Max Players Before Online Status", CATEGORY_SIEGES, MAX_OFFLINE_PLAYER_COUNT_MINIMUM, Integer.MIN_VALUE, Integer.MAX_VALUE, "A static minimum for the maximum number of players which can have been online at some point during a siege before the faction online player count dropping to 0 indicates a live quit. Negative values override the percent");
+        MAX_OFFLINE_PLAYER_PERCENT = configFile.getFloat("Max Player % Before Online Status", CATEGORY_SIEGES, MAX_OFFLINE_PLAYER_PERCENT, 0, 1.0F, "The maximum percent of players in a faction which can be online at some point during a siege before the online count dropping to 0 indicates a live quit.");
+        VERTICAL_SIEGE_DIST = configFile.getInt("Maximum Vertical Siege Radius [Inclusive]", CATEGORY_SIEGES, VERTICAL_SIEGE_DIST, 0, Integer.MAX_VALUE, "The number of blocks up or down a siege block can be placed from a potential target, inclusively. Sieges may also only be started on targets within this vertical radius.");
+        SIEGE_ATTACKER_RADIUS = configFile.getInt("Attacker Square Chunk Radius From Siege", CATEGORY_SIEGES, SIEGE_ATTACKER_RADIUS, 0, Integer.MAX_VALUE, "The number of chunks in any direction from the siege block that an attacker can be in to prevent siege abandon.");
+        SIEGE_DEFENDER_RADIUS = configFile.getInt("Defender Square Chunk Radius From Siege", CATEGORY_SIEGES, SIEGE_DEFENDER_RADIUS, 0, Integer.MAX_VALUE, "The number of chunks in any direction from the siege block that a defender can be in to prevent siege abandon.");
 
 		// Siege swing parameters
 		SIEGE_SWING_PER_DEFENDER_DEATH = configFile.getInt("Siege Swing Per Defender Death", CATEGORY_SIEGES, SIEGE_SWING_PER_DEFENDER_DEATH, 0, 1024, "How much a siege progress swings when a defender dies in the siege");
@@ -448,14 +342,92 @@ public class WarForgeConfig
 		ALLOW_SPAWN_BETWEEN_DIMENSIONS = configFile.getBoolean("Allow /spawn across dimensions", CATEGORY_WARPS, ALLOW_SPAWN_BETWEEN_DIMENSIONS, "Allow players to use /spawn when in a different dimension to the world spawn");
 		NUM_TICKS_FOR_WARP_COMMANDS = configFile.getInt("Num Ticks for Warps", CATEGORY_WARPS, NUM_TICKS_FOR_WARP_COMMANDS, 0, 20 * 60 * 5, "How many ticks must the player stand still for a warp command to take effect");
 
-		// Graphics controls
-		DO_FANCY_RENDERING = configFile.getBoolean("Enable WarForge Fancy Rendering", CATEGORY_CLIENT, DO_FANCY_RENDERING, "Controls whether or not fancy graphics will be enabled for this mod's rendering.");
-		RANDOM_BORDER_REDRAW_DENOMINATOR = configFile.getInt("Random Border Redraw Denominator", CATEGORY_CLIENT, RANDOM_BORDER_REDRAW_DENOMINATOR, 1, Integer.MAX_VALUE, "Sets the bound on a random number generated, which when equal to 0 calls the border redraw. Effectively 1/this chance to redraw every frame");
+        // Graphics controls
+        DO_FANCY_RENDERING = configFile.getBoolean("Enable WarForge Fancy Rendering", CATEGORY_CLIENT, DO_FANCY_RENDERING, "Controls whether or not fancy graphics will be enabled for this mod's rendering.");
+        RANDOM_BORDER_REDRAW_DENOMINATOR = configFile.getInt("Random Border Redraw Denominator", CATEGORY_CLIENT, RANDOM_BORDER_REDRAW_DENOMINATOR, 1, Integer.MAX_VALUE, "Sets the bound on a random number generated, which when equal to 0 calls the border redraw. Effectively 1/this chance to redraw every frame");
 
-		String botChannelString = configFile.getString("Discord Bot Channel ID", Configuration.CATEGORY_GENERAL, "" + FACTIONS_BOT_CHANNEL_ID, "https://github.com/Chikachi/DiscordIntegration/wiki/IMC-Feature");
-		FACTIONS_BOT_CHANNEL_ID = Long.parseLong(botChannelString);
+        String botChannelString = configFile.getString("Discord Bot Channel ID", Configuration.CATEGORY_GENERAL, "" + FACTIONS_BOT_CHANNEL_ID, "https://github.com/Chikachi/DiscordIntegration/wiki/IMC-Feature");
+        FACTIONS_BOT_CHANNEL_ID = Long.parseLong(botChannelString);
 
-		if(configFile.hasChanged())
-			configFile.save();
-	}
+        if (configFile.hasChanged())
+            configFile.save();
+    }
+
+    public static class ProtectionConfig {
+        public boolean BREAK_BLOCKS = true;
+        public boolean PLACE_BLOCKS = true;
+        public boolean INTERACT = true;
+        public boolean USE_ITEM = true;
+        public boolean BLOCK_REMOVAL = true;
+        public boolean EXPLOSION_DAMAGE = false;
+        public boolean PLAYER_TAKE_DAMAGE_FROM_MOB = true;
+        public boolean PLAYER_TAKE_DAMAGE_FROM_PLAYER = true;
+        public boolean PLAYER_TAKE_DAMAGE_FROM_OTHER = true;
+        public boolean PLAYER_DEAL_DAMAGE = true;
+        public boolean ALLOW_MOB_SPAWNS = true;
+        public boolean ALLOW_MOB_ENTRY = true;
+        public boolean ALLOW_MOUNT_ENTITY = true;
+        public boolean ALLOW_DISMOUNT_ENTITY = true;
+        public List<Block> BLOCK_PLACE_EXCEPTIONS;
+        public List<Block> BLOCK_BREAK_EXCEPTIONS;
+        public List<Block> BLOCK_INTERACT_EXCEPTIONS;
+        public List<Item> ITEM_USE_EXCEPTIONS;
+        private String[] BLOCK_PLACE_EXCEPTION_IDS = new String[]{"minecraft:torch"};
+        private String[] BLOCK_BREAK_EXCEPTION_IDS = new String[]{"minecraft:torch", "warforge:siegecampblock"};
+        private String[] BLOCK_INTERACT_EXCEPTION_IDS = new String[]{"minecraft:ender_chest", "warforge:citadelblock", "warforge:basicclaimblock", "warforge:reinforcedclaimblock", "warforge:siegecampblock"};
+        private String[] ITEM_USE_EXCEPTION_IDS = new String[]{"minecraft:snowball"};
+
+        private List<Block> findBlocks(String[] input) {
+            List<Block> output = new ArrayList<Block>(input.length);
+            for (String blockID : input) {
+                Block block = Block.getBlockFromName(blockID);
+                if (block != null)
+                    output.add(block);
+            }
+            return output;
+        }
+
+        private List<Item> FindItems(String[] input) {
+            List<Item> output = new ArrayList<Item>(input.length);
+            for (String itemID : input) {
+                Item item = Item.getByNameOrId(itemID);
+                if (item != null)
+                    output.add(item);
+            }
+            return output;
+        }
+
+        public void findBlocks() {
+            BLOCK_PLACE_EXCEPTIONS = findBlocks(BLOCK_PLACE_EXCEPTION_IDS);
+            BLOCK_BREAK_EXCEPTIONS = findBlocks(BLOCK_BREAK_EXCEPTION_IDS);
+            BLOCK_INTERACT_EXCEPTIONS = findBlocks(BLOCK_INTERACT_EXCEPTION_IDS);
+            ITEM_USE_EXCEPTIONS = FindItems(ITEM_USE_EXCEPTION_IDS);
+        }
+
+        public void SyncConfig(String name, String desc) {
+
+            BREAK_BLOCKS = configFile.getBoolean(name + " - Break Blocks", name, BREAK_BLOCKS, "Can players break blocks in " + desc);
+            PLACE_BLOCKS = configFile.getBoolean(name + " - Place Blocks", name, PLACE_BLOCKS, "Can players place blocks in " + desc);
+            BLOCK_REMOVAL = configFile.getBoolean(name + " - Block Removal", name, BLOCK_REMOVAL, "Can blocks be removed at all in (including from explosions, mobs etc) " + desc);
+            EXPLOSION_DAMAGE = configFile.getBoolean(name + " - Explosion Damage", name, EXPLOSION_DAMAGE, "Can explosions damage blocks in " + desc);
+            INTERACT = configFile.getBoolean(name + " - Interact", name, INTERACT, "Can players interact with blocks and entities in " + desc);
+            USE_ITEM = configFile.getBoolean(name + " - Use Items", name, USE_ITEM, "Can players use items in " + desc);
+            PLAYER_TAKE_DAMAGE_FROM_MOB = configFile.getBoolean(name + " - Take Dmg From Mob", name, PLAYER_TAKE_DAMAGE_FROM_MOB, "Can players take mob damage in " + desc);
+            PLAYER_TAKE_DAMAGE_FROM_PLAYER = configFile.getBoolean(name + " - Take Dmg From Player", name, PLAYER_TAKE_DAMAGE_FROM_PLAYER, "Can players take damage from other players in " + desc);
+            PLAYER_TAKE_DAMAGE_FROM_OTHER = configFile.getBoolean(name + " - Take Any Other Dmg", name, PLAYER_TAKE_DAMAGE_FROM_OTHER, "Can players take damage from any other source in " + desc);
+            PLAYER_DEAL_DAMAGE = configFile.getBoolean(name + " - Deal Damage", name, PLAYER_DEAL_DAMAGE, "Can players deal damage in " + desc);
+
+            BLOCK_PLACE_EXCEPTION_IDS = configFile.getStringList(name + " - Place Exceptions", name, BLOCK_PLACE_EXCEPTION_IDS, "The block IDs that can still be placed. Has no effect if block placement is allowed anyway");
+            BLOCK_BREAK_EXCEPTION_IDS = configFile.getStringList(name + " - Break Exceptions", name, BLOCK_BREAK_EXCEPTION_IDS, "The block IDs that can still be broken. Has no effect if block breaking is allowed anyway");
+            BLOCK_INTERACT_EXCEPTION_IDS = configFile.getStringList(name + " - Interact Exceptions", name, BLOCK_INTERACT_EXCEPTION_IDS, "The block IDs that can still be interacted with. Has no effect if interacting is allowed anyway");
+            ITEM_USE_EXCEPTION_IDS = configFile.getStringList(name + " - Use Exceptions", name, ITEM_USE_EXCEPTION_IDS, "The item IDs that can still be used. Has no effect if interacting is allowed anyway");
+
+            ALLOW_MOB_SPAWNS = configFile.getBoolean(name + " - Allow Mob Spawns", name, ALLOW_MOB_SPAWNS, "Can mobs spawn in " + desc);
+            ALLOW_MOB_ENTRY = configFile.getBoolean(name + " - Allow Mob Entry", name, ALLOW_MOB_ENTRY, "Can mobs enter " + desc);
+
+            ALLOW_DISMOUNT_ENTITY = configFile.getBoolean(name + " - Allow Dismount Entity", name, ALLOW_DISMOUNT_ENTITY, "Can players dismount entities " + desc);
+            ALLOW_MOUNT_ENTITY = configFile.getBoolean(name + " - Allow Mount Entity", name, ALLOW_MOUNT_ENTITY, "Can players mount entities " + desc);
+
+        }
+    }
 }
