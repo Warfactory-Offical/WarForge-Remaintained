@@ -38,16 +38,18 @@ import java.util.stream.Collectors;
 public class GUIUpgradePanel {
     //Dude why the fuck the documentation is so ass
     //Second attempt at using clientside UI, with static methods now
+    public static final int WIDTH = 280;
 
 
     public static ModularScreen createGui(UUID factionID, String factionName, int level, int color, boolean outrankingOfficer) {
         ListWidget list = new ListWidget<>()
                 .scrollDirection(GuiAxis.Y)
                 .keepScrollBarInArea(true)
-                .sizeRel(0.95F, 0.90F)
                 .background(GuiTextures.SLOT_ITEM)
-                .paddingBottom(2)
-                .align(Alignment.TopCenter);
+                .width(WIDTH)
+                .expanded()
+                ;
+
 
 // Sorted by quantity
         Map<StackComparable, Integer> requirements = WarForgeMod.UPGRADE_HANDLER.getRequirementsFor(level + 1)
@@ -110,31 +112,26 @@ public class GUIUpgradePanel {
 
 
         ModularPanel panel = ModularPanel.defaultPanel("citadel_upgrade_panel")
-                .width(280);
+                .width(WIDTH);
 
         // Title label
         Widget prefix = IKey.str("Upgrade citadel for: ")
                 .asWidget()
-                .align(Alignment.TopCenter)
                 .top(8)
                 .scale(1.2f);
 
         Widget factionNamePlate = IKey.str(factionName)
                 .asWidget()
-                .relative(prefix)
                 .color(color)
                 .top(8)
                 .scale(1.2f);
 
 
         Widget title = new Row()
-                .align(Alignment.TopCenter)
                 .paddingBottom(5)
                 .marginBottom(5)
                 .child(prefix)
                 .child(factionNamePlate)
-                .expanded()
-                .height(30)
 
                 ;
 
@@ -145,8 +142,7 @@ public class GUIUpgradePanel {
                 .onMousePressed(button -> {
                     panel.closeIfOpen(true);
                     return true;
-                })
-                .align(Alignment.CenterLeft);
+                });
 
         // Upgrade button
         ButtonWidget<?> upgradeButton = new ButtonWidget<>()
@@ -156,17 +152,14 @@ public class GUIUpgradePanel {
                     player.sendMessage(new TextComponentString("Hello " + player.getName()));
                     return true;
                 })
-                .setEnabledIf(x-> requirementPassed.get() && outrankingOfficer)
-                .align(Alignment.CenterRight);
+                .setEnabledIf(x-> requirementPassed.get() && outrankingOfficer);
 
         // Button row
         Widget buttonRow = new Row()
                 .child(closeButton)
                 .child(upgradeButton)
-                .align(Alignment.BottomCenter)
-                .marginLeft(5)
-                .marginRight(5)
-                .height(32)
+                .padding(5,2)
+                .expanded()
                 ;
 
         // Main content column
@@ -174,8 +167,7 @@ public class GUIUpgradePanel {
                 .child(title)
                 .child(list)
                 .child(buttonRow)
-                .sizeRel(0.98f, 0.95f)
-                .align(Alignment.BottomCenter)
+                .width(WIDTH-4)
                 ;
 
         // Assemble full panel
