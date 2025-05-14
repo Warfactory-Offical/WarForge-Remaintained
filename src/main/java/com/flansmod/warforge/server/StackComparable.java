@@ -78,8 +78,9 @@ public class StackComparable {
 
         }
 
+
         //Registry key check
-        if (registryName != null && stack.getItem().getRegistryName().equals(registryName)) {
+        if (registryName != null && stack.getItem().getRegistryName().toString().equals(registryName)) {
             if (meta == -1) {
                 return true;
             } else {
@@ -106,10 +107,10 @@ public class StackComparable {
         return tag;
     }
 
-    public class StackComparableResult {
+    public static class StackComparableResult {
         public final StackComparable compared;
-        int has = 0;
-        int required = 0;
+        public int has = 0;
+        public int required = 0;
 
 
         public StackComparableResult(StackComparable compared, int has, int required) {

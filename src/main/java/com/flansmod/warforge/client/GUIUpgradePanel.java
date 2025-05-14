@@ -1,10 +1,12 @@
 package com.flansmod.warforge.client;
 
+import com.cleanroommc.modularui.ModularUI;
 import com.cleanroommc.modularui.api.GuiAxis;
 import com.cleanroommc.modularui.api.drawable.IDrawable;
 import com.cleanroommc.modularui.api.drawable.IKey;
 import com.cleanroommc.modularui.drawable.GuiTextures;
 import com.cleanroommc.modularui.drawable.IngredientDrawable;
+import com.cleanroommc.modularui.drawable.UITexture;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.ModularScreen;
 import com.cleanroommc.modularui.utils.Alignment;
@@ -57,37 +59,54 @@ public class GUIUpgradePanel {
                         LinkedHashMap::new
                 ));
 
+        EntityPlayer player = Minecraft.getMinecraft().player;
+        List<ItemStack> inventory = player.inventory.mainInventory;
+
+        List<StackComparable.StackComparableResult> results = requirements.entrySet().stream()
+                .map(entry -> {
+                    StackComparable sc = entry.getKey();
+                    int required = entry.getValue();
+
+                    int count = inventory.stream()
+                            .filter(stack -> !stack.isEmpty() && sc.equals(stack))
+                            .mapToInt(ItemStack::getCount)
+                            .sum();
+
+                    return new StackComparable.StackComparableResult(sc, count, required);
+                })
+                .collect(Collectors.toList());
+
         AtomicInteger index = new AtomicInteger(0);
-        requirements.forEach((requirement, count) -> {
+        results.forEach((comparableResult) -> {
             Ingredient ingredient;
             String displayName;
 
-            if (requirement.getOredict() != null) {
-                ingredient = new OreIngredient(requirement.getOredict());
-                displayName = humanizeOreDictName(requirement.getOredict());
-            } else if (requirement.getRegistryName() != null) {
-                Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(requirement.getRegistryName()));
+            if (comparableResult.compared.getOredict() != null) {
+                ingredient = new OreIngredient(comparableResult.compared.getOredict());
+                displayName = humanizeOreDictName(comparableResult.compared.getOredict());
+            } else if (comparableResult.compared.getRegistryName() != null) {
+                Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(comparableResult.compared.getRegistryName()));
                 if (item == null || item == Items.AIR) {
-                    WarForgeMod.LOGGER.error("Could not find item: " + requirement.getRegistryName() + ". Skipping...");
+                    WarForgeMod.LOGGER.error("Could not find item: " + comparableResult.compared.getRegistryName() + ". Skipping...");
                     return;
                 }
-                int meta = requirement.getMeta() == -1 ? 0 : requirement.getMeta();
+                int meta = comparableResult.compared.getMeta() == -1 ? 0 : comparableResult.compared.getMeta();
                 ItemStack stack = new ItemStack(item, 1, meta);
                 ingredient = Ingredient.fromStacks(stack);
                 displayName = stack.getDisplayName();
             } else {
-                WarForgeMod.LOGGER.error("Malformed StackComparable: \n" + requirement + "\nSkipping...");
+                WarForgeMod.LOGGER.error("Malformed StackComparable: \n" + comparableResult + "\nSkipping...");
                 return;
             }
 
-            list.addChild(createRequirementRow(ingredient, displayName), index.getAndIncrement());
-        });
 
+            list.addChild(createRequirementRow(ingredient, displayName, comparableResult.required, comparableResult.has), index.getAndIncrement());
+        });
 
 
         ModularPanel panel = ModularPanel.defaultPanel("citadel_upgrade_panel")
                 .width(280)
-                .heightRel(0.8f);
+                .heightRel(0.5f);
 
         // Title label
         Widget title = IKey.str("Upgrade citadel for: " + factionName)
@@ -112,7 +131,6 @@ public class GUIUpgradePanel {
                 .size(100, 16)
                 .overlay(IKey.str("Upgrade"))
                 .onMousePressed(button -> {
-                    EntityPlayer player = Minecraft.getMinecraft().player;
                     player.sendMessage(new TextComponentString("Hello " + player.getName()));
                     return true;
                 })
@@ -144,7 +162,6 @@ public class GUIUpgradePanel {
     }
 
 
-    @org.jetbrains.annotations.NotNull
     public static String humanizeOreDictName(String oredict) {
         String name = oredict.startsWith("any") ? oredict.substring(3) : oredict;
 
@@ -182,15 +199,41 @@ public class GUIUpgradePanel {
         return "Any " + String.join(" ", capitalized);
 
     }
-    private static Row createRequirementRow(Ingredient ingredient, String displayName) {
+
+    private static Row createRequirementRow(Ingredient ingredient, String displayName, int count, int has) {
+        UITexture CHECK = UITexture.builder()
+                .location(ModularUI.ID, "gui/widgets/toggle_config")
+                .imageSize(14, 28)
+                .uv(2, 16, 10, 10)
+                .build();
         return (Row) new Row()
                 .child(new IDrawable.DrawableWidget(new IngredientDrawable(ingredient))
                         .size(20, 20)
                         .align(Alignment.CenterLeft)
                 )
-                .child(IKey.str(displayName).asWidget())
+                .child(IKey.str(displayName).asWidget()
+                        .align(Alignment.CenterLeft)
+                        .left(20 + 5 + 2)
+                        .width(120)
+                )
+
+                .child(IKey.str("x " + count).asWidget()
+                        .align(Alignment.CenterLeft)
+                        .left(20 + 5 + 2 + 120)
+                        .scale(1.5f)
+                )
+                .child(new IDrawable.DrawableWidget(count <= has ? CHECK : GuiTextures.CROSS)
+                        .align(Alignment.CenterRight)
+                        .size(20, 20)
+                        .right(5)
+                )
+                .paddingLeft(5)
+                .paddingRight(5)
+                .margin(3, 2)
                 .height(30)
-                .padding(2);
+                .background(GuiTextures.BUTTON_CLEAN)
+                ;
     }
+
 
 }
