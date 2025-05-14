@@ -29,6 +29,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.oredict.OreIngredient;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -60,6 +61,7 @@ public class GUIUpgradePanel {
                 ));
 
         EntityPlayer player = Minecraft.getMinecraft().player;
+        AtomicBoolean requirementPassed  = new AtomicBoolean(true);
         List<ItemStack> inventory = player.inventory.mainInventory;
 
         List<StackComparable.StackComparableResult> results = requirements.entrySet().stream()
@@ -71,6 +73,9 @@ public class GUIUpgradePanel {
                             .filter(stack -> !stack.isEmpty() && sc.equals(stack))
                             .mapToInt(ItemStack::getCount)
                             .sum();
+
+                    if(count <= required)
+                        requirementPassed.set(false);
 
                     return new StackComparable.StackComparableResult(sc, count, required);
                 })
@@ -105,15 +110,33 @@ public class GUIUpgradePanel {
 
 
         ModularPanel panel = ModularPanel.defaultPanel("citadel_upgrade_panel")
-                .width(280)
-                .heightRel(0.5f);
+                .width(280);
 
         // Title label
-        Widget title = IKey.str("Upgrade citadel for: " + factionName)
+        Widget prefix = IKey.str("Upgrade citadel for: ")
                 .asWidget()
                 .align(Alignment.TopCenter)
                 .top(8)
                 .scale(1.2f);
+
+        Widget factionNamePlate = IKey.str(factionName)
+                .asWidget()
+                .relative(prefix)
+                .color(color)
+                .top(8)
+                .scale(1.2f);
+
+
+        Widget title = new Row()
+                .align(Alignment.TopCenter)
+                .paddingBottom(5)
+                .marginBottom(5)
+                .child(prefix)
+                .child(factionNamePlate)
+                .expanded()
+                .height(30)
+
+                ;
 
         // Close button
         ButtonWidget<?> closeButton = new ButtonWidget<>()
@@ -127,13 +150,13 @@ public class GUIUpgradePanel {
 
         // Upgrade button
         ButtonWidget<?> upgradeButton = new ButtonWidget<>()
-                .setEnabledIf(x -> outrankingOfficer)
                 .size(100, 16)
                 .overlay(IKey.str("Upgrade"))
                 .onMousePressed(button -> {
                     player.sendMessage(new TextComponentString("Hello " + player.getName()));
                     return true;
                 })
+                .setEnabledIf(x-> requirementPassed.get() && outrankingOfficer)
                 .align(Alignment.CenterRight);
 
         // Button row
@@ -143,18 +166,20 @@ public class GUIUpgradePanel {
                 .align(Alignment.BottomCenter)
                 .marginLeft(5)
                 .marginRight(5)
-                .height(32);
+                .height(32)
+                ;
 
         // Main content column
         Widget content = new Column()
+                .child(title)
                 .child(list)
                 .child(buttonRow)
                 .sizeRel(0.98f, 0.95f)
-                .align(Alignment.BottomCenter);
+                .align(Alignment.BottomCenter)
+                ;
 
         // Assemble full panel
         panel
-                .child(title)
                 .child(content);
 
         return new ModularScreen(panel);
@@ -222,8 +247,9 @@ public class GUIUpgradePanel {
                         .left(20 + 5 + 2 + 120)
                         .scale(1.5f)
                 )
-                .child(new IDrawable.DrawableWidget(count <= has ? CHECK : GuiTextures.CROSS)
+                .child(new IDrawable.DrawableWidget(CHECK)
                         .align(Alignment.CenterRight)
+                        .setEnabledIf(x -> has >= count)
                         .size(20, 20)
                         .right(5)
                 )
