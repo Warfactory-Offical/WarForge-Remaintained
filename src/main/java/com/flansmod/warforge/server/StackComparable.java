@@ -5,10 +5,21 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.oredict.OreDictionary;
 
 public class StackComparable {
-    String oredict;
-    String registryName = null;
-    short meta = -1;
+    protected String oredict = null;
+    protected String registryName = null;
+    protected short meta = -1;
 
+    public String getOredict() {
+        return oredict;
+    }
+
+    public String getRegistryName() {
+        return registryName;
+    }
+
+    public short getMeta() {
+        return meta;
+    }
 
     public StackComparable() {
     }

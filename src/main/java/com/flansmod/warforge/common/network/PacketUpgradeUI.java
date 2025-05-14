@@ -1,7 +1,7 @@
 package com.flansmod.warforge.common.network;
 
 import com.cleanroommc.modularui.factory.ClientGUI;
-import com.flansmod.warforge.client.GuiUpgradePanel;
+import com.flansmod.warforge.client.GUIUpgradePanel;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.server.Faction;
 import io.netty.buffer.ByteBuf;
@@ -48,6 +48,12 @@ public class PacketUpgradeUI extends PacketBase {
 
     @Override
     public void handleClientSide(EntityPlayer clientPlayer) {
-        ClientGUI.open(new GuiUpgradePanel(mFactionID, mFactionName, level, color, outrankingOfficer));
+        ClientGUI.open(GUIUpgradePanel.createGui(
+                mFactionID,
+                mFactionName,
+                level,
+                color,
+                outrankingOfficer
+                ));
     }
 }
