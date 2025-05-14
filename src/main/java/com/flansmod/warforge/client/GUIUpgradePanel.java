@@ -46,8 +46,8 @@ public class GUIUpgradePanel {
                 .scrollDirection(GuiAxis.Y)
                 .keepScrollBarInArea(true)
                 .background(GuiTextures.SLOT_ITEM)
-                .width(WIDTH)
-                .expanded()
+                .widthRel(0.98f)
+                .height(30*6+10)
                 ;
 
 
@@ -132,7 +132,8 @@ public class GUIUpgradePanel {
                 .marginBottom(5)
                 .child(prefix)
                 .child(factionNamePlate)
-
+                .height(20)
+                .mainAxisAlignment(Alignment.MainAxis.CENTER)
                 ;
 
         // Close button
@@ -158,8 +159,10 @@ public class GUIUpgradePanel {
         Widget buttonRow = new Row()
                 .child(closeButton)
                 .child(upgradeButton)
-                .padding(5,2)
                 .expanded()
+                .height(10)
+                .mainAxisAlignment(Alignment.MainAxis.CENTER)
+                .marginTop(5)
                 ;
 
         // Main content column
@@ -172,7 +175,9 @@ public class GUIUpgradePanel {
 
         // Assemble full panel
         panel
-                .child(content);
+                .child(content)
+                .coverChildrenHeight()
+        ;
 
         return new ModularScreen(panel);
 
