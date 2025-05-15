@@ -4,6 +4,7 @@ import com.cleanroommc.modularui.ModularUI;
 import com.cleanroommc.modularui.api.GuiAxis;
 import com.cleanroommc.modularui.api.drawable.IDrawable;
 import com.cleanroommc.modularui.api.drawable.IKey;
+import com.cleanroommc.modularui.drawable.DynamicDrawable;
 import com.cleanroommc.modularui.drawable.GuiTextures;
 import com.cleanroommc.modularui.drawable.IngredientDrawable;
 import com.cleanroommc.modularui.drawable.UITexture;
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
 public class GUIUpgradePanel {
     //Dude why the fuck the documentation is so ass
     //Second attempt at using clientside UI, with static methods now
-    public static final int WIDTH = 280;
+    public static final int WIDTH = 300;
 
 
     public static ModularScreen createGui(UUID factionID, String factionName, int level, int color, boolean outrankingOfficer) {
@@ -76,7 +77,7 @@ public class GUIUpgradePanel {
                             .mapToInt(ItemStack::getCount)
                             .sum();
 
-                    if (count <= required)
+                    if (count < required)
                         requirementPassed.set(false);
 
                     return new StackComparable.StackComparableResult(sc, count, required);
@@ -113,7 +114,7 @@ public class GUIUpgradePanel {
 
         ModularPanel panel = ModularPanel.defaultPanel("citadel_upgrade_panel")
                 .width(WIDTH)
-                .height(30 * 6 + 60+15);
+                .height(30 * 6 + 60 + 20);
 
         // Title label
         Widget prefix = IKey.str("Upgrade citadel for: ")
@@ -144,6 +145,7 @@ public class GUIUpgradePanel {
         ButtonWidget<?> closeButton = new ButtonWidget<>()
                 .size(100, 16)
                 .overlay(IKey.str("Close"))
+                .bottomRel(0.5f)
                 .onMousePressed(button -> {
                     panel.closeIfOpen(true);
                     return true;
@@ -152,18 +154,26 @@ public class GUIUpgradePanel {
         // Upgrade button
         ButtonWidget<?> upgradeButton = new ButtonWidget<>()
                 .size(100, 16)
-                .overlay(IKey.str("Upgrade"))
+                .overlay(IKey.str("Upgrade").color(requirementPassed.get() && outrankingOfficer ? 0xFFFFFF : 0x555555))
+                .bottomRel(0.5f)
+                .hoverBackground(new DynamicDrawable(() -> (requirementPassed.get() && outrankingOfficer) ?
+                        GuiTextures.MC_BUTTON_HOVERED :
+                        GuiTextures.MC_BUTTON_DISABLED))
+                .background(new DynamicDrawable(() -> (requirementPassed.get() && outrankingOfficer) ?
+                        GuiTextures.MC_BUTTON :
+                        GuiTextures.MC_BUTTON_DISABLED))
                 .onMousePressed(button -> {
+                    if (!(requirementPassed.get() && outrankingOfficer)) return false;
+
                     player.sendMessage(new TextComponentString("Hello " + player.getName()));
                     return true;
-                })
-                .setEnabledIf(x -> requirementPassed.get() && outrankingOfficer);
+                });
         //
 
         UITexture ARROW = UITexture.builder()
                 .location(ModularUI.ID, "gui/widgets/progress_bar_arrow")
                 .imageSize(20, 40)
-                .uv(0,20,20,20)
+                .uv(0, 20, 20, 20)
                 .build();
 
         Widget newLevel = IKey.str("Lvl " + level + 1).asWidget()
@@ -182,7 +192,7 @@ public class GUIUpgradePanel {
                 .child(new IDrawable.DrawableWidget(ARROW)
                         .height(8)
                         .width(10)
-                        .margin(4,0)
+                        .margin(4, 0)
                 )
                 .child(IKey.str("" + WarForgeMod.UPGRADE_HANDLER.getClaimLimitForLevel(level + 1))
                         .asWidget()
@@ -192,15 +202,13 @@ public class GUIUpgradePanel {
                         .color(0x55FF55)
                 )
                 .mainAxisAlignment(Alignment.MainAxis.CENTER)
-                .expanded()
-                ;
+                .expanded();
 
 
         Widget levelIntecator = new Column()
                 .child(newLevel)
                 .child(claimIncrease)
-                .size(60, 20)
-                ;
+                .size(60, 20);
 
 
         // Button row
@@ -209,8 +217,9 @@ public class GUIUpgradePanel {
                 .child(levelIntecator)
                 .child(upgradeButton)
                 .expanded()
-                .height(10)
+                .height(20)
                 .mainAxisAlignment(Alignment.MainAxis.CENTER)
+                .paddingTop(5)
                 .marginTop(5);
 
         // Main content column
@@ -285,11 +294,14 @@ public class GUIUpgradePanel {
                         .align(Alignment.CenterLeft)
                         .left(20 + 5 + 2)
                         .width(120)
+                        .color(0xFFFFFF)
+                        .shadow(true)
                 )
-
-                .child(IKey.str("x " + count).asWidget()
+                .child(IKey.str(has + "/" + count).asWidget()
                         .align(Alignment.CenterLeft)
                         .left(20 + 5 + 2 + 120)
+                        .color(has >= count ? 0x55FF55 : 0xFF5555)
+                        .shadow(true)
                         .scale(1.5f)
                 )
                 .child(new IDrawable.DrawableWidget(CHECK)
