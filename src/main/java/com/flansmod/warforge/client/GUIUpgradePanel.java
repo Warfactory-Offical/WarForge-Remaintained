@@ -37,6 +37,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.flansmod.warforge.common.WarForgeMod.UPGRADE_HANDLER;
+
 public class GUIUpgradePanel {
     //Dude why the fuck the documentation is so ass
     //Second attempt at using clientside UI, with static methods now
@@ -53,7 +55,7 @@ public class GUIUpgradePanel {
 
 
 // Sorted by quantity
-        Map<StackComparable, Integer> requirements = WarForgeMod.UPGRADE_HANDLER.getRequirementsFor(level + 1)
+        Map<StackComparable, Integer> requirements = UPGRADE_HANDLER.getRequirementsFor(level + 1)
                 .entrySet().stream()
                 .sorted(Comparator.comparingInt(Map.Entry::getValue))
                 .collect(Collectors.toMap(
@@ -122,7 +124,7 @@ public class GUIUpgradePanel {
                 .top(8)
                 .color(0xFFFFFF)
                 .shadow(true)
-                .scale(1.2f);
+                .scale(1.25f);
 
         Widget factionNamePlate = IKey.str(factionName)
                 .asWidget()
@@ -130,7 +132,8 @@ public class GUIUpgradePanel {
                 .shadow(true)
                 .top(8)
                 .style(TextFormatting.BOLD)
-                .scale(1.2f);
+                .width(130) //TODO: remove this whenever brachy fixes fonts or scaling
+                .scale(1.25f);
 
 
         Widget title = new Row()
@@ -168,8 +171,16 @@ public class GUIUpgradePanel {
                     player.sendMessage(new TextComponentString("Hello " + player.getName()));
                     return true;
                 });
-        //
 
+        if (!outrankingOfficer || !requirementPassed.get())
+            upgradeButton.tooltip(richTooltip -> {
+                richTooltip.addLine(IKey.str("You don't meet following requirements:").style(TextFormatting.BOLD, TextFormatting.RED));
+                if (!outrankingOfficer) richTooltip.addLine(IKey.str("- You need to be officer of or higher!"));
+                if (!requirementPassed.get()) richTooltip.addLine(IKey.str("- You don't have the materials required!"));
+            });
+
+
+        //Level and claim limit display
         UITexture ARROW = UITexture.builder()
                 .location(ModularUI.ID, "gui/widgets/progress_bar_arrow")
                 .imageSize(20, 40)
@@ -182,7 +193,7 @@ public class GUIUpgradePanel {
                 .height(16);
 
         Widget claimIncrease = new Row()
-                .child(IKey.str("" + WarForgeMod.UPGRADE_HANDLER.getClaimLimitForLevel(level))
+                .child(IKey.str("" + UPGRADE_HANDLER.getClaimLimitForLevel(level))
                         .asWidget()
                         .scale(1.3f)
                         .shadow(true)
@@ -194,7 +205,7 @@ public class GUIUpgradePanel {
                         .width(10)
                         .margin(4, 0)
                 )
-                .child(IKey.str("" + WarForgeMod.UPGRADE_HANDLER.getClaimLimitForLevel(level + 1))
+                .child(IKey.str("" + UPGRADE_HANDLER.getClaimLimitForLevel(level + 1))
                         .asWidget()
                         .shadow(true)
                         .scale(1.3f)
