@@ -265,6 +265,7 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 		registerPacket(PacketCitadelUpgradeRequirement.class);
 		registerPacket(PacketRequestUpgradeUI.class);
 		registerPacket(PacketUpgradeUI.class);
+		registerPacket(PacketRequestUpgrade.class);
 	}
 
 	/**

@@ -4,7 +4,6 @@ import com.flansmod.warforge.api.ObjectIntPair;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.DimChunkPos;
 import com.flansmod.warforge.common.WarForgeConfig;
-import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.IClaim;
 import com.flansmod.warforge.common.blocks.TileEntityCitadel;
 import com.flansmod.warforge.common.blocks.TileEntityClaim;
@@ -34,6 +33,8 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.flansmod.warforge.common.WarForgeMod.*;
 
 public class FactionStorage {
     // SafeZone and WarZone
@@ -149,7 +150,7 @@ public class FactionStorage {
         if (mFactions.containsKey(factionID))
             return mFactions.get(factionID);
 
-        WarForgeMod.LOGGER.error("Could not find a faction with UUID " + factionID);
+        LOGGER.error("Could not find a faction with UUID " + factionID);
         return null;
     }
 
@@ -194,7 +195,7 @@ public class FactionStorage {
             claim.onServerSetFaction(faction);
             faction.onClaimPlaced(claim);
         } else
-            WarForgeMod.LOGGER.error("Invalid placer placed a claim at " + claim.getClaimPos());
+            LOGGER.error("Invalid placer placed a claim at " + claim.getClaimPos());
     }
 
     public UUID getClaim(DimBlockPos pos) {
@@ -222,7 +223,7 @@ public class FactionStorage {
     }
 
     public void updateConqueredChunks(long msUpdateTime) {
-        int msPassed = (int) (msUpdateTime - WarForgeMod.previousUpdateTimestamp); // the difference is likely less than 596h (max time storage of int using ms)
+        int msPassed = (int) (msUpdateTime - previousUpdateTimestamp); // the difference is likely less than 596h (max time storage of int using ms)
 
         try {
             // concurrent modification exception can occur when conquered chunks is checked by other methods, such as pre block place
@@ -233,7 +234,7 @@ public class FactionStorage {
                 else chunkEntry.setRight(chunkEntry.getRight() - msPassed);
             }
         } catch (Exception e) {
-            WarForgeMod.LOGGER.atError().log("Error when updating conquered chunk of type " + e + ", with stacktrace:");
+            LOGGER.atError().log("Error when updating conquered chunk of type " + e + ", with stacktrace:");
             e.printStackTrace();
         }
     }
@@ -337,7 +338,7 @@ public class FactionStorage {
         Faction attackers = getFaction(siege.attackingFaction);
         Faction defenders = getFaction(siege.defendingFaction);
         if (attackers == null || defenders == null) {
-            WarForgeMod.LOGGER.error("Invalid factions in completed siege. Nothing will happen.");
+            LOGGER.error("Invalid factions in completed siege. Nothing will happen.");
             return;
         }
 
@@ -357,8 +358,8 @@ public class FactionStorage {
             defenders.messageAll(new TextComponentTranslation("warforge.info.siege_lost_defenders", defenders.name, blockPos.toFancyString()));
             attackers.notoriety += WarForgeConfig.NOTORIETY_PER_SIEGE_ATTACK_SUCCESS;
             if (WarForgeConfig.SIEGE_CAPTURE) {
-                WarForgeMod.MC_SERVER.getWorld(blockPos.dim).setBlockState(blockPos.toRegularPos(), WarForgeMod.CONTENT.basicClaimBlock.getDefaultState());
-                TileEntity te = WarForgeMod.MC_SERVER.getWorld(blockPos.dim).getTileEntity(blockPos.toRegularPos());
+                MC_SERVER.getWorld(blockPos.dim).setBlockState(blockPos.toRegularPos(), CONTENT.basicClaimBlock.getDefaultState());
+                TileEntity te = MC_SERVER.getWorld(blockPos.dim).getTileEntity(blockPos.toRegularPos());
                 onNonCitadelClaimPlaced((IClaim) te, attackers);
             }
         } else {
@@ -421,7 +422,7 @@ public class FactionStorage {
         }
 
         if (colour == 0xffffff) {
-            colour = Color.HSBtoRGB(WarForgeMod.rand.nextFloat(), WarForgeMod.rand.nextFloat() * 0.5f + 0.5f, 1.0f);
+            colour = Color.HSBtoRGB(rand.nextFloat(), rand.nextFloat() * 0.5f + 0.5f, 1.0f);
         }
 
         // All checks passed, create a faction
@@ -439,41 +440,78 @@ public class FactionStorage {
         mFactions.put(proposedID, faction);
         citadel.onServerSetFaction(faction);
         mClaims.put(citadel.getClaimPos().toChunkPos(), proposedID);
-        WarForgeMod.LEADERBOARD.RegisterFaction(faction);
+        LEADERBOARD.RegisterFaction(faction);
 
-        WarForgeMod.INSTANCE.messageAll(new TextComponentString(player.getName() + " created the faction " + factionName), true);
+        INSTANCE.messageAll(new TextComponentString(player.getName() + " created the faction " + factionName), true);
 
         faction.addPlayer(player.getUniqueID());
         faction.setLeader(player.getUniqueID());
 
         return true;
     }
-   public boolean requestLevelUp(EntityPlayerMP officer, UUID factionID){
-       Faction faction = getFaction(factionID);
-       if (faction == null) {
-           officer.sendMessage(new TextComponentString("That faction doesn't exist"));
-           return false;
-       }
 
-       if (!faction.isPlayerInFaction(officer.getUniqueID())) {
-           officer.sendMessage(new TextComponentString("You are not in that faction"));
-           return false;
-       }
-       if(!faction.isPlayerRoleInFaction(officer.getUniqueID(), Role.OFFICER) && !faction.isPlayerRoleInFaction(officer.getUniqueID(), Role.LEADER)){
-           officer.sendMessage(new TextComponentString("You must be officer or higher to upgrade citadel"));
-           return false;
-       }
+    public boolean requestLevelUp(EntityPlayerMP officer, UUID factionID) {
+        Faction faction = getFaction(factionID);
+        if (faction == null) {
+            officer.sendMessage(new TextComponentString("That faction doesn't exist"));
+            return false;
+        }
 
-       Map<StackComparable, Integer> requiredItems = WarForgeMod.UPGRADE_HANDLER.getRequirementsFor(faction.citadelLevel +1);
-       List<ItemStack> invCopy = officer.inventory.mainInventory.stream()
-               .map(ItemStack::copy)
-               .collect(Collectors.toList());
-                //Copy for safety
+        if (!faction.isPlayerInFaction(officer.getUniqueID())) {
+            officer.sendMessage(new TextComponentString("You are not in that faction"));
+            return false;
+        }
+        if (!faction.isPlayerRoleInFaction(officer.getUniqueID(), Role.OFFICER) && !faction.isPlayerRoleInFaction(officer.getUniqueID(), Role.LEADER)) {
+            officer.sendMessage(new TextComponentString("You must be officer or higher to upgrade citadel"));
+            return false;
+        }
+
+        Map<StackComparable, Integer> requiredItems = (Map<StackComparable, Integer>) UPGRADE_HANDLER.getRequirementsFor(faction.citadelLevel + 1).clone();
+        List<ItemStack> invCopy = officer.inventory.mainInventory.stream()
+                .map(ItemStack::copy)
+                .collect(Collectors.toList());
+        //Copy for safety
+        boolean passed = true;
+
+        outer:
+        for (Map.Entry<StackComparable, Integer> entry : requiredItems.entrySet()) {
+            StackComparable sc = entry.getKey();
+            int required = entry.getValue();
+
+            for (ItemStack stack : invCopy) {
+                if (!stack.isEmpty() && sc.equals(stack)) {
+                    int consumed = Math.min(required, stack.getCount());
+                    required -= consumed;
+                    stack.shrink(consumed);
+                }
+                if (required == 0) break;
+            }
+
+            if (required > 0) {
+                passed = false;
+                break outer;
+            }
+        }
+
+
+        if (!passed || invCopy.size() != 36) { //Schizophrenia
+            officer.sendMessage(new TextComponentString("Could not upgrade: you don't have the required items"));
+            return false;
+        }
+
+        for (int i = 0; i < officer.inventory.mainInventory.size(); i++) {
+            officer.inventory.mainInventory.set(i, invCopy.get(i));
+        }
+
+        faction.citadelLevel++;
+        faction.messageAll(new TextComponentString(
+                officer.getName() + " has upgraded your facition to level " +
+                        faction.citadelLevel + "! You can now claim " +
+                        UPGRADE_HANDLER.getClaimLimitForLevel(faction.citadelLevel)));
 
 
         return true;
-   }
-
+    }
 
 
     public boolean requestRemovePlayerFromFaction(ICommandSender remover, UUID factionID, UUID toRemove) {
@@ -488,7 +526,7 @@ public class FactionStorage {
             return false;
         }
 
-        boolean canRemove = WarForgeMod.isOp(remover);
+        boolean canRemove = isOp(remover);
         boolean removingSelf = false;
         if (remover instanceof EntityPlayer) {
             UUID removerID = ((EntityPlayer) remover).getUniqueID();
@@ -507,7 +545,7 @@ public class FactionStorage {
             return false;
         }
 
-        GameProfile userProfile = WarForgeMod.MC_SERVER.getPlayerProfileCache().getProfileByUUID(toRemove);
+        GameProfile userProfile = MC_SERVER.getPlayerProfileCache().getProfileByUUID(toRemove);
         if (userProfile != null) {
             if (removingSelf) {
                 faction.messageAll(new TextComponentString(userProfile.getName() + " left " + faction.name));
@@ -543,7 +581,7 @@ public class FactionStorage {
             return false;
         }
 
-        if (!WarForgeMod.isOp(factionOfficer) && !faction.isPlayerRoleInFaction(WarForgeMod.getUUID(factionOfficer), Faction.Role.OFFICER)) {
+        if (!isOp(factionOfficer) && !faction.isPlayerRoleInFaction(getUUID(factionOfficer), Faction.Role.OFFICER)) {
             factionOfficer.sendMessage(new TextComponentString("You are not an officer of this faction"));
             return false;
         }
@@ -557,7 +595,7 @@ public class FactionStorage {
         // TODO: Faction player limit - grows with claims?
 
         faction.invitePlayer(invitee);
-        WarForgeMod.MC_SERVER.getPlayerList().getPlayerByUUID(invitee).sendMessage(new TextComponentString("You have received an invite to " + faction.name + ". Type /f accept to join"));
+        MC_SERVER.getPlayerList().getPlayerByUUID(invitee).sendMessage(new TextComponentString("You have received an invite to " + faction.name + ". Type /f accept to join"));
 
         return true;
     }
@@ -577,7 +615,7 @@ public class FactionStorage {
             return false;
         }
 
-        if (!WarForgeMod.isOp(factionLeader) && !faction.isPlayerRoleInFaction(factionLeader.getUniqueID(), Faction.Role.LEADER)) {
+        if (!isOp(factionLeader) && !faction.isPlayerRoleInFaction(factionLeader.getUniqueID(), Faction.Role.LEADER)) {
             factionLeader.sendMessage(new TextComponentString("You are not the leader of this faction"));
             return false;
         }
@@ -658,7 +696,7 @@ public class FactionStorage {
         }
         faction.disband();
         mFactions.remove(factionID);
-        WarForgeMod.LEADERBOARD.UnregisterFaction(faction);
+        LEADERBOARD.UnregisterFaction(faction);
     }
 
     private void disbandAndCleanup(Faction faction) {
@@ -667,7 +705,7 @@ public class FactionStorage {
         }
         faction.disband();
         mFactions.remove(faction.uuid);
-        WarForgeMod.LEADERBOARD.UnregisterFaction(faction);
+        LEADERBOARD.UnregisterFaction(faction);
     }
 
     //Use disbandAndCleanup
@@ -694,12 +732,12 @@ public class FactionStorage {
         Faction attacking = getFactionOfPlayer(factionOfficer.getUniqueID());
 
         // for some reason, server tick is in number of ticks and last siege timestamp is in ms, while siege cooldown is in mins (according to description), though through calculations looks like hours? it should be in ms
-        if (WarForgeMod.serverTick - attacking.lastSiegeTimestamp < WarForgeConfig.SIEGE_COOLDOWN_FAIL) {
+        if (serverTick - attacking.lastSiegeTimestamp < WarForgeConfig.SIEGE_COOLDOWN_FAIL) {
             factionOfficer.sendMessage(new TextComponentString("Your faction is on cooldown on starting a new siege"));
 
-            long s = WarForgeMod.INSTANCE.getCooldownRemainingSeconds(WarForgeConfig.SIEGE_COOLDOWN_FAIL, attacking.lastSiegeTimestamp % 60);
-            int m = WarForgeMod.INSTANCE.getCooldownRemainingMinutes(WarForgeConfig.SIEGE_COOLDOWN_FAIL, attacking.lastSiegeTimestamp % 60);
-            int h = WarForgeMod.INSTANCE.getCooldownRemainingHours(WarForgeConfig.SIEGE_COOLDOWN_FAIL, attacking.lastSiegeTimestamp);
+            long s = INSTANCE.getCooldownRemainingSeconds(WarForgeConfig.SIEGE_COOLDOWN_FAIL, attacking.lastSiegeTimestamp % 60);
+            int m = INSTANCE.getCooldownRemainingMinutes(WarForgeConfig.SIEGE_COOLDOWN_FAIL, attacking.lastSiegeTimestamp % 60);
+            int h = INSTANCE.getCooldownRemainingHours(WarForgeConfig.SIEGE_COOLDOWN_FAIL, attacking.lastSiegeTimestamp);
 
             factionOfficer.sendMessage(new TextComponentString(String.format("Cooldown remaining: %dh %dm %ds or %d ticks", h, m, s, s * 20)));
             return;
@@ -712,7 +750,7 @@ public class FactionStorage {
 
         // TODO: Verify there aren't existing alliances
 
-        TileEntitySiegeCamp siegeTE = (TileEntitySiegeCamp) WarForgeMod.proxy.GetTile(siegeCampPos);
+        TileEntitySiegeCamp siegeTE = (TileEntitySiegeCamp) proxy.GetTile(siegeCampPos);
         DimChunkPos defendingChunk = siegeCampPos.toChunkPos().Offset(direction, 1);
         UUID defendingFactionID = mClaims.get(defendingChunk);
         Faction defending = getFaction(defendingFactionID);
@@ -731,7 +769,7 @@ public class FactionStorage {
 
         if (conqueredChunks.get(defendingPos.toChunkPos()) != null) {
             factionOfficer.sendMessage(new TextComponentTranslation("warforge.info.chunk_is_conquered",
-                    defending.name, WarForgeMod.formatTime(conqueredChunks.get(defendingPos.toChunkPos()).getRight())));
+                    defending.name, formatTime(conqueredChunks.get(defendingPos.toChunkPos()).getRight())));
             return;
         }
 
@@ -743,7 +781,7 @@ public class FactionStorage {
         siegeTE.setSiegeTarget(defendingPos);
         siege.Start();
 
-        attacking.lastSiegeTimestamp = WarForgeMod.serverTick;
+        attacking.lastSiegeTimestamp = serverTick;
 
     }
 
@@ -771,7 +809,7 @@ public class FactionStorage {
         // Place a bedrock tile entity at 0,0,0 chunk coords
         // This might look a bit dodge in End. It's only for admin claims though
         DimBlockPos tePos = new DimBlockPos(pos.mDim, pos.getXStart(), 0, pos.getZStart());
-        op.world.setBlockState(tePos.toRegularPos(), WarForgeMod.CONTENT.adminClaimBlock.getDefaultState());
+        op.world.setBlockState(tePos.toRegularPos(), CONTENT.adminClaimBlock.getDefaultState());
         TileEntity te = op.world.getTileEntity(tePos.toRegularPos());
         if (te == null || !(te instanceof IClaim)) {
             op.sendMessage(new TextComponentString("Placing admin claim block failed"));
@@ -791,13 +829,13 @@ public class FactionStorage {
             if (info != null) {
                 PacketSiegeCampProgressUpdate packet = new PacketSiegeCampProgressUpdate();
                 packet.info = info;
-                WarForgeMod.NETWORK.sendToAllAround(packet, siegePos.x * 16, 128d, siegePos.z * 16, WarForgeConfig.SIEGE_INFO_RADIUS + 128f, siegePos.mDim);
+                NETWORK.sendToAllAround(packet, siegePos.x * 16, 128d, siegePos.z * 16, WarForgeConfig.SIEGE_INFO_RADIUS + 128f, siegePos.mDim);
             }
         }
     }
 
     public void sendAllSiegeInfoToNearby() {
-        for (HashMap.Entry<DimChunkPos, Siege> kvp : WarForgeMod.FACTIONS.sieges.entrySet()) {
+        for (HashMap.Entry<DimChunkPos, Siege> kvp : FACTIONS.sieges.entrySet()) {
             kvp.getValue().CalculateBasePower();
 
             SendSiegeInfoToNearby(kvp.getKey());
@@ -856,7 +894,7 @@ public class FactionStorage {
             return false;
         }
 
-        if (!WarForgeMod.isOp(player) && !faction.isPlayerRoleInFaction(player.getUniqueID(), Role.OFFICER)) {
+        if (!isOp(player) && !faction.isPlayerRoleInFaction(player.getUniqueID(), Role.OFFICER)) {
             player.sendMessage(new TextComponentString("You are not an officer of the faction"));
             return false;
         }
@@ -893,7 +931,7 @@ public class FactionStorage {
         }
 
         faction.setColour(colour);
-        for (World world : WarForgeMod.MC_SERVER.worlds) {
+        for (World world : MC_SERVER.worlds) {
             for (TileEntity te : world.loadedTileEntityList) {
                 if (te instanceof IClaim) {
                     if (((IClaim) te).getFaction().equals(faction.uuid)) {
@@ -933,19 +971,19 @@ public class FactionStorage {
         }
 
         // Set new citadel
-        WarForgeMod.MC_SERVER.getWorld(pos.dim).setBlockState(pos.toRegularPos(), WarForgeMod.CONTENT.citadelBlock.getDefaultState());
-        TileEntityCitadel newCitadel = (TileEntityCitadel) WarForgeMod.MC_SERVER.getWorld(pos.dim).getTileEntity(pos.toRegularPos());
+        MC_SERVER.getWorld(pos.dim).setBlockState(pos.toRegularPos(), CONTENT.citadelBlock.getDefaultState());
+        TileEntityCitadel newCitadel = (TileEntityCitadel) MC_SERVER.getWorld(pos.dim).getTileEntity(pos.toRegularPos());
 
         // Convert old citadel to basic claim
-        WarForgeMod.MC_SERVER.getWorld(faction.citadelPos.dim).setBlockState(faction.citadelPos.toRegularPos(), WarForgeMod.CONTENT.basicClaimBlock.getDefaultState());
-        TileEntityClaim newClaim = (TileEntityClaim) WarForgeMod.MC_SERVER.getWorld(faction.citadelPos.dim).getTileEntity(faction.citadelPos.toRegularPos());
+        MC_SERVER.getWorld(faction.citadelPos.dim).setBlockState(faction.citadelPos.toRegularPos(), CONTENT.basicClaimBlock.getDefaultState());
+        TileEntityClaim newClaim = (TileEntityClaim) MC_SERVER.getWorld(faction.citadelPos.dim).getTileEntity(faction.citadelPos.toRegularPos());
 
         // Update pos
         faction.citadelPos = pos;
         newCitadel.onServerSetFaction(faction);
         newClaim.onServerSetFaction(faction);
 
-        WarForgeMod.INSTANCE.messageAll(new TextComponentString(faction.name + " moved their citadel"), true);
+        INSTANCE.messageAll(new TextComponentString(faction.name + " moved their citadel"), true);
 
         faction.citadelMoveCooldown = WarForgeConfig.CITADEL_MOVE_NUM_DAYS;
 
@@ -974,7 +1012,7 @@ public class FactionStorage {
                 faction = new Faction();
                 faction.uuid = uuid;
                 mFactions.put(uuid, faction);
-                WarForgeMod.LEADERBOARD.RegisterFaction(faction);
+                LEADERBOARD.RegisterFaction(faction);
             }
 
             faction.readFromNBT(factionTags);

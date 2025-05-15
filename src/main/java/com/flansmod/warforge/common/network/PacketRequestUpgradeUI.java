@@ -26,6 +26,7 @@ public class PacketRequestUpgradeUI extends PacketRequestFactionInfo {
             packet.mFactionID = faction.uuid;
             packet.mFactionName = faction.name;
             packet.color = faction.colour;
+            packet.level = faction.citadelLevel;
             packet.outrankingOfficer = faction.isPlayerRoleInFaction(playerUUID, Faction.Role.OFFICER);
             WarForgeMod.NETWORK.sendTo(packet, playerEntity);
         } else {

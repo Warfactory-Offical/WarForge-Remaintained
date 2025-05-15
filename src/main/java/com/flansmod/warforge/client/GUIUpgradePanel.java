@@ -17,6 +17,7 @@ import com.cleanroommc.modularui.widgets.ListWidget;
 import com.cleanroommc.modularui.widgets.layout.Column;
 import com.cleanroommc.modularui.widgets.layout.Row;
 import com.flansmod.warforge.common.WarForgeMod;
+import com.flansmod.warforge.common.network.PacketRequestUpgrade;
 import com.flansmod.warforge.server.StackComparable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
@@ -37,6 +38,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.flansmod.warforge.common.WarForgeMod.NETWORK;
 import static com.flansmod.warforge.common.WarForgeMod.UPGRADE_HANDLER;
 
 public class GUIUpgradePanel {
@@ -167,8 +169,11 @@ public class GUIUpgradePanel {
                         GuiTextures.MC_BUTTON_DISABLED))
                 .onMousePressed(button -> {
                     if (!(requirementPassed.get() && outrankingOfficer)) return false;
+                    PacketRequestUpgrade packet = new PacketRequestUpgrade();
+                    packet.factionID = factionID;
+                    NETWORK.sendToServer(packet);
+                    panel.closeIfOpen(true);
 
-                    player.sendMessage(new TextComponentString("Hello " + player.getName()));
                     return true;
                 });
 
@@ -187,7 +192,7 @@ public class GUIUpgradePanel {
                 .uv(0, 20, 20, 20)
                 .build();
 
-        Widget newLevel = IKey.str("Lvl " + level + 1).asWidget()
+        Widget newLevel = IKey.str("Lvl " + (level + 1)).asWidget()
                 .color(0xFFAA00)
                 .shadow(true)
                 .height(16);
@@ -219,7 +224,7 @@ public class GUIUpgradePanel {
         Widget levelIntecator = new Column()
                 .child(newLevel)
                 .child(claimIncrease)
-                .size(60, 20);
+                .size(80, 20);
 
 
         // Button row
