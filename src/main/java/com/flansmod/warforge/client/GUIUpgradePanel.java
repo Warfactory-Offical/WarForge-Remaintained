@@ -26,7 +26,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.oredict.OreIngredient;
@@ -55,6 +54,10 @@ public class GUIUpgradePanel {
                 .widthRel(0.98f)
                 .height(30 * 6 + 10);
 
+
+        if (UPGRADE_HANDLER.getRequirementsFor(level + 1) == null) {
+            return createNoMoreLevelsGui();
+        }
 
 // Sorted by quantity
         Map<StackComparable, Integer> requirements = UPGRADE_HANDLER.getRequirementsFor(level + 1)
@@ -253,6 +256,30 @@ public class GUIUpgradePanel {
         ;
 
         return new ModularScreen(panel);
+
+    }
+
+    private static ModularScreen createNoMoreLevelsGui() {
+        ModularPanel panel = ModularPanel.defaultPanel("no_more_levels_panel", 180, 50);
+        return new ModularScreen(panel
+                .child(IKey.str("Your citadel is at it's max level!").asWidget()
+                        .shadow(true)
+                        .style(TextFormatting.WHITE)
+                        .height(16)
+                        .align(Alignment.TopCenter)
+                )
+                .child(new ButtonWidget<>()
+                        .size(100, 16)
+                        .overlay(IKey.str("Close"))
+                        .onMousePressed(button -> {
+                            panel.closeIfOpen(true);
+                            return true;
+                        })
+                        .center()
+                        .bottom(10)
+                )
+
+        );
 
     }
 

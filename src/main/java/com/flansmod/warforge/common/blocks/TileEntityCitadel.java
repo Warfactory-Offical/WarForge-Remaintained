@@ -1,15 +1,23 @@
 package com.flansmod.warforge.common.blocks;
 
+import com.flansmod.warforge.common.Content;
 import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.server.Faction;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemBanner;
 import net.minecraft.item.ItemShield;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.world.WorldServer;
 
 import java.util.UUID;
+
+import static com.flansmod.warforge.common.blocks.BlockDummy.MODEL;
 
 public class TileEntityCitadel extends TileEntityYieldCollector implements IClaim {
     public static final int BANNER_SLOT_INDEX = NUM_BASE_SLOTS;
@@ -140,12 +148,45 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
 
     @Override
     public void onServerSetFaction(Faction faction) {
+
+        IBlockState state = world.getBlockState(pos);
+        world.setBlockState(pos.up(), Content.statue.getDefaultState().withProperty(MODEL, BlockDummy.modelEnum.KNIGHT), 3);
+        world.notifyBlockUpdate(pos.up(), state, state, 3);
+
+
+        TileEntity teMiddle = world.getTileEntity(pos.up());
+        if (teMiddle instanceof TileEntityDummy) {
+            ((TileEntityDummy) teMiddle).setMaster(pos);
+        }
+
+        world.setBlockState(pos.up(2), Content.dummyTranslusent.getDefaultState().withProperty(MODEL, BlockDummy.modelEnum.TRANSLUCENT), 3);
+        world.notifyBlockUpdate(pos.up(2), state, state, 3);
+
+        TileEntity teTop = world.getTileEntity(pos.up(2));
+        if (teTop instanceof TileEntityDummy) {
+            ((TileEntityDummy) teMiddle).setMaster(pos);
+        }
+
         super.onServerSetFaction(faction);
         TileEntity te = world.getTileEntity(pos.up(2));
         if (te instanceof TileEntityDummy)
             ((TileEntityDummy) te).setLaserRender(true);
+
+
     }
 
+    public void onServerCreateFaction(Faction faction) {
+
+        world.playSound(null, pos, SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 1.0F, 1.0F);
+        ((WorldServer) world).spawnParticle(
+                EnumParticleTypes.EXPLOSION_LARGE,
+                pos.getX(), pos.getY(), pos.getZ(),
+                32,
+                0.0D, 2.5D, 0.0D,
+                1.0D
+        );
+        onServerSetFaction(faction);
+    }
 
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound nbt) {

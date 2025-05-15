@@ -39,6 +39,10 @@ public abstract class MultiBlockColumn extends Block implements IMultiBlockInit 
 
     @Override
     public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack) {
+        setUpMultiblock(world, pos, state);
+    }
+
+    public void setUpMultiblock(World world, BlockPos pos, IBlockState state){
         world.setBlockState(pos.up(), Content.statue.getDefaultState().withProperty(MODEL, BlockDummy.modelEnum.KNIGHT), 3);
         world.notifyBlockUpdate(pos.up(), state, state, 3);
 

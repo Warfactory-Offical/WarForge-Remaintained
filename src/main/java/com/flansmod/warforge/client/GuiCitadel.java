@@ -108,14 +108,7 @@ public class GuiCitadel extends GuiContainer
 				PacketRequestUpgradeUI packet = new PacketRequestUpgradeUI();
 				packet.mFactionIDRequest = citadelContainer.citadel.getFaction();
 				packet.mFactionNameRequest = citadelContainer.citadel.factionName;
-
-				//ClientGUI.open(new GuiUpgradePanel());
-
-//				PacketPlaceFlag packet = new PacketPlaceFlag();
-//				packet.pos = citadelContainer.citadel.getClaimPos();
 				WarForgeMod.NETWORK.sendToServer(packet);
-//
-//				Minecraft.getMinecraft().displayGuiScreen(null);
 				break;
 			}
 			case BUTTON_CHANGE_COLOUR:

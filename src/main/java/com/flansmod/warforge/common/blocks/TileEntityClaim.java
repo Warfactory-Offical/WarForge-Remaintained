@@ -3,6 +3,7 @@ package com.flansmod.warforge.common.blocks;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.server.Faction;
+import net.minecraft.block.Block;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
@@ -106,6 +107,8 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim {
             updateColour(faction.colour);
             factionName = faction.name;
         }
+        MultiBlockColumn b = (MultiBlockColumn) world.getBlockState(this.pos).getBlock();
+        b.setUpMultiblock(world, pos, b.getDefaultState());
 
         updateTileEntity();
     }

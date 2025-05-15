@@ -187,6 +187,8 @@ public class UpgradeHandler {
 
 
     public HashMap<StackComparable, Integer> getRequirementsFor(int level) {
+        if(level >= LEVELS.length)
+            return null;
         return LEVELS[level];
     }
 

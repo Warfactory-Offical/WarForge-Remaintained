@@ -46,10 +46,10 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
     }
 
     public void initMap() {
-         multiBlockMap = Collections.unmodifiableMap(new HashMap<IBlockState, Vec3i>() {{
-            put(statue.getDefaultState().withProperty(MODEL, KING), new Vec3i(0, 1, 0));
-            put(dummyTranslusent.getDefaultState().withProperty(MODEL, TRANSLUCENT), new Vec3i(0, 2, 0));
-        }});
+         multiBlockMap = Collections.unmodifiableMap(new HashMap<>() {{
+             put(statue.getDefaultState().withProperty(MODEL, KING), new Vec3i(0, 1, 0));
+             put(dummyTranslusent.getDefaultState().withProperty(MODEL, TRANSLUCENT), new Vec3i(0, 2, 0));
+         }});
 
     }
 
@@ -101,8 +101,8 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
         if (te != null) {
             TileEntityCitadel citadel = (TileEntityCitadel) te;
             citadel.onPlacedBy(placer);
-            if (world.isRemote) return;
-            super.onBlockPlacedBy(world, pos, state, placer, stack);
+//            if (world.isRemote) return;
+//            super.onBlockPlacedBy(world, pos, state, placer, stack);
         }
     }
 

@@ -438,7 +438,7 @@ public class FactionStorage {
         faction.wealth = 0;
 
         mFactions.put(proposedID, faction);
-        citadel.onServerSetFaction(faction);
+        citadel.onServerCreateFaction(faction);
         mClaims.put(citadel.getClaimPos().toChunkPos(), proposedID);
         LEADERBOARD.RegisterFaction(faction);
 
@@ -467,6 +467,12 @@ public class FactionStorage {
         }
 
         Map<StackComparable, Integer> requiredItems = (Map<StackComparable, Integer>) UPGRADE_HANDLER.getRequirementsFor(faction.citadelLevel + 1).clone();
+
+        if(requiredItems == null) {
+            officer.sendMessage(new TextComponentString("You cannot level up fruther"));
+            return false;
+        }
+
         List<ItemStack> invCopy = officer.inventory.mainInventory.stream()
                 .map(ItemStack::copy)
                 .collect(Collectors.toList());
