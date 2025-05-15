@@ -1,6 +1,8 @@
 package com.flansmod.warforge.common.blocks;
 
+import com.flansmod.warforge.Sounds;
 import com.flansmod.warforge.common.Content;
+import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.server.Faction;
 import net.minecraft.block.state.IBlockState;
@@ -13,7 +15,9 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.SoundCategory;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.oredict.RecipeSorter;
 
 import java.util.UUID;
 
@@ -173,6 +177,10 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
             ((TileEntityDummy) te).setLaserRender(true);
 
 
+    }
+
+    public void onCitadelUpgrade(BlockPos pos){
+        world.playSound(null, pos, Sounds.sfxUpgrade, SoundCategory.PLAYERS, 1f, 1f);
     }
 
     public void onServerCreateFaction(Faction faction) {

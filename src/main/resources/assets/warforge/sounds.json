@@ -1,0 +1,12 @@
+{
+  "sfx.upgrade": {
+    "category": "player",
+    "sounds":[
+      {
+        "name":"warforge:sfx/upgrade",
+        "stream": false
+      }
+    ]
+
+  }
+}

@@ -1,5 +1,6 @@
 package com.flansmod.warforge.server;
 
+import com.flansmod.warforge.Sounds;
 import com.flansmod.warforge.api.ObjectIntPair;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.DimChunkPos;
@@ -25,6 +26,8 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
@@ -516,6 +519,8 @@ public class FactionStorage {
                         UPGRADE_HANDLER.getClaimLimitForLevel(faction.citadelLevel)));
 
 
+        faction.soundEffectAll(Sounds.sfxUpgrade);
+        //TODO: This is temporary, make arbitrary soundEffect
         return true;
     }
 

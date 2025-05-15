@@ -12,7 +12,7 @@ import static net.minecraft.client.renderer.tileentity.TileEntityBeaconRenderer.
 
 public class RenderTileEntityDummy extends TileEntitySpecialRenderer<com.flansmod.warforge.common.blocks.TileEntityDummy> {
 
-    public void render(com.flansmod.warforge.common.blocks.TileEntityDummy te, double x, double y, double z, float partialTicks, int destroyStage, float f) { //TODO:Improve Perf, probably VBOs
+    public void render(com.flansmod.warforge.common.blocks.TileEntityDummy te, double x, double y, double z, float partialTicks, int destroyStage, float f) {
 
         if (te.getLaserRender()) {
             GlStateManager.pushMatrix();

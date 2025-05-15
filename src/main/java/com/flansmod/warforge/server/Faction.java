@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Predicate;
 
+import com.flansmod.warforge.Sounds;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.DimChunkPos;
 import com.flansmod.warforge.common.WarForgeConfig;
@@ -20,6 +21,7 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTBase;
@@ -27,10 +29,14 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagIntArray;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
+
+import static com.flansmod.warforge.common.WarForgeMod.MC_SERVER;
 
 
 /**
@@ -365,6 +371,16 @@ public class Faction {
             player.sendMessage(chat);
         }
     }
+
+    public void soundEffectAll(SoundEvent soundEvent) {
+        for (UUID playerID : members.keySet()) {
+            final EntityPlayerMP player = (EntityPlayerMP) getPlayer(playerID);
+            if (player != null) {
+                player.world.playSound(player, player.getPosition(), soundEvent, SoundCategory.PLAYERS, 1f, 1.0f);
+            }
+        }
+    }
+
 
     public DimBlockPos getSpecificPosForClaim(DimChunkPos pos) {
         for (DimBlockPos claimPos : claims.keySet()) {
