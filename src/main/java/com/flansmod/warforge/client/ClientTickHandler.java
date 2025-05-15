@@ -483,7 +483,7 @@ public class ClientTickHandler
 			data.renderList = GLAllocation.generateDisplayLists(1);
 			GlStateManager.glNewList(data.renderList, 4864);
 
-			boolean renderNorth = true, renderEast = true, renderWest = true, renderSouth = true;
+			boolean renderNorth = true, renderEast = true, renderWest = true, renderSouth = true, renderNorthWest = true, renderNorthEast = true, renderSouthWest = true, renderSouthEast = true;
 			if(renderData.containsKey(pos.North()))
 				renderNorth = !renderData.get(pos.North()).claim.getFaction().equals(data.claim.getFaction());
 			if(renderData.containsKey(pos.East()))
@@ -492,6 +492,16 @@ public class ClientTickHandler
 				renderSouth = !renderData.get(pos.South()).claim.getFaction().equals(data.claim.getFaction());
 			if(renderData.containsKey(pos.West()))
 				renderWest = !renderData.get(pos.West()).claim.getFaction().equals(data.claim.getFaction());
+
+			//for super spesific edge cases
+			if(renderData.containsKey(pos.North().West()))
+				renderNorthWest = !renderData.get(pos.North().West()).claim.getFaction().equals(data.claim.getFaction());
+			if(renderData.containsKey(pos.North().East()))
+				renderNorthEast = !renderData.get(pos.North().East()).claim.getFaction().equals(data.claim.getFaction());
+			if(renderData.containsKey(pos.South().West()))
+				renderSouthWest = !renderData.get(pos.South().West()).claim.getFaction().equals(data.claim.getFaction());
+			if(renderData.containsKey(pos.South().East()))
+				renderSouthEast = !renderData.get(pos.South().East()).claim.getFaction().equals(data.claim.getFaction());
 
 			// North edge, [0,0] -> [16,0] wall
 			if(renderNorth)
@@ -594,7 +604,7 @@ public class ClientTickHandler
 				for (int x = 0; x < 16; x++) {
 					for (int y = 0; y < 256; y++) {
 						if (x < 15) {
-							if (renderNorth) {
+							if (renderNorth ) {
 								boolean air0 = world.isAirBlock(new BlockPos(pos.getXStart() + x, y, pos.getZStart()));
 								boolean air1 = world.isAirBlock(new BlockPos(pos.getXStart() + x + 1, y, pos.getZStart()));
 								renderZEdge(world, x, y, pos.getZStart(), smaller_alignment + 0.001d, air0, air1, 0);
@@ -610,9 +620,9 @@ public class ClientTickHandler
 								boolean air0 = world.isAirBlock(new BlockPos(pos.getXStart() + x, y, pos.getZStart()));
 								boolean air1 = world.isAirBlock(new BlockPos(pos.getXStart() + x, y + 1, pos.getZStart()));
 								//renderZVerticalEdge(world, x, y, pos.getZStart(), smaller_alignment, air0, air1, 0);
-								if (x == 15){
+								if (x == 15 && renderEast){
 									renderZVerticalCorner(world, x - smaller_alignment, y, smaller_alignment, air0, air1, 0, -smaller_alignment);
-								} else if (x == 0) {
+								} else if (x == 0 && renderWest) {
 									renderZVerticalCorner(world, x, y, smaller_alignment, air0, air1, 0, -smaller_alignment);
 								} else {
 									renderZVerticalEdge(world, x, y, pos.getZStart(), smaller_alignment, air0, air1, 0);
@@ -621,9 +631,9 @@ public class ClientTickHandler
 							if (renderSouth) {
 								boolean air0 = world.isAirBlock(new BlockPos(pos.getXStart() + x, y, pos.getZEnd()));
 								boolean air1 = world.isAirBlock(new BlockPos(pos.getXStart() + x, y + 1, pos.getZEnd()));
-								if (x == 15){
+								if (x == 15 && renderEast){
 									renderZVerticalCorner(world, x - smaller_alignment, y, 16 - smaller_alignment, air0, air1, 0, -smaller_alignment);
-								} else if (x == 0) {
+								} else if (x == 0 && renderWest) {
 									renderZVerticalCorner(world, x, y, 16 - smaller_alignment, air0, air1, 0, -smaller_alignment);
 								} else {
 									renderZVerticalEdge(world, x, y, pos.getZEnd(), 16d - smaller_alignment, air0, air1, 0);
@@ -653,9 +663,9 @@ public class ClientTickHandler
 							if (renderWest) {
 								boolean air0 = world.isAirBlock(new BlockPos(pos.getXStart(), y, pos.getZStart() + z));
 								boolean air1 = world.isAirBlock(new BlockPos(pos.getXStart(), y + 1, pos.getZStart() + z));
-								if (z == 15){
+								if (z == 15 && renderSouth){
 									renderXVerticalCorner(world, smaller_alignment, y, z - smaller_alignment, air0, air1, 0, -smaller_alignment);
-								} else if (z == 0) {
+								} else if (z == 0 && renderNorth) {
 									renderXVerticalCorner(world, smaller_alignment, y, z, air0, air1, 0, -smaller_alignment);
 								} else {
 									renderXVerticalEdge(world, pos.getXStart(), y, z, smaller_alignment, air0, air1, 0);
@@ -664,9 +674,9 @@ public class ClientTickHandler
 							if (renderEast) {
 								boolean air0 = world.isAirBlock(new BlockPos(pos.getXEnd(), y, pos.getZStart() + z));
 								boolean air1 = world.isAirBlock(new BlockPos(pos.getXEnd(), y + 1, pos.getZStart() + z));
-								if (z == 15){
+								if (z == 15 && renderSouth){
 									renderXVerticalCorner(world, 16d - smaller_alignment, y, z - smaller_alignment, air0, air1, 0, -smaller_alignment);
-								} else if (z == 0) {
+								} else if (z == 0 && renderNorth) {
 									renderXVerticalCorner(world, 16d - smaller_alignment, y, z, air0, air1, 0, -smaller_alignment);
 								} else {
 									renderXVerticalEdge(world, pos.getXEnd(), y, z, 16d - smaller_alignment, air0, air1, 0);
@@ -676,6 +686,50 @@ public class ClientTickHandler
 					}
 				}
 			}
+
+			//Edge corner cases because of autism
+
+			if (renderNorthEast) {
+				if (!renderNorth && !renderEast) {
+					for (int y = 0; y < 256; y++) {
+						boolean air0 = world.isAirBlock(new BlockPos(pos.getXEnd(), y, pos.getZStart()));
+						boolean air1 = world.isAirBlock(new BlockPos(pos.getXEnd(), y + 1, pos.getZStart()));
+						renderZVerticalCorner(world, 15, y, smaller_alignment, air0, air1, 0, smaller_alignment - 1.0);
+						renderXVerticalCorner(world, 16 - smaller_alignment, y, smaller_alignment - 1, air0, air1, 0, smaller_alignment - 1.0);
+					}
+				}
+			}
+			if (renderNorthWest) {
+				if (!renderNorth && !renderWest) {
+					for (int y = 0; y < 256; y++) {
+						boolean air0 = world.isAirBlock(new BlockPos(pos.getXStart(), y, pos.getZStart()));
+						boolean air1 = world.isAirBlock(new BlockPos(pos.getXStart(), y + 1, pos.getZStart()));
+						renderZVerticalCorner(world, -1 + smaller_alignment, y, smaller_alignment, air0, air1, 0, smaller_alignment - 1.0);
+						renderXVerticalCorner(world, smaller_alignment, y, smaller_alignment - 1, air0, air1, 0, smaller_alignment - 1.0);
+					}
+				}
+			}
+			if (renderSouthWest) {
+				if (!renderSouth && !renderWest) {
+					for (int y = 0; y < 256; y++) {
+						boolean air0 = world.isAirBlock(new BlockPos(pos.getXStart(), y, pos.getZEnd()));
+						boolean air1 = world.isAirBlock(new BlockPos(pos.getXStart(), y + 1, pos.getZEnd()));
+						renderZVerticalCorner(world, -1 + smaller_alignment, y, 16 - smaller_alignment, air0, air1, 0, smaller_alignment - 1.0);
+						renderXVerticalCorner(world, smaller_alignment, y, 15, air0, air1, 0, smaller_alignment - 1.0);
+					}
+				}
+			}
+			if (renderSouthEast) {
+				if (!renderSouth && !renderEast) {
+					for (int y = 0; y < 256; y++) {
+						boolean air0 = world.isAirBlock(new BlockPos(pos.getXEnd(), y, pos.getZEnd()));
+						boolean air1 = world.isAirBlock(new BlockPos(pos.getXEnd(), y + 1, pos.getZEnd()));
+						renderZVerticalCorner(world, 15, y, 16 - smaller_alignment, air0, air1, 0, smaller_alignment - 1.0);
+						renderXVerticalCorner(world, 16 - smaller_alignment, y, 15, air0, air1, 0, smaller_alignment - 1.0);
+					}
+				}
+			}
+
 
 			GlStateManager.glEndList();
 			break;

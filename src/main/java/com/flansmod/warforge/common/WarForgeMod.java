@@ -628,16 +628,18 @@ public class WarForgeMod implements ILateMixinLoader
 			NETWORK.sendTo(clearSiegesPacket, (EntityPlayerMP) event.player);
 	    	
 	    	FACTIONS.sendAllSiegeInfoToNearby();
-			for (int i = 0; i < UPGRADE_HANDLER.getLEVELS().length; i++) {
-				final int level = i;
-				final HashMap<StackComparable, Integer> requirements = UPGRADE_HANDLER.getLEVELS()[i];
-				final int limit = UPGRADE_HANDLER.getLIMITS()[i];
+			if (UPGRADE_HANDLER != null && UPGRADE_HANDLER.getLEVELS() != null) {
 
-				SyncQueueHandler.enqueue(() ->
-						NETWORK.sendTo(new PacketCitadelUpgradeRequirement(level, requirements, limit), (EntityPlayerMP) event.player)
-				);
+				for (int i = 0; i < UPGRADE_HANDLER.getLEVELS().length; i++) {
+					final int level = i;
+					final HashMap<StackComparable, Integer> requirements = UPGRADE_HANDLER.getLEVELS()[i];
+					final int limit = UPGRADE_HANDLER.getLIMITS()[i];
+
+					SyncQueueHandler.enqueue(() ->
+							NETWORK.sendTo(new PacketCitadelUpgradeRequirement(level, requirements, limit), (EntityPlayerMP) event.player)
+					);
+				}
 			}
-
     	}
     }
     
