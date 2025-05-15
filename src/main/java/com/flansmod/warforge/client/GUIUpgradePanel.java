@@ -25,6 +25,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.oredict.OreIngredient;
 
@@ -47,8 +48,7 @@ public class GUIUpgradePanel {
                 .keepScrollBarInArea(true)
                 .background(GuiTextures.SLOT_ITEM)
                 .widthRel(0.98f)
-                .height(30*6+10)
-                ;
+                .height(30 * 6 + 10);
 
 
 // Sorted by quantity
@@ -63,7 +63,7 @@ public class GUIUpgradePanel {
                 ));
 
         EntityPlayer player = Minecraft.getMinecraft().player;
-        AtomicBoolean requirementPassed  = new AtomicBoolean(true);
+        AtomicBoolean requirementPassed = new AtomicBoolean(true);
         List<ItemStack> inventory = player.inventory.mainInventory;
 
         List<StackComparable.StackComparableResult> results = requirements.entrySet().stream()
@@ -76,7 +76,7 @@ public class GUIUpgradePanel {
                             .mapToInt(ItemStack::getCount)
                             .sum();
 
-                    if(count <= required)
+                    if (count <= required)
                         requirementPassed.set(false);
 
                     return new StackComparable.StackComparableResult(sc, count, required);
@@ -112,18 +112,23 @@ public class GUIUpgradePanel {
 
 
         ModularPanel panel = ModularPanel.defaultPanel("citadel_upgrade_panel")
-                .width(WIDTH);
+                .width(WIDTH)
+                .height(30 * 6 + 60+15);
 
         // Title label
         Widget prefix = IKey.str("Upgrade citadel for: ")
                 .asWidget()
                 .top(8)
+                .color(0xFFFFFF)
+                .shadow(true)
                 .scale(1.2f);
 
         Widget factionNamePlate = IKey.str(factionName)
                 .asWidget()
                 .color(color)
+                .shadow(true)
                 .top(8)
+                .style(TextFormatting.BOLD)
                 .scale(1.2f);
 
 
@@ -133,8 +138,7 @@ public class GUIUpgradePanel {
                 .child(prefix)
                 .child(factionNamePlate)
                 .height(20)
-                .mainAxisAlignment(Alignment.MainAxis.CENTER)
-                ;
+                .mainAxisAlignment(Alignment.MainAxis.CENTER);
 
         // Close button
         ButtonWidget<?> closeButton = new ButtonWidget<>()
@@ -153,30 +157,74 @@ public class GUIUpgradePanel {
                     player.sendMessage(new TextComponentString("Hello " + player.getName()));
                     return true;
                 })
-                .setEnabledIf(x-> requirementPassed.get() && outrankingOfficer);
+                .setEnabledIf(x -> requirementPassed.get() && outrankingOfficer);
+        //
+
+        UITexture ARROW = UITexture.builder()
+                .location(ModularUI.ID, "gui/widgets/progress_bar_arrow")
+                .imageSize(20, 40)
+                .uv(0,20,20,20)
+                .build();
+
+        Widget newLevel = IKey.str("Lvl " + level + 1).asWidget()
+                .color(0xFFAA00)
+                .shadow(true)
+                .height(16);
+
+        Widget claimIncrease = new Row()
+                .child(IKey.str("" + WarForgeMod.UPGRADE_HANDLER.getClaimLimitForLevel(level))
+                        .asWidget()
+                        .scale(1.3f)
+                        .shadow(true)
+                        .color(0xFF5555)
+
+                )
+                .child(new IDrawable.DrawableWidget(ARROW)
+                        .height(8)
+                        .width(10)
+                        .margin(4,0)
+                )
+                .child(IKey.str("" + WarForgeMod.UPGRADE_HANDLER.getClaimLimitForLevel(level + 1))
+                        .asWidget()
+                        .shadow(true)
+                        .scale(1.3f)
+                        .style(TextFormatting.BOLD)
+                        .color(0x55FF55)
+                )
+                .mainAxisAlignment(Alignment.MainAxis.CENTER)
+                .expanded()
+                ;
+
+
+        Widget levelIntecator = new Column()
+                .child(newLevel)
+                .child(claimIncrease)
+                .size(60, 20)
+                ;
+
 
         // Button row
         Widget buttonRow = new Row()
                 .child(closeButton)
+                .child(levelIntecator)
                 .child(upgradeButton)
                 .expanded()
                 .height(10)
                 .mainAxisAlignment(Alignment.MainAxis.CENTER)
-                .marginTop(5)
-                ;
+                .marginTop(5);
 
         // Main content column
         Widget content = new Column()
                 .child(title)
                 .child(list)
                 .child(buttonRow)
-                .width(WIDTH-4)
-                ;
+                .widthRel(0.98f)
+                .center()
+                .crossAxisAlignment(Alignment.CrossAxis.CENTER);
 
         // Assemble full panel
         panel
                 .child(content)
-                .coverChildrenHeight()
         ;
 
         return new ModularScreen(panel);
