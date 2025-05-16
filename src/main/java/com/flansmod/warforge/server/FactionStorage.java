@@ -1,5 +1,6 @@
 package com.flansmod.warforge.server;
 
+import com.flansmod.warforge.client.effect.EffectDisband;
 import com.flansmod.warforge.common.Sounds;
 import com.flansmod.warforge.api.ObjectIntPair;
 import com.flansmod.warforge.client.effect.EffectUpgrade;
@@ -701,6 +702,9 @@ public class FactionStorage {
     // Used to remove and clean up faction;
     private void disbandAndCleanup(UUID factionID) {
         Faction faction = mFactions.get(factionID);
+        EffectDisband.composeEffect(faction.citadelPos.dim, faction.citadelPos.toRegularPos(), 100);
+
+
         for (Map.Entry<DimBlockPos, Integer> kvp : faction.claims.entrySet()) {
             mClaims.remove(kvp.getKey().toChunkPos());
         }

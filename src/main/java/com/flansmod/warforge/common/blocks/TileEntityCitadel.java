@@ -177,13 +177,11 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
 
     }
 
-    public void onCitadelUpgrade(BlockPos pos){
-        world.playSound(null, pos, Sounds.sfxUpgrade, SoundCategory.PLAYERS, 1f, 1f);
-    }
 
     public void onServerCreateFaction(Faction faction) {
 
         world.playSound(null, pos, SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 1.0F, 1.0F);
+        world.playSound(null, pos, SoundEvents.BLOCK_ANVIL_USE, SoundCategory.PLAYERS, 1.0F, 1.2F);
         ((WorldServer) world).spawnParticle(
                 EnumParticleTypes.EXPLOSION_LARGE,
                 pos.getX(), pos.getY(), pos.getZ(),

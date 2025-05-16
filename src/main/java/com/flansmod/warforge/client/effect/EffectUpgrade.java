@@ -4,7 +4,6 @@ import com.flansmod.warforge.client.particle.ParticleStarCircle;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketEffect;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.WorldClient;
@@ -12,12 +11,10 @@ import net.minecraft.client.particle.ParticleManager;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import scala.Int;
 
 import java.util.Random;
 
@@ -59,18 +56,18 @@ public class EffectUpgrade implements IEffect {
     public void runEffect(World world, EntityPlayer player, TextureManager man, Random rand, double x, double y, double z, NBTTagCompound data) {
         double radius = data.getDouble("radius");
         int segments = data.getInteger("segments");
-        double speed =  data.getDouble("speed");
+        double speed = data.getDouble("speed");
         int color = data.getInteger("color");
         int effectCount = data.getInteger("count");
-        int red   = (color >> 16) & 0xFF;
+        int red = (color >> 16) & 0xFF;
         int green = (color >> 8) & 0xFF;
-        int blue  = color & 0xFF;
+        int blue = color & 0xFF;
         float r = red / 255f;
         float g = green / 255f;
         float b = blue / 255f;
 
 
-        for(int j = 0; j <= effectCount; j++ ) {
+        for (int j = 0; j <= effectCount; j++) {
             EffectUpgradeContext context = new EffectUpgradeContext(new BlockPos(x, y, z), j, radius, segments, speed, r, g, b);
             AnimatedEffectHandler.add(new EffectAnimated<>(context, 20, (EffectUpgradeContext ctx, Integer i) -> {
                 Minecraft.getMinecraft().addScheduledTask(() -> {
@@ -84,14 +81,13 @@ public class EffectUpgrade implements IEffect {
                     double py = ctx.pos.getY() + world1.rand.nextFloat();
 
                     ParticleManager particleManager = Minecraft.getMinecraft().effectRenderer;
-                    particleManager.addEffect(new ParticleStarCircle(world1, px,py,pz, particleManager, r,g,b));
+                    particleManager.addEffect(new ParticleStarCircle(world1, px, py, pz, particleManager, r, g, b));
 
                 });
                 ctx.tickRotation(context.speed);
 
             }));
         }
-
 
 
     }
@@ -103,8 +99,9 @@ public class EffectUpgrade implements IEffect {
         public final double radius;
         public final int segments;
         public final double speed;
-        public final double r,g,b;
+        public final double r, g, b;
         public double rotation = 0;
+
         public void tickRotation(double delta) {
             rotation += delta;
             if (rotation > 2 * Math.PI) rotation -= 2 * Math.PI;

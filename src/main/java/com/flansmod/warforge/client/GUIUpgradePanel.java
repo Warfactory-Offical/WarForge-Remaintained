@@ -137,7 +137,6 @@ public class GUIUpgradePanel {
                 .shadow(true)
                 .top(8)
                 .style(TextFormatting.BOLD)
-                .width(130) //TODO: remove this whenever brachy fixes fonts or scaling
                 .scale(1.25f);
 
 

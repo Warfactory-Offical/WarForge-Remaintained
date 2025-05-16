@@ -66,5 +66,5 @@ dependencies {
 
     runtimeOnly rfg.deobf("curse.maven:creativecore-257814:4722163")
 
-    implementation ("com.cleanroommc:modularui:2.5.0-rc4"){transitive = false}
+    implementation ("com.cleanroommc:modularui:2.5.0-rc5"){transitive = false}
 }
