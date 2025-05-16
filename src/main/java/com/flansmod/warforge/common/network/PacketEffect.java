@@ -10,6 +10,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTException;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.world.World;
 
 public class PacketEffect extends PacketBase {
 
@@ -52,7 +53,7 @@ public class PacketEffect extends PacketBase {
         }
         if (EffectRegistry.EFFECT_REGISTRY.containsKey(type)) {
             EffectRegistry.EFFECT_REGISTRY.get(type).runEffect(
-                    clientPlayer.world,
+                     Minecraft.getMinecraft().world,
                     clientPlayer,
                     Minecraft.getMinecraft().renderEngine,
                     clientPlayer.world.rand,

@@ -3,6 +3,7 @@ package com.flansmod.warforge.client;
 import java.util.HashMap;
 import java.util.UUID;
 
+import com.flansmod.warforge.client.effect.AnimatedEffectHandler;
 import com.flansmod.warforge.common.blocks.*;
 import org.lwjgl.input.Keyboard;
 
@@ -44,6 +45,7 @@ public class ClientProxy extends CommonProxy
 	{
 		MinecraftForge.EVENT_BUS.register(this);
 		MinecraftForge.EVENT_BUS.register(new ClientTickHandler());
+		MinecraftForge.EVENT_BUS.register(new AnimatedEffectHandler());
 		ClientRegistry.registerKeyBinding(factionChatKey);	
 	}
 	

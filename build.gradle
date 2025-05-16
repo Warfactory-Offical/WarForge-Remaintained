@@ -14,6 +14,7 @@ plugins {
     id 'com.matthewprenger.cursegradle' version '1.4.0' apply false
     id 'com.modrinth.minotaur' version '2.+' apply false
     id 'org.jetbrains.changelog' version '2.2.0'
+    id("io.freefair.lombok") version "8.13.1" //LOMBOK!!!!
 }
 
 apply from: 'gradle/scripts/helpers.gradle'

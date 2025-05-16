@@ -1,6 +1,5 @@
-package com.flansmod.warforge;
+package com.flansmod.warforge.common;
 
-import com.flansmod.warforge.common.WarForgeMod;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
 import net.minecraftforge.registries.IForgeRegistry;

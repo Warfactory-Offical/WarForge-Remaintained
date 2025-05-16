@@ -13,9 +13,7 @@ public interface IEffect {
 
     @SideOnly(Side.CLIENT)
     public void runEffect(World world, EntityPlayer player, TextureManager man, Random rand, double x, double y, double z, NBTTagCompound data);
-    public static void sendPacket(World world, double x, double y, double z, int range, NBTTagCompound data) {
 
-    }
 
 
 

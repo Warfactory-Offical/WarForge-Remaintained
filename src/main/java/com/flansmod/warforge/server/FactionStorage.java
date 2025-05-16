@@ -1,6 +1,6 @@
 package com.flansmod.warforge.server;
 
-import com.flansmod.warforge.Sounds;
+import com.flansmod.warforge.common.Sounds;
 import com.flansmod.warforge.api.ObjectIntPair;
 import com.flansmod.warforge.client.effect.EffectUpgrade;
 import com.flansmod.warforge.common.DimBlockPos;
@@ -27,8 +27,6 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
@@ -521,7 +519,7 @@ public class FactionStorage {
 
 
         faction.soundEffectAll(Sounds.sfxUpgrade);
-        EffectUpgrade.composeEffect(faction.citadelPos, 100, 100, 2.5f);
+        EffectUpgrade.composeEffect(faction.citadelPos.dim, faction.citadelPos.toRegularPos().up(2), 100, 400, 1f, 0.5D, faction.colour, 15);
         return true;
     }
 
