@@ -520,7 +520,7 @@ public class FactionStorage {
 
 
         faction.soundEffectAll(Sounds.sfxUpgrade);
-        EffectUpgrade.composeEffect(faction.citadelPos.dim, faction.citadelPos.toRegularPos().up(2), 100, 400, 1f, 0.5D, faction.colour, 15);
+        EffectUpgrade.composeEffect(faction.citadelPos.dim, faction.citadelPos.toRegularPos().up(2), 100, 400, 1f, 0.2D, faction.colour, 10);
         return true;
     }
 

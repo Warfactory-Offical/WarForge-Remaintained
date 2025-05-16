@@ -68,8 +68,8 @@ public class EffectUpgrade implements IEffect {
 
 
         for (int j = 0; j <= effectCount; j++) {
-            EffectUpgradeContext context = new EffectUpgradeContext(new BlockPos(x, y, z), j, radius, segments, speed, r, g, b);
-            AnimatedEffectHandler.add(new EffectAnimated<>(context, 20, (EffectUpgradeContext ctx, Integer i) -> {
+            EffectUpgradeContext context = new EffectUpgradeContext(new BlockPos(x, y, z), j*0.1, radius, segments, speed, r, g, b);
+            AnimatedEffectHandler.add(new EffectAnimated<>(context, 60, (EffectUpgradeContext ctx, Integer i) -> {
                 Minecraft.getMinecraft().addScheduledTask(() -> {
                     WorldClient world1 = Minecraft.getMinecraft().world;
                     double angle = (2 * Math.PI * i / ctx.segments) + context.angleOffset;
@@ -78,7 +78,7 @@ public class EffectUpgrade implements IEffect {
 
                     double px = ctx.pos.getX() + 0.5 + ctx.radius * Math.cos(rotatedAngle);
                     double pz = ctx.pos.getZ() + 0.5 + ctx.radius * Math.sin(rotatedAngle);
-                    double py = ctx.pos.getY() + world1.rand.nextFloat();
+                    double py = ctx.pos.getY() + context.angleOffset;
 
                     ParticleManager particleManager = Minecraft.getMinecraft().effectRenderer;
                     particleManager.addEffect(new ParticleStarCircle(world1, px, py, pz, particleManager, r, g, b));
