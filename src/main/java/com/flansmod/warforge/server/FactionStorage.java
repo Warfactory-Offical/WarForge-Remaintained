@@ -2,6 +2,7 @@ package com.flansmod.warforge.server;
 
 import com.flansmod.warforge.Sounds;
 import com.flansmod.warforge.api.ObjectIntPair;
+import com.flansmod.warforge.client.effect.EffectUpgrade;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.DimChunkPos;
 import com.flansmod.warforge.common.WarForgeConfig;
@@ -471,7 +472,7 @@ public class FactionStorage {
 
         Map<StackComparable, Integer> requiredItems = (Map<StackComparable, Integer>) UPGRADE_HANDLER.getRequirementsFor(faction.citadelLevel + 1).clone();
 
-        if(requiredItems == null) {
+        if (requiredItems == null) {
             officer.sendMessage(new TextComponentString("You cannot level up fruther"));
             return false;
         }
@@ -520,6 +521,7 @@ public class FactionStorage {
 
 
         faction.soundEffectAll(Sounds.sfxUpgrade);
+        EffectUpgrade.composeEffect(faction.citadelPos, 100, 100, 2.5f);
         return true;
     }
 
