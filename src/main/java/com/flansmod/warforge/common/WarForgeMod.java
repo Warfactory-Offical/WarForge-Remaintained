@@ -2,6 +2,8 @@ package com.flansmod.warforge.common;
 
 import com.flansmod.warforge.Sounds;
 import com.flansmod.warforge.api.ObjectIntPair;
+import com.flansmod.warforge.client.effect.EffectRegistry;
+import com.flansmod.warforge.client.effect.EffectUpgrade;
 import com.flansmod.warforge.common.blocks.IMultiBlockInit;
 import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
 import com.flansmod.warforge.common.network.*;
@@ -188,6 +190,7 @@ public class WarForgeMod implements ILateMixinLoader {
         MinecraftForge.EVENT_BUS.register(new ServerTickHandler());
         MinecraftForge.EVENT_BUS.register(this);
         proxy.preInit(event);
+        EffectRegistry.init();
     }
 
     @EventHandler

@@ -28,6 +28,7 @@ import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagIntArray;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.network.play.server.SPacketSoundEffect;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
@@ -372,15 +373,24 @@ public class Faction {
         }
     }
 
-    public void soundEffectAll(SoundEvent soundEvent) {
+    // Plays sound to everyone within faction
+    public void soundEffectAll(SoundEvent soundEvent, float volume, float pitch) {
         for (UUID playerID : members.keySet()) {
             final EntityPlayerMP player = (EntityPlayerMP) getPlayer(playerID);
             if (player != null) {
-                player.world.playSound(player, player.getPosition(), soundEvent, SoundCategory.PLAYERS, 1f, 1.0f);
+                player.connection.sendPacket(new SPacketSoundEffect(
+                        soundEvent,
+                        SoundCategory.PLAYERS,
+                        player.posX, player.posY, player.posZ,
+                        volume, pitch
+                ));
             }
         }
     }
 
+    public void soundEffectAll(SoundEvent soundEvent) {
+        soundEffectAll(soundEvent, 1f, 1f);
+    }
 
     public DimBlockPos getSpecificPosForClaim(DimChunkPos pos) {
         for (DimBlockPos claimPos : claims.keySet()) {

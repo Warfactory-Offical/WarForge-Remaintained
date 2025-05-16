@@ -520,7 +520,6 @@ public class FactionStorage {
 
 
         faction.soundEffectAll(Sounds.sfxUpgrade);
-        //TODO: This is temporary, make arbitrary soundEffect
         return true;
     }
 
