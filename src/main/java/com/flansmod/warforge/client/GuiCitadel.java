@@ -3,6 +3,7 @@ package com.flansmod.warforge.client;
 import com.cleanroommc.modularui.factory.ClientGUI;
 import com.flansmod.warforge.common.CommonProxy;
 import com.flansmod.warforge.common.ContainerCitadel;
+import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketDisbandFaction;
 import com.flansmod.warforge.common.network.PacketPlaceFlag;
@@ -49,10 +50,12 @@ public class GuiCitadel extends GuiContainer
 		createButton.visible = !hasFactionSet;
 		buttonList.add(createButton);
 		
-		//Place Flag Button
-		GuiButton placeFlagButton = new GuiButton(BUTTON_UPGRADE, width / 2 - 20, height / 2 - 48, 100, 20, "Upgrade Citadel");
-		placeFlagButton.enabled = hasFactionSet;
-		buttonList.add(placeFlagButton);
+		//Upgrade
+		if(WarForgeConfig.ENABLE_CITADEL_UPGRADES) {
+			GuiButton placeFlagButton = new GuiButton(BUTTON_UPGRADE, width / 2 - 20, height / 2 - 48, 100, 20, "Upgrade Citadel");
+			placeFlagButton.enabled = hasFactionSet;
+			buttonList.add(placeFlagButton);
+		}
 		
 		//Info Button
 		GuiButton infoButton = new GuiButton(BUTTON_INFO, width / 2 - 20, height / 2 - 26, 36, 20, "Info");
