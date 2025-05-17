@@ -143,6 +143,7 @@ public class Faction {
         info.notoriety = notoriety;
         info.wealth = wealth;
         info.legacy = legacy;
+        info.lvl = citadelLevel;
 
         info.legacyRank = WarForgeMod.LEADERBOARD.GetOneIndexedRankOf(this, FactionStat.LEGACY);
         info.notorietyRank = WarForgeMod.LEADERBOARD.GetOneIndexedRankOf(this, FactionStat.NOTORIETY);
@@ -162,6 +163,7 @@ public class Faction {
             playerInfo.playerUuid = entry.getKey();
             playerInfo.role = entry.getValue().role;
             info.members.add(playerInfo);
+
         }
         return info;
     }

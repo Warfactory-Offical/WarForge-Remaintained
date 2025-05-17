@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.FactionDisplayInfo;
 import com.flansmod.warforge.common.network.PacketFactionInfo;
@@ -330,7 +331,11 @@ public class GuiFactionInfo extends GuiScreen
 				fontRenderer.drawStringWithShadow("Legacy:", j + 8, k + 172, 0xffffff);
 				fontRenderer.drawStringWithShadow("Total:", j + 8, k + 182, 0xffffff);
 				fontRenderer.drawStringWithShadow("Members:", j + 8, k + 192, 0xffffff);
-				
+				int maxLvl = WarForgeMod.UPGRADE_HANDLER.getLEVELS().length - 1;
+
+				if(WarForgeConfig.ENABLE_CITADEL_UPGRADES)
+					fontRenderer.drawStringWithShadow("Citadel Level:", j + 8, k + 202, info.lvl >= maxLvl ? 0xFFAA00 : 0xffffff);
+
 				// Second column - numbers
 				int column1X = 120;
 				fontRenderer.drawStringWithShadow("" + info.notoriety, j + column1X, k + 152, 0xffffff);
@@ -338,7 +343,9 @@ public class GuiFactionInfo extends GuiScreen
 				fontRenderer.drawStringWithShadow("" + info.legacy, j + column1X, k + 172, 0xffffff);
 				fontRenderer.drawStringWithShadow("" + (info.notoriety + info.wealth + info.legacy), j + column1X, k + 182, 0xffffff);
 				fontRenderer.drawStringWithShadow("" + info.members.size(), j + column1X, k + 192, 0xffffff);
-				
+				if(WarForgeConfig.ENABLE_CITADEL_UPGRADES)
+					fontRenderer.drawStringWithShadow("" + info.lvl + " [" + WarForgeMod.UPGRADE_HANDLER.getClaimLimitForLevel(info.lvl) + "]", j + column1X, k + 202, info.lvl >= maxLvl ? 0xFFAA00 : 0xffffff);
+
 				// Third column - server positioning
 				int column2X = 150;
 				fontRenderer.drawStringWithShadow("#" + info.notorietyRank, j + column2X, k + 152, 0xffffff);

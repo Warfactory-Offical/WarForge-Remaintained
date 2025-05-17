@@ -29,7 +29,8 @@ public class PacketFactionInfo extends PacketBase
 			data.writeInt(info.notoriety);
 			data.writeInt(info.wealth);
 			data.writeInt(info.legacy);
-			
+			data.writeInt(info.lvl);
+
 			data.writeInt(info.notorietyRank);
 			data.writeInt(info.wealthRank);
 			data.writeInt(info.legacyRank);
@@ -74,6 +75,7 @@ public class PacketFactionInfo extends PacketBase
 			info.notoriety = data.readInt();
 			info.wealth = data.readInt();
 			info.legacy = data.readInt();
+			info.lvl = data.readInt();
 			
 			info.notorietyRank = data.readInt();
 			info.wealthRank = data.readInt();

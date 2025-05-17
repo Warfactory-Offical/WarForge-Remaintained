@@ -18,6 +18,7 @@ public class FactionDisplayInfo
 	public int notoriety = 0;
 	public int wealth = 0;
 	public int legacy = 0;
+	public int lvl = 0;
 	
 	public int notorietyRank = 0;
 	public int wealthRank = 0;
