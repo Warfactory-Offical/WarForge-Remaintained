@@ -1,4 +1,4 @@
-package com.flansmod.warforge.client.effect;
+package com.flansmod.warforge.common.effect;
 
 import com.flansmod.warforge.client.particle.ParticleStarCircle;
 import com.flansmod.warforge.common.DimBlockPos;

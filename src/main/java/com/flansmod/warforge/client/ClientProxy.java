@@ -3,7 +3,7 @@ package com.flansmod.warforge.client;
 import java.util.HashMap;
 import java.util.UUID;
 
-import com.flansmod.warforge.client.effect.AnimatedEffectHandler;
+import com.flansmod.warforge.common.effect.AnimatedEffectHandler;
 import com.flansmod.warforge.common.blocks.*;
 import org.lwjgl.input.Keyboard;
 

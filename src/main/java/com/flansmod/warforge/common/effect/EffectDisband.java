@@ -1,4 +1,4 @@
-package com.flansmod.warforge.client.effect;
+package com.flansmod.warforge.common.effect;
 
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketEffect;
@@ -10,6 +10,8 @@ import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.Random;
 
@@ -32,6 +34,7 @@ public class EffectDisband implements IEffect {
 
     }
 
+    @SideOnly(Side.CLIENT)
     @Override
     public void runEffect(World world, EntityPlayer player, TextureManager man, Random rand, double x, double y, double z, NBTTagCompound data) {
 

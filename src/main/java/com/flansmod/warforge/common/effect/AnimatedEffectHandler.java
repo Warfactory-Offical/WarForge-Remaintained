@@ -1,4 +1,4 @@
-package com.flansmod.warforge.client.effect;
+package com.flansmod.warforge.common.effect;
 
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;

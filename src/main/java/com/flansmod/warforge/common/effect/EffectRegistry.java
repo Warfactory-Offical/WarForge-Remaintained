@@ -1,4 +1,4 @@
-package com.flansmod.warforge.client.effect;
+package com.flansmod.warforge.common.effect;
 
 import java.util.HashMap;
 import java.util.Map;

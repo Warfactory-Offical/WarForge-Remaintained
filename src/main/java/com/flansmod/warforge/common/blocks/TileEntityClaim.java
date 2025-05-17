@@ -107,8 +107,11 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim {
             updateColour(faction.colour);
             factionName = faction.name;
         }
-        MultiBlockColumn b = (MultiBlockColumn) world.getBlockState(this.pos).getBlock();
-        b.setUpMultiblock(world, pos, b.getDefaultState());
+
+        if(world.getBlockState(this.pos).getBlock() instanceof MultiBlockColumn) {
+            MultiBlockColumn b = (MultiBlockColumn) world.getBlockState(this.pos).getBlock();
+            b.setUpMultiblock(world, pos, b.getDefaultState());
+        }
 
         updateTileEntity();
     }

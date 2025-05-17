@@ -1,4 +1,4 @@
-package com.flansmod.warforge.client.effect;
+package com.flansmod.warforge.common.effect;
 
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.entity.player.EntityPlayer;

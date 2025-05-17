@@ -1,7 +1,7 @@
 package com.flansmod.warforge.common;
 
 import com.flansmod.warforge.api.ObjectIntPair;
-import com.flansmod.warforge.client.effect.EffectRegistry;
+import com.flansmod.warforge.common.effect.EffectRegistry;
 import com.flansmod.warforge.common.blocks.IMultiBlockInit;
 import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
 import com.flansmod.warforge.common.network.*;

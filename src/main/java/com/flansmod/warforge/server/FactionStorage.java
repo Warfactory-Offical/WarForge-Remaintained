@@ -1,9 +1,9 @@
 package com.flansmod.warforge.server;
 
-import com.flansmod.warforge.client.effect.EffectDisband;
+import com.flansmod.warforge.common.effect.EffectDisband;
 import com.flansmod.warforge.common.Sounds;
 import com.flansmod.warforge.api.ObjectIntPair;
-import com.flansmod.warforge.client.effect.EffectUpgrade;
+import com.flansmod.warforge.common.effect.EffectUpgrade;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.DimChunkPos;
 import com.flansmod.warforge.common.WarForgeConfig;

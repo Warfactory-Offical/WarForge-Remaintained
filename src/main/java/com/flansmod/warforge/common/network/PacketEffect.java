@@ -1,7 +1,7 @@
 package com.flansmod.warforge.common.network;
 
-import com.flansmod.warforge.client.effect.EffectRegistry;
 import com.flansmod.warforge.common.WarForgeMod;
+import com.flansmod.warforge.common.effect.EffectRegistry;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import net.minecraft.client.Minecraft;
@@ -10,7 +10,8 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTException;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class PacketEffect extends PacketBase {
 
@@ -39,10 +40,11 @@ public class PacketEffect extends PacketBase {
 
     @Override
     public void handleServerSide(EntityPlayerMP playerEntity) {
-        //Bruh
+        WarForgeMod.LOGGER.error("Recieved effect packet on Server side!");
     }
 
     @Override
+    @SideOnly(Side.CLIENT)
     public void handleClientSide(EntityPlayer clientPlayer) {
         NBTTagCompound compound;
         try {
@@ -53,7 +55,7 @@ public class PacketEffect extends PacketBase {
         }
         if (EffectRegistry.EFFECT_REGISTRY.containsKey(type)) {
             EffectRegistry.EFFECT_REGISTRY.get(type).runEffect(
-                     Minecraft.getMinecraft().world,
+                    Minecraft.getMinecraft().world,
                     clientPlayer,
                     Minecraft.getMinecraft().renderEngine,
                     clientPlayer.world.rand,
