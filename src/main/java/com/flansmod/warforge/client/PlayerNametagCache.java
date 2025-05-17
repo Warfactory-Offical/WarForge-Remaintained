@@ -33,6 +33,7 @@ public class PlayerNametagCache {
             packet.name = player;
             WarForgeMod.LOGGER.info("Requesting faction nametag for " + player);
             WarForgeMod.NETWORK.sendToServer(packet);
+            cache.put(player, null);
 
             return null;
         }
