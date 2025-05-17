@@ -1,5 +1,7 @@
 package com.flansmod.warforge.common.mixins.vanilla;
 
+import com.flansmod.warforge.client.PlayerNametagCache;
+import com.flansmod.warforge.client.util.FullColorNameplate;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.server.Faction;
 import net.minecraft.client.gui.FontRenderer;
@@ -42,9 +44,10 @@ public abstract class RenderMixin<T extends Entity>{
             boolean flag1 = this.renderManager.options.thirdPersonView == 2;
             float f2 = entityIn.height + 0.5F - (flag ? 0.25F : 0.0F);
             EntityRenderer.drawNameplate(this.getFontRendererFromRenderManager(), str, (float)x, (float)y + f2, (float)z, 0, f, f1, flag1, flag);
-            String faction = WarForgeMod.NAMETAG_CACHE.requestIfAbsent(str.replaceAll("§.", "")); //SOOO minecraft puts this symbol in player nicknames...? the fuck?
+            PlayerNametagCache.NamePlateData faction = WarForgeMod.NAMETAG_CACHE.requestIfAbsent(str.replaceAll("§.", "")); //SOOO minecraft puts this symbol in player nicknames...? the fuck?
             if (faction != null){
-                EntityRenderer.drawNameplate(this.getFontRendererFromRenderManager(), faction, (float)x, (float)y + f2 + 0.25f, (float)z, -10, f, f1, flag1, flag);
+                //FullColorNameplate.drawNameplate(this.getFontRendererFromRenderManager(), faction.name, (float)x, (float)y + f2, (float)z, -10, f, f1, flag1, flag, faction.color);
+                EntityRenderer.drawNameplate(this.getFontRendererFromRenderManager(), faction.name, (float)x, (float)y + f2, (float)z, -10, f, f1, flag1, flag);
             }
         }
     }

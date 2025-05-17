@@ -12,12 +12,14 @@ public class PacketNamePlateChange extends PacketBase {
     public boolean isRemove = false;
     public String faction = "";
     public String name = "";
+    public int color;
 
     @Override
     public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) {
         data.writeBoolean(isRemove);
         writeUTF(data, faction);
         writeUTF(data, name);
+        data.writeInt(color);
     }
 
     @Override
@@ -25,6 +27,7 @@ public class PacketNamePlateChange extends PacketBase {
         isRemove = data.readBoolean();
         faction = readUTF(data);
         name = readUTF(data);
+        color = data.readInt();
 
     }
 
@@ -38,7 +41,7 @@ public class PacketNamePlateChange extends PacketBase {
     public void handleClientSide(EntityPlayer clientPlayer) {
         WarForgeMod.LOGGER.info("Recieved faction nametag for " + name + " [" + faction + "]");
         if (!isRemove)
-            WarForgeMod.NAMETAG_CACHE.add(name, faction);
+            WarForgeMod.NAMETAG_CACHE.add(name, faction, color);
         else
             WarForgeMod.NAMETAG_CACHE.remove(name);
 
