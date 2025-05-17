@@ -1,16 +1,14 @@
 package com.flansmod.warforge.server;
 
-import com.flansmod.warforge.common.effect.EffectDisband;
-import com.flansmod.warforge.common.Sounds;
 import com.flansmod.warforge.api.ObjectIntPair;
-import com.flansmod.warforge.common.effect.EffectUpgrade;
-import com.flansmod.warforge.common.DimBlockPos;
-import com.flansmod.warforge.common.DimChunkPos;
-import com.flansmod.warforge.common.WarForgeConfig;
+import com.flansmod.warforge.common.*;
 import com.flansmod.warforge.common.blocks.IClaim;
 import com.flansmod.warforge.common.blocks.TileEntityCitadel;
 import com.flansmod.warforge.common.blocks.TileEntityClaim;
 import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
+import com.flansmod.warforge.common.effect.EffectDisband;
+import com.flansmod.warforge.common.effect.EffectUpgrade;
+import com.flansmod.warforge.common.network.PacketNamePlateChange;
 import com.flansmod.warforge.common.network.PacketSiegeCampProgressUpdate;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
 import com.flansmod.warforge.server.Faction.PlayerData;
@@ -31,12 +29,14 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 
 import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.flansmod.warforge.client.util.LegacyColorUtil.getClosestLegacyColor;
 import static com.flansmod.warforge.common.WarForgeMod.*;
 
 public class FactionStorage {
@@ -1123,5 +1123,43 @@ public class FactionStorage {
                 pDataKVP.getValue().moveFlagCooldown = 0;
             }
         }
+    }
+
+    public void requestNamePlateCacheEntry(EntityPlayerMP playerEntity, String name) {
+        PacketNamePlateChange packet = new PacketNamePlateChange();
+        packet.name = name;
+        EntityPlayerMP targetPlayer = MC_SERVER.getPlayerList().getPlayerByUsername(name);
+        if (targetPlayer == null) {
+            WarForgeMod.NETWORK.sendTo(packet, playerEntity);
+            return; //Likely bruteforcer TODO:Kick him
+        }
+        if (playerEntity.dimension != targetPlayer.dimension) {
+            WarForgeMod.NETWORK.sendTo(packet, playerEntity);
+            return; //Also sus
+        }
+
+
+        double dx = playerEntity.posX - targetPlayer.posX;
+        double dz = playerEntity.posZ - targetPlayer.posZ;
+        double dy = playerEntity.posY - targetPlayer.posY;
+
+        int viewDistanceChunks = ((WorldServer) playerEntity.world).getMinecraftServer().getPlayerList().getViewDistance();
+        int maxDistanceBlocks = viewDistanceChunks * 16;
+        double maxDistanceSq = maxDistanceBlocks * maxDistanceBlocks;
+        int distance = (int) (dx * dx + dy * dy + dz * dz);
+        if (distance > maxDistanceSq) {
+            WarForgeMod.LOGGER.warn(playerEntity.getName() + "Made a nameplate request for player " + name + "who is" + distance + "blocks away.");
+            packet.isRemove = false;
+            WarForgeMod.NETWORK.sendTo(packet, playerEntity);
+            return;
+        }
+        if (getFactionOfPlayer(targetPlayer.getUniqueID()) == null)
+            NETWORK.sendTo(packet, playerEntity);
+
+        Faction faction = getFactionOfPlayer(targetPlayer.getUniqueID());
+
+        packet.faction = getClosestLegacyColor(faction.colour) + faction.name;
+        WarForgeMod.NETWORK.sendTo(packet, playerEntity);
+
     }
 }

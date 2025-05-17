@@ -53,6 +53,10 @@ public class WarforgeCache<K, V> {
             cache.remove(oldest.key);
         }
     }
+    public synchronized boolean contains(K key){
+        purgeExpired();
+        return cache.containsKey(key);
+    }
 
     private void purgeExpired() {
         long now = System.currentTimeMillis();

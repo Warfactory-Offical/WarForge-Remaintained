@@ -41,12 +41,10 @@ public abstract class RenderMixin<T extends Entity>{
             float f1 = this.renderManager.playerViewX;
             boolean flag1 = this.renderManager.options.thirdPersonView == 2;
             float f2 = entityIn.height + 0.5F - (flag ? 0.25F : 0.0F);
-            int i = "deadmau5".equals(str) ? -10 : 0;
-            EntityRenderer.drawNameplate(this.getFontRendererFromRenderManager(), str, (float)x, (float)y + f2, (float)z, i, f, f1, flag1, flag);
-            Faction info = WarForgeMod.FACTIONS.getFactionOfPlayer(entityIn.getUniqueID());
-            if (info != null){
-                String faction = getClosestLegacyColor(info.colour) + info.name;
-                EntityRenderer.drawNameplate(this.getFontRendererFromRenderManager(), faction, (float)x, (float)y + f2 - 0.23f, (float)z, i, f, f1, flag1, flag);
+            EntityRenderer.drawNameplate(this.getFontRendererFromRenderManager(), str, (float)x, (float)y + f2, (float)z, 0, f, f1, flag1, flag);
+            String faction = WarForgeMod.NAMETAG_CACHE.requestIfAbsent(str.replaceAll("§.", "")); //SOOO minecraft puts this symbol in player nicknames...? the fuck?
+            if (faction != null){
+                EntityRenderer.drawNameplate(this.getFontRendererFromRenderManager(), faction, (float)x, (float)y + f2 + 0.25f, (float)z, -10, f, f1, flag1, flag);
             }
         }
     }

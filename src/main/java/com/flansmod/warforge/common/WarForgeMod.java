@@ -1,6 +1,7 @@
 package com.flansmod.warforge.common;
 
 import com.flansmod.warforge.api.ObjectIntPair;
+import com.flansmod.warforge.client.PlayerNametagCache;
 import com.flansmod.warforge.common.effect.EffectRegistry;
 import com.flansmod.warforge.common.blocks.IMultiBlockInit;
 import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
@@ -35,6 +36,7 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
@@ -44,7 +46,10 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.logging.log4j.Logger;
+import scala.tools.nsc.doc.model.Public;
 import zone.rong.mixinbooter.ILateMixinLoader;
 
 import java.io.File;
@@ -71,6 +76,9 @@ public class WarForgeMod implements ILateMixinLoader {
     public static final TeleportsModule TELEPORTS = new TeleportsModule();
     public static final PotionsModule POTIONS = new PotionsModule();
     public static final UpgradeHandler UPGRADE_HANDLER = new UpgradeHandler();
+
+    @SideOnly(Side.CLIENT)
+    public static PlayerNametagCache NAMETAG_CACHE;
     // Discord integration
     private static final String DISCORD_MODID = "discordintegration";
     @Instance(MODID)
@@ -235,6 +243,10 @@ public class WarForgeMod implements ILateMixinLoader {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+
+        if(FMLCommonHandler.instance().getSide() == Side.CLIENT){
+            NAMETAG_CACHE = new PlayerNametagCache(60_000, 200);
         }
 
 

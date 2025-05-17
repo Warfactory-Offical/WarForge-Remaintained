@@ -33,6 +33,7 @@ import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
+import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 
 public class ClientTickHandler 
 {
@@ -60,6 +61,10 @@ public class ClientTickHandler
 
 	public ClientTickHandler() {
 		tess = Tessellator.getInstance();
+	}
+	@SubscribeEvent
+	public void onPlayerLogin(FMLNetworkEvent.ClientConnectedToServerEvent event) {
+		WarForgeMod.NAMETAG_CACHE.purge(); //Purge to remove possible stale data
 	}
 
 	@SubscribeEvent
