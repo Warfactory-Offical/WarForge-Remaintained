@@ -187,6 +187,7 @@ public class WarForgeMod implements ILateMixinLoader {
 
         MinecraftForge.EVENT_BUS.register(new ServerTickHandler());
         MinecraftForge.EVENT_BUS.register(this);
+        MinecraftForge.EVENT_BUS.register(PROTECTIONS);
         proxy.preInit(event);
         EffectRegistry.init();
     }

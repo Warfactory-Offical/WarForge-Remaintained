@@ -29,7 +29,6 @@ public class ProtectionsModule {
     private static boolean inLoop = false;
 
     public ProtectionsModule() {
-        MinecraftForge.EVENT_BUS.register(this);
     }
 
     @Nonnull

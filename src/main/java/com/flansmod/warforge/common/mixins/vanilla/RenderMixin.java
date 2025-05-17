@@ -16,12 +16,6 @@ import static com.flansmod.warforge.client.util.LegacyColorUtil.getClosestLegacy
 
 @Mixin(Render.class)
 public abstract class RenderMixin<T extends Entity>{
-    /**
-     * @author
-     * Fyrsti
-     * @reason
-     * thank you, MrNorwood
-     */
 
     @Shadow
     protected RenderManager renderManager;
@@ -29,6 +23,12 @@ public abstract class RenderMixin<T extends Entity>{
     @Shadow
     protected abstract FontRenderer getFontRendererFromRenderManager();
 
+    /**
+     * @author
+     * Fyrsti
+     * @reason
+     * adds ability to see player's faction in the nameplate
+     */
     @Overwrite
     protected void renderLivingLabel(T entityIn, String str, double x, double y, double z, int maxDistance)
     {
