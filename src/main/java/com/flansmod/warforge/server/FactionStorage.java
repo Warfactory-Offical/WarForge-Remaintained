@@ -449,9 +449,11 @@ public class FactionStorage {
 
         faction.addPlayer(player.getUniqueID());
         faction.setLeader(player.getUniqueID());
-//        PacketNamePlateChange = new Packet
-//        NETWORK.sendToAllAround();
-
+        PacketNamePlateChange packet = new PacketNamePlateChange();
+        packet.name = player.getName();
+        packet.faction = factionName;
+        packet.color = faction.colour;
+        NETWORK.sendToAllAround(packet, player.posX, player.posY, player.posZ, 100, player.dimension);
         return true;
     }
 
@@ -719,6 +721,15 @@ public class FactionStorage {
         for (Map.Entry<DimBlockPos, Integer> kvp : faction.claims.entrySet()) {
             mClaims.remove(kvp.getKey().toChunkPos());
         }
+        ArrayList<EntityPlayer> onlinePlayers = faction.getOnlinePlayers(
+                player -> player != null && player.isEntityAlive());
+
+        onlinePlayers.forEach(player -> {
+            PacketNamePlateChange packet = new PacketNamePlateChange();
+            packet.name = player.getName();
+            packet.isRemove = true;
+            NETWORK.sendToAllAround(packet, player.posX, player.posY, player.posZ, 100, player.dimension);
+        });
         faction.disband();
         mFactions.remove(faction.uuid);
         LEADERBOARD.UnregisterFaction(faction);
