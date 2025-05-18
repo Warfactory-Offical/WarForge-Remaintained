@@ -331,9 +331,10 @@ public class GuiFactionInfo extends GuiScreen
 				fontRenderer.drawStringWithShadow("Legacy:", j + 8, k + 172, 0xffffff);
 				fontRenderer.drawStringWithShadow("Total:", j + 8, k + 182, 0xffffff);
 				fontRenderer.drawStringWithShadow("Members:", j + 8, k + 192, 0xffffff);
-				int maxLvl = WarForgeMod.UPGRADE_HANDLER.getLEVELS().length - 1;
 
+				int maxLvl;
 				if(WarForgeConfig.ENABLE_CITADEL_UPGRADES)
+					maxLvl = WarForgeMod.UPGRADE_HANDLER.getLEVELS().length - 1;
 					fontRenderer.drawStringWithShadow("Citadel Level:", j + 8, k + 202, info.lvl >= maxLvl ? 0xFFAA00 : 0xffffff);
 
 				// Second column - numbers
