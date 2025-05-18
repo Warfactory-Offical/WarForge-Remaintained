@@ -449,6 +449,8 @@ public class FactionStorage {
 
         faction.addPlayer(player.getUniqueID());
         faction.setLeader(player.getUniqueID());
+//        PacketNamePlateChange = new Packet
+//        NETWORK.sendToAllAround();
 
         return true;
     }
@@ -1130,11 +1132,9 @@ public class FactionStorage {
         packet.name = name;
         EntityPlayerMP targetPlayer = MC_SERVER.getPlayerList().getPlayerByUsername(name);
         if (targetPlayer == null) {
-            WarForgeMod.NETWORK.sendTo(packet, playerEntity);
             return; //Likely bruteforcer TODO:Kick him
         }
         if (playerEntity.dimension != targetPlayer.dimension) {
-            WarForgeMod.NETWORK.sendTo(packet, playerEntity);
             return; //Also sus
         }
 
@@ -1154,7 +1154,7 @@ public class FactionStorage {
             return;
         }
         if (getFactionOfPlayer(targetPlayer.getUniqueID()) == null)
-            NETWORK.sendTo(packet, playerEntity);
+            return;
 
         Faction faction = getFactionOfPlayer(targetPlayer.getUniqueID());
 
