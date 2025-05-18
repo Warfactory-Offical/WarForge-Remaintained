@@ -38,21 +38,13 @@ public class FullColorNameplate {
         tessellator.draw();
         GlStateManager.enableTexture2D();
 
-        if (!isSneaking)
-        {
-            fontRendererIn.drawString(str, -fontRendererIn.getStringWidth(str) / 2, verticalShift, 0xFF000000 | color);
-            GlStateManager.enableDepth();
-        }
-        float red   = ((color >> 16) & 0xFF) / 255.0f;
-        float green = ((color >> 8) & 0xFF) / 255.0f;
-        float blue  = (color & 0xFF) / 255.0f;
+        GlStateManager.enableDepth();
 
 
         GlStateManager.depthMask(true);
-        fontRendererIn.drawString(str, -fontRendererIn.getStringWidth(str) / 2, verticalShift, isSneaking ? 0xFF000000 | color : -1);
+        fontRendererIn.drawString(str, -fontRendererIn.getStringWidth(str) / 2, verticalShift, color);
         GlStateManager.enableLighting();
         GlStateManager.disableBlend();
-        GlStateManager.color(red, green, blue, 1.0F);
         GlStateManager.popMatrix();
     }
 }

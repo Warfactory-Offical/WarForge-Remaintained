@@ -36,7 +36,6 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.flansmod.warforge.client.util.LegacyColorUtil.getClosestLegacyColor;
 import static com.flansmod.warforge.common.WarForgeMod.*;
 
 public class FactionStorage {
@@ -1168,9 +1167,10 @@ public class FactionStorage {
             return;
 
         Faction faction = getFactionOfPlayer(targetPlayer.getUniqueID());
-
-        packet.faction = getClosestLegacyColor(faction.colour) + "[" + faction.name + "]";
-        packet.color = faction.colour;
+        if (faction != null) {
+            packet.faction = faction.name;
+            packet.color = faction.colour;
+        }
         WarForgeMod.NETWORK.sendTo(packet, playerEntity);
 
     }
