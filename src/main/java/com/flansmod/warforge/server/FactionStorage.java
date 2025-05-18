@@ -1158,7 +1158,7 @@ public class FactionStorage {
 
         Faction faction = getFactionOfPlayer(targetPlayer.getUniqueID());
 
-        packet.faction = faction.name;
+        packet.faction = getClosestLegacyColor(faction.colour) + "[" + faction.name + "]";
         packet.color = faction.colour;
         WarForgeMod.NETWORK.sendTo(packet, playerEntity);
 

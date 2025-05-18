@@ -57,9 +57,14 @@ public class BlockDummy extends Block implements ITileEntityProvider {
     }
 
 
+//    @Override
+//    public EnumBlockRenderType getRenderType(IBlockState state) {
+//        return EnumBlockRenderType.MODEL;
+//    }
+
     @Override
     public EnumBlockRenderType getRenderType(IBlockState state) {
-        return EnumBlockRenderType.MODEL;
+        return EnumBlockRenderType.INVISIBLE;
     }
 
     @Override
@@ -127,7 +132,7 @@ public class BlockDummy extends Block implements ITileEntityProvider {
         return FULL_BLOCK_AABB;
     }
 
-    enum modelEnum implements IStringSerializable {
+    public enum modelEnum implements IStringSerializable {
         TRANSLUCENT,
         KING,
         KNIGHT,
