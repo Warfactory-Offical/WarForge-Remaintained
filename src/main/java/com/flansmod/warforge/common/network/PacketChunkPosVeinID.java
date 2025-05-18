@@ -6,19 +6,17 @@ import com.flansmod.warforge.api.VeinKey;
 import com.flansmod.warforge.common.DimChunkPos;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 
-public class PacketVeinInfo extends PacketBase {
-    final public DimChunkPos veinLocation;  // we need to guarantee this data is here
-
-    PacketVeinInfo(DimChunkPos chunkPos) {
-        veinLocation = chunkPos;
-    }
+public class PacketChunkPosVeinID extends PacketBase {
+    public DimChunkPos veinLocation = null;
+    public int resultID = -1;
+    public int resultQualOrd = -1;
 
     // clients ask for data, servers send data
+    // called by the packet handler to convert to a byte stream to send
     @Override
     public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) {
         // encode the chunk position
@@ -30,19 +28,29 @@ public class PacketVeinInfo extends PacketBase {
         if (!Minecraft.getMinecraft().world.isRemote) {
             Pair<Vein, VeinKey.Quality> veinInfo = VeinKey.getVein(veinLocation, Minecraft.getMinecraft().world.getSeed());
             data.writeInt(veinInfo.first().getID());  // the client should have a copy of the vein to refer the ID w/
+            data.writeByte((byte) veinInfo.second().ordinal());  // we need to tell them the quality
         }
     }
 
+    // called by the packet handler to make the packet form a byte stream
     @Override
     public void decodeInto(ChannelHandlerContext ctx, ByteBuf data) {
+        veinLocation = new DimChunkPos(data.readInt(), data.readInt(), data.readInt());
 
+        // receive the ID on the client
+        if (Minecraft.getMinecraft().world.isRemote) {
+            resultID = data.readInt();
+            resultQualOrd = data.readByte();
+        }
     }
 
+    // always called on packet after decodeInto has been called
     @Override
     public void handleServerSide(EntityPlayerMP playerEntity) {
 
     }
 
+    // always called on packet after decodeInto has been called
     @Override
     public void handleClientSide(EntityPlayer clientPlayer) {
 

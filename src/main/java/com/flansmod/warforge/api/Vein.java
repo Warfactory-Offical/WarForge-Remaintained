@@ -39,8 +39,7 @@ public class Vein {
     // translation_key, {mc:comp1, mc:comp2}, {-1, 0, 1}, {0.5, 0.5, 1}, {0.4525, 0.5475}
     public Vein(final String vein_entry, int id) {
         VEIN_ENTRY = vein_entry;
-        ID = idCounter;
-        ++idCounter;
+        ID = idCounter++;
 
         // splits on all spaces/ commas in any combination not within curly brackets
         // looks ahead to see if either there are any number of {} combinations, or if there are no }
@@ -114,7 +113,7 @@ public class Vein {
     // creates a null vein
     public Vein(int dim, int weight) {
         VEIN_ENTRY = "";
-        ID = -1;
+        ID = idCounter++;
         this.translation_key = null;
         this.component_ids = new ResourceLocation[0];
         this.component_yields = new int[0];

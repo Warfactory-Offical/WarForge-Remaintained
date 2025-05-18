@@ -60,7 +60,7 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 	 */
 	public boolean registerPacket(Class<? extends PacketBase> cl)
 	{
-		if(packets.size() > 256)
+		if(packets.size() > 255)
 		{
 			WarForgeMod.LOGGER.warn("Packet limit exceeded in Flan's Mod packet handler by packet " + cl.getCanonicalName() + ".");
 			return false;
@@ -269,6 +269,7 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 		registerPacket(PacketEffect.class);
 		registerPacket(PacketNamePlateChange.class);
 		registerPacket(PacketRequestNamePlate.class);
+		registerPacket(PacketChunkPosVeinID.class);
 	}
 
 	/**

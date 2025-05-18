@@ -3,8 +3,10 @@ package com.flansmod.warforge.client;
 import java.util.HashMap;
 import java.util.UUID;
 
+import com.flansmod.warforge.api.Vein;
 import com.flansmod.warforge.common.effect.AnimatedEffectHandler;
 import com.flansmod.warforge.common.blocks.*;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.lwjgl.input.Keyboard;
 
 import com.flansmod.warforge.common.CommonProxy;
@@ -34,6 +36,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 public class ClientProxy extends CommonProxy
 {
 	public static HashMap<DimBlockPos, SiegeCampProgressInfo> sSiegeInfo = new HashMap<DimBlockPos, SiegeCampProgressInfo>();
+
+	public static Int2ObjectOpenHashMap<Vein> VEIN_ENTRIES = null;
 
 	public static KeyBinding factionChatKey = new KeyBinding("key.factionchat.desc",
 			KeyConflictContext.IN_GAME,

@@ -11,6 +11,8 @@ import com.flansmod.warforge.api.Vein;
 import com.flansmod.warforge.api.VeinKey;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
+import static com.flansmod.warforge.common.CommonProxy.YIELD_QUALITY_MULTIPLIER;
+
 public class WarForgeConfig
 {
 	// Config
@@ -51,8 +53,8 @@ public class WarForgeConfig
 	public static float NUM_SHULKER_PER_DAY_PER_ORE = 0.01f;
 
 	// Yield - veins:
+	// maps each dimension id to a map of vein keys to veins for quick access
 	public static Int2ObjectOpenHashMap<TreeMap<VeinKey, Vein>> VEIN_MAP = new Int2ObjectOpenHashMap<>();
-	public static float YIELD_QUALITY_MULTIPLIER = 2;
 
 	// Sieges
 	public static final String CATEGORY_SIEGES = "Sieges";
@@ -277,14 +279,8 @@ public class WarForgeConfig
 		REDSTONE_YIELD_AS_BLOCKS = configFile.getBoolean("Redstone Yield As Blocks", CATEGORY_YIELDS, REDSTONE_YIELD_AS_BLOCKS, "If true, redstone ore gives redstone blocks. If false, it gives redstone dust");
 		YIELD_DAY_LENGTH = configFile.getFloat("Yield Day Length", CATEGORY_YIELDS, YIELD_DAY_LENGTH, 0.0001f, 100000f, "The length of time between yields, in real-world hours.");
 
-		final String VEIN_ENTRY_EXPLANATION = "All veins should be entered in the follow format: \n" +
-				"<translation_key>, {<yield_amount#component item id>}, {<valid dim id's>}, {<vein dim weights 0.0000 - 1.0000>}, {<component weights 0.0000 - 1.0000>}; \n" +
-				"Example: veins.pure_iron, {2#minecraft:iron_ore, 1#minecraft:coal_ore}, {-1, 0, 1}, {0.5, 0.4215, 1}, {1, 0.2}. \n" +
-				"The above is a vein which yields two iron ore and one coal in all dimensions with 3 respective dimension weights and which always gives iron, but only gives coal 20% of the time. \n" +
-				"If component weights entry is left as {} [empty], then all are assumed to have a value of 1. All other fields are mandatory and must have equal counts.";
-
 		YIELD_QUALITY_MULTIPLIER = configFile.getFloat("Yield Quality Multiplier", CATEGORY_YIELDS, YIELD_QUALITY_MULTIPLIER, 1, 10000, "A number to be used to vary yield amounts for every vein's components, dividing by this for poor quality veins and multiplying for high quality. Set to 1 to effectively have no difference.");
-		configFile.getStringList("Vein list", CATEGORY_YIELDS, new String[0], VEIN_ENTRY_EXPLANATION);  // if the default value is null then the returned result is null which causes a npe
+		initializeVeins();
 
 		// Notoriety
 		NOTORIETY_PER_PLAYER_KILL = configFile.getInt("Notoriety gain per PVP kill", CATEGORY_NOTORIETY, NOTORIETY_PER_PLAYER_KILL, 0, 1024, "How much notoriety a player earns for their faction when killing another player");
