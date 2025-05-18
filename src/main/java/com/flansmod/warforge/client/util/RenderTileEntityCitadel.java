@@ -22,15 +22,31 @@ public class RenderTileEntityCitadel extends TileEntitySpecialRenderer<TileEntit
     @Override
     public void render(TileEntityCitadel te, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
 
+        GlStateManager.pushMatrix();
         this.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 
+        double centerX = x+0.50d;
+        double centerZ = z-0.50d;
+        double angleRAD = Math.toRadians(te.rotation);
+
+        double vectorX = centerX - x;
+        double vectorZ = centerZ - z;
+        double cosA = Math.cos(angleRAD);
+        double sinA = Math.sin(angleRAD);
+       double vecXRotation = vectorX * cosA - vectorZ * sinA;
+       double vecZRotation = vectorX * sinA + vectorZ * cosA;
+
         GlStateManager.shadeModel(GL11.GL_SMOOTH);
+        GlStateManager.translate(x+vecXRotation,y+1,z+vecZRotation);
 
-        GlStateManager.translate(x, y + 1, z + 0.5);
-        GlStateManager.rotate(-45, 0, 1, 0);
+        //GlStateManager.translate(x+ (Math.sin(te.rotation+partialTicks)), y+1, z * (Math.cos(te.rotation+partialTicks)));
+//        GlStateManager.rotate(te.rotation+partialTicks, 0, 1, 0);
 
+        GlStateManager.rotate(te.rotation+partialTicks, 0, 1, 0);
 
         Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelRenderer().renderModelBrightness(model, blockState, 1, false);
+
+        GlStateManager.popMatrix();
     }
 
     @Override
