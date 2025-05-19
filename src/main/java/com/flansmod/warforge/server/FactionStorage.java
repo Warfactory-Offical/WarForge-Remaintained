@@ -449,7 +449,11 @@ public class FactionStorage {
 
         faction.addPlayer(player.getUniqueID());
         faction.setLeader(player.getUniqueID());
-
+        PacketNamePlateChange packet = new PacketNamePlateChange();
+        packet.name = player.getName();
+        packet.faction = factionName;
+        packet.color = faction.colour;
+        NETWORK.sendToAllAround(packet, player.posX, player.posY, player.posZ, 100, player.dimension);
         return true;
     }
 
@@ -717,6 +721,15 @@ public class FactionStorage {
         for (Map.Entry<DimBlockPos, Integer> kvp : faction.claims.entrySet()) {
             mClaims.remove(kvp.getKey().toChunkPos());
         }
+        ArrayList<EntityPlayer> onlinePlayers = faction.getOnlinePlayers(
+                player -> player != null && player.isEntityAlive());
+
+        onlinePlayers.forEach(player -> {
+            PacketNamePlateChange packet = new PacketNamePlateChange();
+            packet.name = player.getName();
+            packet.isRemove = true;
+            NETWORK.sendToAllAround(packet, player.posX, player.posY, player.posZ, 100, player.dimension);
+        });
         faction.disband();
         mFactions.remove(faction.uuid);
         LEADERBOARD.UnregisterFaction(faction);
@@ -1130,11 +1143,9 @@ public class FactionStorage {
         packet.name = name;
         EntityPlayerMP targetPlayer = MC_SERVER.getPlayerList().getPlayerByUsername(name);
         if (targetPlayer == null) {
-            WarForgeMod.NETWORK.sendTo(packet, playerEntity);
             return; //Likely bruteforcer TODO:Kick him
         }
         if (playerEntity.dimension != targetPlayer.dimension) {
-            WarForgeMod.NETWORK.sendTo(packet, playerEntity);
             return; //Also sus
         }
 
@@ -1154,11 +1165,11 @@ public class FactionStorage {
             return;
         }
         if (getFactionOfPlayer(targetPlayer.getUniqueID()) == null)
-            NETWORK.sendTo(packet, playerEntity);
+            return;
 
         Faction faction = getFactionOfPlayer(targetPlayer.getUniqueID());
 
-        packet.faction = faction.name;
+        packet.faction = getClosestLegacyColor(faction.colour) + "[" + faction.name + "]";
         packet.color = faction.colour;
         WarForgeMod.NETWORK.sendTo(packet, playerEntity);
 

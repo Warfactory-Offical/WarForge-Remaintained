@@ -13,6 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.ITickable;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
@@ -21,11 +22,12 @@ import java.util.UUID;
 
 import static com.flansmod.warforge.common.blocks.BlockDummy.MODEL;
 
-public class TileEntityCitadel extends TileEntityYieldCollector implements IClaim {
+public class TileEntityCitadel extends TileEntityYieldCollector implements IClaim, ITickable {
     public static final int BANNER_SLOT_INDEX = NUM_BASE_SLOTS;
     public static final int NUM_SLOTS = NUM_BASE_SLOTS + 1;
 
     public UUID placer = Faction.nullUuid;
+    public float rotation = 0f;
 
     // The banner stack is an optional slot that sets all banners in owned chunks to copy the design
     protected ItemStack bannerStack;
@@ -211,5 +213,11 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
 
         bannerStack = new ItemStack(nbt.getCompoundTag("banner"));
         placer = nbt.getUniqueId("placer");
+    }
+
+    @Override
+    public void update() {
+        rotation++;
+
     }
 }

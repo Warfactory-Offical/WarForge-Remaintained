@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.UUID;
 
 import com.flansmod.warforge.api.Vein;
+import com.flansmod.warforge.client.util.RenderTileEntityCitadel;
 import com.flansmod.warforge.common.effect.AnimatedEffectHandler;
 import com.flansmod.warforge.common.blocks.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -64,6 +65,7 @@ public class ClientProxy extends CommonProxy
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityDummy.class, new RenderTileEntityDummy());
 
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityLeaderboard.class, new TileEntityLeaderboardRenderer());
+		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityCitadel.class, new RenderTileEntityCitadel());
 	}
 	
 	@Override
