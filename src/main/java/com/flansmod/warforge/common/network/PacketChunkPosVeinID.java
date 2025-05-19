@@ -32,7 +32,7 @@ public class PacketChunkPosVeinID extends PacketBase {
         }
     }
 
-    // called by the packet handler to make the packet form a byte stream
+    // called by the packet handler to make the packet from a byte stream after construction
     @Override
     public void decodeInto(ChannelHandlerContext ctx, ByteBuf data) {
         veinLocation = new DimChunkPos(data.readInt(), data.readInt(), data.readInt());

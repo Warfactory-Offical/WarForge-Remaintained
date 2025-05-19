@@ -4,13 +4,16 @@ package com.flansmod.warforge.api;
 import com.flansmod.warforge.common.network.PacketBase;
 import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import net.minecraft.util.ResourceLocation;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.Objects;
 
 public class Vein {
+    public static ArrayList<Vein> orderedVeins = new ArrayList<>();
     public final String translation_key;
 
     @Nonnull
@@ -28,18 +31,24 @@ public class Vein {
     public static int WEIGHT_FRACTION_DIGIT_COUNT = 4;
 
     // Packet Data:
-    final private String VEIN_ENTRY;  // used to send over network on join
+    final public String VEIN_ENTRY;  // used to send over network on join
     final int ID;
 
     private static int idCounter = 0;
 
     public static int getNextID() { return idCounter++; }
 
+    // should only be called by the server
+    public Vein(final String vein_entry) {
+        this(vein_entry, idCounter++);
+        orderedVeins.add(this);  // only the server will create these veins in order
+    }
+
     // we assume the values are in order as described by the other constructor
     // translation_key, {mc:comp1, mc:comp2}, {-1, 0, 1}, {0.5, 0.5, 1}, {0.4525, 0.5475}
     public Vein(final String vein_entry, int id) {
         VEIN_ENTRY = vein_entry;
-        ID = idCounter++;
+        ID = id;
 
         // splits on all spaces/ commas in any combination not within curly brackets
         // looks ahead to see if either there are any number of {} combinations, or if there are no }
@@ -113,7 +122,7 @@ public class Vein {
     // creates a null vein
     public Vein(int dim, int weight) {
         VEIN_ENTRY = "";
-        ID = idCounter++;
+        ID = -1;
         this.translation_key = null;
         this.component_ids = new ResourceLocation[0];
         this.component_yields = new int[0];
@@ -129,9 +138,5 @@ public class Vein {
 
     public void setDimWeights(int dim, int weight) { dim_weights.put(dim, weight); }
 
-    public boolean isNullVein() { return VEIN_ENTRY.equals(""); }
-
-    void writeToBuf(ByteBuf buf) {
-        PacketBase.writeUTF(buf, VEIN_ENTRY);
-    }
+    public boolean isNullVein() { return ID == -1; }
 }

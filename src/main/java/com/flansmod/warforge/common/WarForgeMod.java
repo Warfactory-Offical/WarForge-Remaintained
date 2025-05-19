@@ -1,6 +1,7 @@
 package com.flansmod.warforge.common;
 
 import com.flansmod.warforge.api.ObjectIntPair;
+import com.flansmod.warforge.api.Vein;
 import com.flansmod.warforge.client.PlayerNametagCache;
 import com.flansmod.warforge.common.effect.EffectRegistry;
 import com.flansmod.warforge.common.blocks.IMultiBlockInit;
@@ -636,8 +637,10 @@ public class WarForgeMod implements ILateMixinLoader {
             clearSiegesPacket.info.attackingPos = DimBlockPos.ZERO;
             clearSiegesPacket.info.defendingPos = DimBlockPos.ZERO;
             NETWORK.sendTo(clearSiegesPacket, (EntityPlayerMP) event.player);
-
             FACTIONS.sendAllSiegeInfoToNearby();
+
+            // begin queued sync info
+            // don't sync if the upgrade info doesn't exist
             if (UPGRADE_HANDLER != null && UPGRADE_HANDLER.getLEVELS() != null) {
 
                 for (int i = 0; i < UPGRADE_HANDLER.getLEVELS().length; i++) {
@@ -649,6 +652,18 @@ public class WarForgeMod implements ILateMixinLoader {
                             NETWORK.sendTo(new PacketCitadelUpgradeRequirement(level, requirements, limit), (EntityPlayerMP) event.player)
                     );
                 }
+            }
+
+            // go over all ordered veins that the server has and send them to the client
+            for (int veinID = 0; veinID < Vein.orderedVeins.size();) {
+                PacketVeinEntries currEntries = new PacketVeinEntries().fillFrom(Vein.orderedVeins, veinID);
+                veinID += currEntries.entryCount();
+
+                // queue up each compressed packet to be sent
+                SyncQueueHandler.enqueue(() -> {
+                        NETWORK.sendTo(currEntries, (EntityPlayerMP) event.player);
+                    }
+                );
             }
         }
     }
