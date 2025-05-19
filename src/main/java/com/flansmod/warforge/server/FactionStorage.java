@@ -29,7 +29,6 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
 
 import java.awt.*;
 import java.util.*;
@@ -44,14 +43,14 @@ public class FactionStorage {
     public static UUID WAR_ZONE_ID = Faction.createUUID("warzone");
     public static Faction SAFE_ZONE = null;
     public static Faction WAR_ZONE = null;
-    //This is all chunks that are under the "Grace" period
-    public HashMap<DimChunkPos, ObjectIntPair<UUID>> conqueredChunks = new HashMap<>();
-    private HashMap<UUID, Faction> mFactions = new HashMap<UUID, Faction>();
+    private final HashMap<UUID, Faction> mFactions = new HashMap<>();
     // This map contains every single claim, including siege camps.
     // So if you take one of these and try to look it up in the faction, check their active sieges too
-    private HashMap<DimChunkPos, UUID> mClaims = new HashMap<DimChunkPos, UUID>();
+    private final HashMap<DimChunkPos, UUID> mClaims = new HashMap<>();
     // This is all the currently active sieges, keyed by the defending position
-    private HashMap<DimChunkPos, Siege> sieges = new HashMap<DimChunkPos, Siege>();
+    private final HashMap<DimChunkPos, Siege> sieges = new HashMap<>();
+    //This is all chunks that are under the "Grace" period
+    public HashMap<DimChunkPos, ObjectIntPair<UUID>> conqueredChunks = new HashMap<>();
 
     public FactionStorage() {
         InitNeutralZones();
@@ -268,8 +267,7 @@ public class FactionStorage {
     }
 
     public void playerDied(EntityPlayerMP playerWhoDied, DamageSource source) {
-        if (source.getTrueSource() instanceof EntityPlayerMP) {
-            EntityPlayerMP killer = (EntityPlayerMP) source.getTrueSource();
+        if (source.getTrueSource() instanceof EntityPlayerMP killer) {
             Faction killedFac = getFactionOfPlayer(playerWhoDied.getUniqueID());
             Faction killerFac = getFactionOfPlayer(killer.getUniqueID());
 
@@ -293,11 +291,11 @@ public class FactionStorage {
 
                 if (numTimesKilled <= WarForgeConfig.NOTORIETY_KILL_CAP_PER_PLAYER) {
                     if (killerFac != killedFac) {
-                        ((EntityPlayer) source.getTrueSource()).sendMessage(new TextComponentString("Killing " + playerWhoDied.getName() + " earned your faction " + WarForgeConfig.NOTORIETY_PER_PLAYER_KILL + " notoriety"));
+                        source.getTrueSource().sendMessage(new TextComponentString("Killing " + playerWhoDied.getName() + " earned your faction " + WarForgeConfig.NOTORIETY_PER_PLAYER_KILL + " notoriety"));
                         killerFac.notoriety += WarForgeConfig.NOTORIETY_PER_PLAYER_KILL;
                     }
                 } else {
-                    ((EntityPlayer) source.getTrueSource()).sendMessage(new TextComponentString("Your faction has already killed " + playerWhoDied.getName() + " " + numTimesKilled + " times. You will not become more notorious."));
+                    source.getTrueSource().sendMessage(new TextComponentString("Your faction has already killed " + playerWhoDied.getName() + " " + numTimesKilled + " times. You will not become more notorious."));
                 }
             }
         }
@@ -360,7 +358,7 @@ public class FactionStorage {
             defenders.messageAll(new TextComponentTranslation("warforge.info.siege_lost_defenders", defenders.name, blockPos.toFancyString()));
             attackers.notoriety += WarForgeConfig.NOTORIETY_PER_SIEGE_ATTACK_SUCCESS;
             if (WarForgeConfig.SIEGE_CAPTURE) {
-                MC_SERVER.getWorld(blockPos.dim).setBlockState(blockPos.toRegularPos(), CONTENT.basicClaimBlock.getDefaultState());
+                MC_SERVER.getWorld(blockPos.dim).setBlockState(blockPos.toRegularPos(), Content.basicClaimBlock.getDefaultState());
                 TileEntity te = MC_SERVER.getWorld(blockPos.dim).getTileEntity(blockPos.toRegularPos());
                 onNonCitadelClaimPlaced((IClaim) te, attackers);
             }
@@ -501,7 +499,7 @@ public class FactionStorage {
 
             if (required > 0) {
                 passed = false;
-                break outer;
+                break;
             }
         }
 
@@ -827,7 +825,7 @@ public class FactionStorage {
         // Place a bedrock tile entity at 0,0,0 chunk coords
         // This might look a bit dodge in End. It's only for admin claims though
         DimBlockPos tePos = new DimBlockPos(pos.mDim, pos.getXStart(), 0, pos.getZStart());
-        op.world.setBlockState(tePos.toRegularPos(), CONTENT.adminClaimBlock.getDefaultState());
+        op.world.setBlockState(tePos.toRegularPos(), Content.adminClaimBlock.getDefaultState());
         TileEntity te = op.world.getTileEntity(tePos.toRegularPos());
         if (te == null || !(te instanceof IClaim)) {
             op.sendMessage(new TextComponentString("Placing admin claim block failed"));
@@ -959,6 +957,18 @@ public class FactionStorage {
             }
         }
 
+        ArrayList<EntityPlayer> onlinePlayers = faction.getOnlinePlayers(
+                entityPlayer -> entityPlayer != null && entityPlayer.isEntityAlive());
+
+        onlinePlayers.forEach(entityPlayer -> {
+            PacketNamePlateChange packet = new PacketNamePlateChange();
+            packet.name = entityPlayer.getName();
+            packet.faction = faction.name;
+            packet.color = colour;
+            NETWORK.sendToAllAround(packet, entityPlayer.posX, entityPlayer.posY, entityPlayer.posZ, 100, player.dimension);
+        });
+
+
         return true;
 
     }
@@ -989,11 +999,11 @@ public class FactionStorage {
         }
 
         // Set new citadel
-        MC_SERVER.getWorld(pos.dim).setBlockState(pos.toRegularPos(), CONTENT.citadelBlock.getDefaultState());
+        MC_SERVER.getWorld(pos.dim).setBlockState(pos.toRegularPos(), Content.citadelBlock.getDefaultState());
         TileEntityCitadel newCitadel = (TileEntityCitadel) MC_SERVER.getWorld(pos.dim).getTileEntity(pos.toRegularPos());
 
         // Convert old citadel to basic claim
-        MC_SERVER.getWorld(faction.citadelPos.dim).setBlockState(faction.citadelPos.toRegularPos(), CONTENT.basicClaimBlock.getDefaultState());
+        MC_SERVER.getWorld(faction.citadelPos.dim).setBlockState(faction.citadelPos.toRegularPos(), Content.basicClaimBlock.getDefaultState());
         TileEntityClaim newClaim = (TileEntityClaim) MC_SERVER.getWorld(faction.citadelPos.dim).getTileEntity(faction.citadelPos.toRegularPos());
 
         // Update pos
@@ -1064,7 +1074,7 @@ public class FactionStorage {
         // 11 is type id for int array
         int index = 0;
         while (true) {
-            NBTTagList keyValPair = conqueredChunksDataList.getTagList(new StringBuilder("conqueredChunk_").append(index).toString(), 11);
+            NBTTagList keyValPair = conqueredChunksDataList.getTagList("conqueredChunk_" + index, 11);
             if (keyValPair.isEmpty())
                 break; // exit once invalid (empty, since getTagList never returns null) is found, as it is assumed this is the first non-existent/ invalid index
             int[] dimInfo = keyValPair.getIntArrayAt(0);
@@ -1112,7 +1122,7 @@ public class FactionStorage {
             keyValPair.appendTag(new NBTTagIntArray(UUIDToBEIntArray(conqueredChunks.get(chunkPosKey).getLeft())));
             keyValPair.appendTag(new NBTTagIntArray(new int[]{conqueredChunks.get(chunkPosKey).getRight()}));
 
-            conqueredChunksDataList.setTag(new StringBuilder("conqueredChunk_").append(index).toString(), keyValPair);
+            conqueredChunksDataList.setTag("conqueredChunk_" + index, keyValPair);
 
             ++index;
         }
@@ -1145,7 +1155,7 @@ public class FactionStorage {
         double dz = playerEntity.posZ - targetPlayer.posZ;
         double dy = playerEntity.posY - targetPlayer.posY;
 
-        int viewDistanceChunks = ((WorldServer) playerEntity.world).getMinecraftServer().getPlayerList().getViewDistance();
+        int viewDistanceChunks = playerEntity.world.getMinecraftServer().getPlayerList().getViewDistance();
         int maxDistanceBlocks = viewDistanceChunks * 16;
         double maxDistanceSq = maxDistanceBlocks * maxDistanceBlocks;
         int distance = (int) (dx * dx + dy * dy + dz * dz);
