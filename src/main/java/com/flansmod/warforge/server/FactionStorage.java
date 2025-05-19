@@ -687,7 +687,7 @@ public class FactionStorage {
         return true;
     }
 
-    public boolean RequestDisbandFaction(EntityPlayer factionLeader, UUID factionID) {
+    public boolean requestDisbandFaction(EntityPlayer factionLeader, UUID factionID) {
         if (factionID.equals(Faction.nullUuid)) {
             Faction faction = getFactionOfPlayer(factionLeader.getUniqueID());
             if (faction != null)
@@ -704,24 +704,16 @@ public class FactionStorage {
 
     // Used to remove and clean up faction;
     private void disbandAndCleanup(UUID factionID) {
-        Faction faction = mFactions.get(factionID);
-        EffectDisband.composeEffect(faction.citadelPos.dim, faction.citadelPos.toRegularPos(), 100);
-
-
-        for (Map.Entry<DimBlockPos, Integer> kvp : faction.claims.entrySet()) {
-            mClaims.remove(kvp.getKey().toChunkPos());
-        }
-        faction.disband();
-        mFactions.remove(factionID);
-        LEADERBOARD.UnregisterFaction(faction);
+        disbandAndCleanup(mFactions.get(factionID));
     }
 
     private void disbandAndCleanup(Faction faction) {
+        EffectDisband.composeEffect(faction.citadelPos.dim, faction.citadelPos.toRegularPos(), 100);
         for (Map.Entry<DimBlockPos, Integer> kvp : faction.claims.entrySet()) {
             mClaims.remove(kvp.getKey().toChunkPos());
         }
         ArrayList<EntityPlayer> onlinePlayers = faction.getOnlinePlayers(
-                player -> player != null && player.isEntityAlive());
+                player -> player != null);
 
         onlinePlayers.forEach(player -> {
             PacketNamePlateChange packet = new PacketNamePlateChange();
