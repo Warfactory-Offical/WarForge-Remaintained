@@ -40,6 +40,8 @@ public class GuiSiegeCampNew {
         List<Thread> threads = new ArrayList<>();
 
         int chunkID = 0;
+        int max = 256;
+        int min = 0;
         for (int x = centerX - radius; x <= centerX + radius; x++) {
             for (int z = centerZ - radius; z <= centerZ + radius; z++) {
                 Chunk chunk = world.getChunkProvider().getLoadedChunk(x, z);
@@ -48,6 +50,8 @@ public class GuiSiegeCampNew {
                     for (int chunkX = 0; chunkX < 16; chunkX++) {
                         for (int chunkZ = 0; chunkZ < 16; chunkZ++) {
                             int y = chunk.getHeightValue(chunkX, chunkZ);
+                            if (y < min) min = y;
+                            if (y > max) max = y;
                             BlockPos blockPos = new BlockPos((x << 4) | chunkX, y - 1, (z << 4) | chunkZ);
                             IBlockState state = chunk.getBlockState(chunkX, y - 1, chunkZ);
                             MapColor blockcolor = state.getMapColor(world, blockPos);
@@ -56,7 +60,7 @@ public class GuiSiegeCampNew {
                         }
                     }
                     int[] heightMapCopy = chunk.getHeightMap().clone();
-                    ChunkDynamicTextureThread thread = new ChunkDynamicTextureThread(4, "chunk" + chunkID, rawChunk, heightMapCopy);
+                    ChunkDynamicTextureThread thread = new ChunkDynamicTextureThread(4, "chunk" + chunkID, rawChunk, heightMapCopy, max, min);
                     threads.add(thread);
                     thread.run();
                     chunkID++;

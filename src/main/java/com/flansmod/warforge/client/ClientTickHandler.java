@@ -90,6 +90,7 @@ public class ClientTickHandler
 
 	@SubscribeEvent
 	public void onTick(ClientTickEvent tick) {
+
 		// Handle client packets and perform the client-side tick
 		WarForgeMod.NETWORK.handleClientPackets();
 		WarForgeMod.proxy.TickClient();

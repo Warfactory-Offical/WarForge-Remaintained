@@ -11,14 +11,18 @@ public class ChunkDynamicTextureThread extends Thread {
     final int[] rawChunk;
     final int[] heightMapCopy;
     int scale;
+    final int maxHeight;
+    final int minHeight;
     DynamicTexture mapTexture;
     String name;
 
-    public ChunkDynamicTextureThread(int scale, String name, int[] rawChunk1, int[] heightMapCopy1) {
+    public ChunkDynamicTextureThread(int scale, String name, int[] rawChunk1, int[] heightMapCopy1, int maxHeight, int minHeight) {
         this.scale = scale;
         this.name = name;
         this.rawChunk = rawChunk1;
         this.heightMapCopy = heightMapCopy1;
+        this.maxHeight = maxHeight;
+        this.minHeight = minHeight;
     }
 
     public static int[] scaleRGBAArray(int[] originalPixels, int originalWidth, int originalHeight, int scale) {
@@ -69,7 +73,7 @@ public class ChunkDynamicTextureThread extends Thread {
 
                 // Combine diffs to get shading factor (clamped)
                 float shadeFactor = 1.0f - (diffEast + diffSouth) * 0.05f;
-                shadeFactor = Math.max(0.6f, Math.min(1.0f, shadeFactor)); // Clamp between 0.6 and 1.0
+                shadeFactor = Math.max(0.7f, Math.min(1.0f, shadeFactor)); // Clamp between 0.6 and 1.0
 
                 // Apply shading by scaling RGB channels
                 shaded[idx] = applyBrightness(baseColor, shadeFactor);
@@ -124,13 +128,6 @@ public class ChunkDynamicTextureThread extends Thread {
     }
 
     public void applyHeightMap(int[] colorBuffer, int[] heightMap) {
-        int minHeight = Integer.MAX_VALUE;
-        int maxHeight = Integer.MIN_VALUE;
-
-        for (int h : heightMap) {
-            if (h < minHeight) minHeight = h;
-            if (h > maxHeight) maxHeight = h;
-        }
 
         float range = maxHeight - minHeight + 1e-5f;
 
