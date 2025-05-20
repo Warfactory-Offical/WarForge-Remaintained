@@ -101,7 +101,7 @@ public class GuiCreateFaction extends GuiScreen
 			{
 				PacketSetFactionColour packet = new PacketSetFactionColour();
 				packet.mColour = Color.HSBtoRGB(currentHSB[0], currentHSB[1], currentHSB[2]);
-				WarForgeMod.INSTANCE.NETWORK.sendToServer(packet);
+				WarForgeMod.NETWORK.sendToServer(packet);
 				mc.displayGuiScreen(null);
 				
 				break;
