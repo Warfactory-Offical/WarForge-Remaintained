@@ -17,6 +17,7 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.storage.MapData;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 
 public class GuiSiegeCampNew {
@@ -35,11 +36,12 @@ public class GuiSiegeCampNew {
         int radius = 2;  // 2 chunks in each direction → 5x5 total area
         int centerX = centerChunk.x;
         int centerZ = centerChunk.z;
+        List<Thread> threads = new ArrayList<>();
 
 
         for (int x = centerX - radius; x <= centerX + radius; x++) {
             for (int z = centerZ - radius; z <= centerZ + radius; z++) {
-                Chunk chunk = world.getChunkProvider().getLoadedChunk(x, z);  // or however you access chunks in your context
+                Chunk chunk = world.getChunkProvider().getLoadedChunk(x, z);
                 if (chunk != null) {
                     int[] rawChunk = new int[16 * 16];
                     for (int chunkX = 0; chunkX < 16; chunkX++) {
@@ -59,11 +61,18 @@ public class GuiSiegeCampNew {
                     }
                     int[] heightMapCopy = chunk.getHeightMap().clone();
                     ChunkDynamicTextureThread thread = new ChunkDynamicTextureThread(4, "chunk" + x + "" + z, rawChunk, heightMapCopy);
-
-
+                    threads.add(thread);
+                    thread.run();
                 }
             }
         }
+        threads.forEach(thread -> {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
 
 //        MapData data = new MapData("gui_preview_map");
 //        data.scale = 0;
@@ -92,8 +101,8 @@ public class GuiSiegeCampNew {
 
         ModularPanel panel = ModularPanel.defaultPanel("citadel_upgrade_panel")
                 .width(500)
-                .height(500);
-                //.child(new MapDrawable().asWidget().size(128, 128));
+                .height(500)
+                .child(new MapDrawable("chunk11").asWidget().size(16*4, 16*4));
 
         return new ModularScreen(panel);
     }

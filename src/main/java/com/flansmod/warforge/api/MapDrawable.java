@@ -18,41 +18,18 @@ import java.lang.reflect.Field;
 
 public class MapDrawable implements IDrawable {
 
-    private final MapData mapData;
-    private int[] mapPixels;
-    private DynamicTexture mapTexture;
 
-    public MapDrawable(MapData mapData) {
+    private final String mapData;
+
+    public MapDrawable(String mapData) {
         this.mapData = mapData;
     }
 
     @Override
-    public void draw(GuiContext context, int x, int y, int width, int height, WidgetTheme widgetTheme) {
-        byte[] colors = mapData.colors;
-        if (colors == null || colors.length != width * height) return;
-
-        if(mapPixels == null)
-            mapPixels = new int[width * height];
-
-        for (int i = 0; i < colors.length; i++) {
-            mapPixels[i] = (0xFF << 24) | MapColor.COLORS[colors[i]].colorValue;
-        }
-
-        if(mapTexture == null){
-            mapTexture = new DynamicTexture(width, height);
-            Minecraft.getMinecraft().getTextureManager().loadTexture(new ResourceLocation(WarForgeMod.MODID, "preview_texture"), mapTexture);
-        }
-        try {
-            Field textureDataField = DynamicTexture.class.getDeclaredField("dynamicTextureData");
-            textureDataField.setAccessible(true);
-            textureDataField.set(mapTexture, mapPixels);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-        mapTexture.updateDynamicTexture();
+    public void draw(GuiContext context, int x, int y, int width, int height, WidgetTheme theme) {
         GlStateManager.color(1f, 1f, 1f, 1f);
-        Minecraft.getMinecraft().getTextureManager().bindTexture(new ResourceLocation(WarForgeMod.MODID, "preview_texture"));
-        Gui.drawModalRectWithCustomSizedTexture(x, y, 0, 0, width, height, 128, 128);
+        Minecraft.getMinecraft().getTextureManager().bindTexture(new ResourceLocation(WarForgeMod.MODID, mapData));
+        Gui.drawModalRectWithCustomSizedTexture(x, y, 0, 0, width, height, 16*4, 16*4);
     }
 
 

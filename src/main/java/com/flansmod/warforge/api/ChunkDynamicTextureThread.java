@@ -1,23 +1,20 @@
 package com.flansmod.warforge.api;
 
 import com.flansmod.warforge.common.WarForgeMod;
-import javafx.scene.effect.Reflection;
-import net.minecraft.block.material.MapColor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.chunk.Chunk;
 
 import java.lang.reflect.Field;
 
-public class ChunkDynamicTextureThread implements Runnable {
+public class ChunkDynamicTextureThread extends Thread {
     int scale;
     DynamicTexture mapTexture;
     String name;
     final int[] rawChunk;
     final int[] heightMapCopy;
 
-    public ChunkDynamicTextureThread(int scale, String name,  int[] rawChunk1, int[] heightMapCopy1) {
+    public ChunkDynamicTextureThread(int scale, String name, int[] rawChunk1, int[] heightMapCopy1) {
         this.scale = scale;
         this.name = name;
         this.rawChunk = rawChunk1;
@@ -30,7 +27,6 @@ public class ChunkDynamicTextureThread implements Runnable {
         int[] scaledHeightMap = scaleRGBAArray(heightMapCopy, 16, 16, scale);
         applyShading(scaledBuffer, 16 * scale, 16 * scale);
 
-// Texture update code here (as you had it)
         if (mapTexture == null) {
             mapTexture = new DynamicTexture(16 * scale, 16 * scale);
             Minecraft.getMinecraft().getTextureManager().loadTexture(new ResourceLocation(WarForgeMod.MODID, name), mapTexture);
