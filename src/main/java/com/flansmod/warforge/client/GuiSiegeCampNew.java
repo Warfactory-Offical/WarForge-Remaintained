@@ -14,14 +14,15 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.storage.MapData;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
 public class GuiSiegeCampNew {
 
+    @SideOnly(Side.CLIENT)
     public static ModularScreen makeGUI
             (DimBlockPos siegeCampPos, List<SiegeCampAttackInfo> possibleAttacks) {
 
@@ -38,7 +39,7 @@ public class GuiSiegeCampNew {
         int centerZ = centerChunk.z;
         List<Thread> threads = new ArrayList<>();
 
-
+        int chunkID = 0;
         for (int x = centerX - radius; x <= centerX + radius; x++) {
             for (int z = centerZ - radius; z <= centerZ + radius; z++) {
                 Chunk chunk = world.getChunkProvider().getLoadedChunk(x, z);
@@ -47,22 +48,18 @@ public class GuiSiegeCampNew {
                     for (int chunkX = 0; chunkX < 16; chunkX++) {
                         for (int chunkZ = 0; chunkZ < 16; chunkZ++) {
                             int y = chunk.getHeightValue(chunkX, chunkZ);
-                            MapColor blockcolor;
-                            try {
-                                Field blockcolorField = chunk.getBlockState(chunkX, y, chunkZ).getBlock().getClass().getDeclaredField("blockMapColor");
-                                blockcolorField.setAccessible(true);
-                                blockcolor = (MapColor) blockcolorField.get(chunk.getBlockState(chunkX, y, chunkZ).getBlock());
-                            } catch (NoSuchFieldException | IllegalAccessException e) {
-                                throw new RuntimeException(e);
-                            }
+                            BlockPos blockPos = new BlockPos((x << 4) | chunkX, y - 1, (z << 4) | chunkZ);
+                            IBlockState state = chunk.getBlockState(chunkX, y - 1, chunkZ);
+                            MapColor blockcolor = state.getMapColor(world, blockPos);
                             int index = chunkX + chunkZ * 16;
                             rawChunk[index] = (0xFF << 24) | blockcolor.colorValue;
                         }
                     }
                     int[] heightMapCopy = chunk.getHeightMap().clone();
-                    ChunkDynamicTextureThread thread = new ChunkDynamicTextureThread(4, "chunk" + x + "" + z, rawChunk, heightMapCopy);
+                    ChunkDynamicTextureThread thread = new ChunkDynamicTextureThread(4, "chunk" + chunkID, rawChunk, heightMapCopy);
                     threads.add(thread);
                     thread.run();
+                    chunkID++;
                 }
             }
         }
@@ -101,8 +98,19 @@ public class GuiSiegeCampNew {
 
         ModularPanel panel = ModularPanel.defaultPanel("citadel_upgrade_panel")
                 .width(500)
-                .height(500)
-                .child(new MapDrawable("chunk11").asWidget().size(16*4, 16*4));
+                .height(500);
+
+        int id = 0;
+
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 5; j++) {
+                panel.child(new MapDrawable("chunk" + id).asWidget()
+                        .size(16 * 4)
+                        .pos((i * (16 * 4)), (j * (16 * 4))
+                        ));
+                id++;
+            }
+        }
 
         return new ModularScreen(panel);
     }

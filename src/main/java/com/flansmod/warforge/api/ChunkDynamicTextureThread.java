@@ -5,14 +5,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.util.ResourceLocation;
 
-import java.lang.reflect.Field;
+import java.awt.image.BufferedImage;
 
 public class ChunkDynamicTextureThread extends Thread {
+    final int[] rawChunk;
+    final int[] heightMapCopy;
     int scale;
     DynamicTexture mapTexture;
     String name;
-    final int[] rawChunk;
-    final int[] heightMapCopy;
 
     public ChunkDynamicTextureThread(int scale, String name, int[] rawChunk1, int[] heightMapCopy1) {
         this.scale = scale;
@@ -20,29 +20,6 @@ public class ChunkDynamicTextureThread extends Thread {
         this.rawChunk = rawChunk1;
         this.heightMapCopy = heightMapCopy1;
     }
-
-    @Override
-    public void run() {
-        int[] scaledBuffer = scaleRGBAArray(rawChunk, 16, 16, scale);
-        int[] scaledHeightMap = scaleRGBAArray(heightMapCopy, 16, 16, scale);
-        applyShading(scaledBuffer, 16 * scale, 16 * scale);
-
-        if (mapTexture == null) {
-            mapTexture = new DynamicTexture(16 * scale, 16 * scale);
-            Minecraft.getMinecraft().getTextureManager().loadTexture(new ResourceLocation(WarForgeMod.MODID, name), mapTexture);
-        }
-
-        try {
-            Field textureDataField = DynamicTexture.class.getDeclaredField("dynamicTextureData");
-            textureDataField.setAccessible(true);
-            textureDataField.set(mapTexture, scaledBuffer);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-        mapTexture.updateDynamicTexture();
-
-    }
-
 
     public static int[] scaleRGBAArray(int[] originalPixels, int originalWidth, int originalHeight, int scale) {
         int newWidth = originalWidth * scale;
@@ -126,5 +103,64 @@ public class ChunkDynamicTextureThread extends Thread {
         return (alpha << 24) | (r << 16) | (g << 8) | b;
     }
 
+    @Override
+    public void run() {
+        int[] scaledBuffer = scaleRGBAArray(rawChunk, 16, 16, scale);
+        int[] scaledHeightMap = scaleRGBAArray(heightMapCopy, 16, 16, scale);
+        int size = 16 * scale;
+        applyHeightMap(scaledBuffer,scaledHeightMap);
+        applyShading(scaledBuffer, size, size);
 
+        BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        image.setRGB(0, 0, size, size, scaledBuffer, 0, size);
+        if (mapTexture == null) {
+            mapTexture = new DynamicTexture(image);
+            Minecraft.getMinecraft().getTextureManager().loadTexture(new ResourceLocation(WarForgeMod.MODID, name), mapTexture);
+        }
+
+
+        mapTexture.updateDynamicTexture();
+
+    }
+
+    public void applyHeightMap(int[] colorBuffer, int[] heightMap) {
+        int minHeight = Integer.MAX_VALUE;
+        int maxHeight = Integer.MIN_VALUE;
+
+        for (int h : heightMap) {
+            if (h < minHeight) minHeight = h;
+            if (h > maxHeight) maxHeight = h;
+        }
+
+        float range = maxHeight - minHeight + 1e-5f;
+
+        for (int i = 0; i < colorBuffer.length; i++) {
+            int rgb = colorBuffer[i];
+
+            // Normalize height: 0.0 to 1.0
+            float normalized = (heightMap[i] - minHeight) / range;
+
+            // Extract original RGB
+            int alpha = (rgb >>> 24) & 0xFF;
+            int red = (rgb >>> 16) & 0xFF;
+            int green = (rgb >>> 8) & 0xFF;
+            int blue = (rgb) & 0xFF;
+
+            // Apply brightness multiplier
+            float brightness = 0.6f + normalized * 0.4f; // keep brightness in [0.6, 1.0]
+
+            red = (int) (red * brightness);
+            green = (int) (green * brightness);
+            blue = (int) (blue * brightness);
+
+            // Clamp to [0,255]
+            red = Math.min(255, red);
+            green = Math.min(255, green);
+            blue = Math.min(255, blue);
+
+            colorBuffer[i] = (alpha << 24) | (red << 16) | (green << 8) | blue;
+        }
+
+
+    }
 }
