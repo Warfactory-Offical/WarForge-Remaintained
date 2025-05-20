@@ -223,7 +223,7 @@ public class GUIUpgradePanel {
                 .expanded();
 
 
-        Widget levelIntecator = new Column()
+        Widget levelIndicator = new Column()
                 .child(newLevel)
                 .child(claimIncrease)
                 .size(80, 20);
@@ -232,7 +232,7 @@ public class GUIUpgradePanel {
         // Button row
         Widget buttonRow = new Row()
                 .child(closeButton)
-                .child(levelIntecator)
+                .child(levelIndicator)
                 .child(upgradeButton)
                 .expanded()
                 .height(20)

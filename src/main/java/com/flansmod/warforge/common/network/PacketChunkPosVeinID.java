@@ -4,11 +4,14 @@ import akka.japi.Pair;
 import com.flansmod.warforge.api.Vein;
 import com.flansmod.warforge.api.VeinKey;
 import com.flansmod.warforge.common.DimChunkPos;
+import com.flansmod.warforge.common.WarForgeMod;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+
+import static com.flansmod.warforge.client.ClientProxy.CHUNK_VEIN_CACHE;
 
 public class PacketChunkPosVeinID extends PacketBase {
     public DimChunkPos veinLocation = null;
@@ -47,12 +50,12 @@ public class PacketChunkPosVeinID extends PacketBase {
     // always called on packet after decodeInto has been called
     @Override
     public void handleServerSide(EntityPlayerMP playerEntity) {
-
+        WarForgeMod.NETWORK.sendTo(this, playerEntity);  // 'encode into' handles getting of important data
     }
 
     // always called on packet after decodeInto has been called
     @Override
     public void handleClientSide(EntityPlayer clientPlayer) {
-
+        CHUNK_VEIN_CACHE.add(veinLocation, resultID, resultQualOrd);  // we now have the necessary data about the vein
     }
 }

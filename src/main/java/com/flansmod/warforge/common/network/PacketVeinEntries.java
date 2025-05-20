@@ -78,6 +78,7 @@ public class PacketVeinEntries extends PacketBase {
         // store the received veins
         for (int idOffset = 0; idOffset < orderedEntryList.size(); ++idOffset) {
             VEIN_ENTRIES.put(startID + idOffset, new Vein(orderedEntryList.get(idOffset), startID + idOffset));
+            WarForgeMod.LOGGER.atDebug().log("Received vein entry of <" + orderedEntryList.get(idOffset) + "> w/ id: " + (startID + idOffset));
         }
     }
 }

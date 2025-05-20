@@ -27,12 +27,11 @@ public class WarforgeCache<K, V> {
         this.maxSize = maxSize;
     }
 
+    // put the key in, overriding any previous association
     public synchronized void put(K key, V value) {
         purgeExpired();
 
-        if (cache.containsKey(key)) {
-            queue.remove(cache.get(key));
-        } else if (maxSize > 0 && cache.size() >= maxSize) {
+        if (!cache.containsKey(key) && maxSize > 0 && cache.size() >= maxSize) {
             evictOldest();
         }
 

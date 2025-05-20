@@ -40,6 +40,8 @@ public class ClientProxy extends CommonProxy
 
 	public static Int2ObjectOpenHashMap<Vein> VEIN_ENTRIES = null;
 
+	public static ChunkVeinCache CHUNK_VEIN_CACHE = new ChunkVeinCache();
+
 	public static KeyBinding factionChatKey = new KeyBinding("key.factionchat.desc",
 			KeyConflictContext.IN_GAME,
 			Keyboard.KEY_Y,

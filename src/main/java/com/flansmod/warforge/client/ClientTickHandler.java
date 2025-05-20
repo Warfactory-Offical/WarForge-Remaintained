@@ -4,12 +4,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import akka.japi.Pair;
 import com.flansmod.warforge.api.Vein;
+import com.flansmod.warforge.api.VeinKey;
 import com.flansmod.warforge.common.*;
 import com.flansmod.warforge.common.blocks.IClaim;
+import com.flansmod.warforge.common.network.PacketChunkPosVeinID;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
 import com.flansmod.warforge.client.*;
 
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -35,6 +39,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 
+import static com.flansmod.warforge.client.ClientProxy.CHUNK_VEIN_CACHE;
+
 public class ClientTickHandler 
 {
 	// FIXME: use something other than a tessellator
@@ -51,6 +57,9 @@ public class ClientTickHandler
 	public static long nextSiegeDayMs = 0L;
 	public static long nextYieldDayMs = 0L;
 
+	// -1 indicates the chunk has never been probed
+	public static Object2LongOpenHashMap<DimChunkPos> permitChunkReprobeMs = new Object2LongOpenHashMap<>();
+
 	private final HashMap<ItemStack, ResourceLocation> bannerTextures = new HashMap<ItemStack, ResourceLocation>();
 
 	public static boolean CLAIMS_DIRTY = false;
@@ -64,6 +73,13 @@ public class ClientTickHandler
 	}
 	@SubscribeEvent
 	public void onPlayerLogin(FMLNetworkEvent.ClientConnectedToServerEvent event) {
+		// init and clear stale data
+		permitChunkReprobeMs = new Object2LongOpenHashMap<>();
+		permitChunkReprobeMs.defaultReturnValue(-1);
+
+		// clear stale data
+		CHUNK_VEIN_CACHE.purge();
+		ClientProxy.VEIN_ENTRIES.clear();
 		WarForgeMod.NAMETAG_CACHE.purge(); //Purge to remove possible stale data
 	}
 
@@ -178,8 +194,6 @@ public class ClientTickHandler
 
 	}
 
-
-
 	@SubscribeEvent
 	public void onRenderHUD(RenderGameOverlayEvent event)
 	{
@@ -202,6 +216,22 @@ public class ClientTickHandler
 				if (infoToRender != null)
 				{
 					renderSiegeOverlay(mc, infoToRender, event);
+				}
+
+				// get the vein info
+				if (player.isSneaking()) {
+					DimChunkPos currPos = new DimChunkPos(player.dimension, player.getPosition());
+					Pair<Vein, VeinKey.Quality> veinInfo = CHUNK_VEIN_CACHE.get(currPos);
+
+					// probe the server for the data for this chunk
+					if (veinInfo == null && permitChunkReprobeMs.getLong(currPos) <= System.currentTimeMillis()) {
+						permitChunkReprobeMs.put(currPos, System.currentTimeMillis() + 60000);  // only req every min
+						PacketChunkPosVeinID packetChunkVeinRequest = new PacketChunkPosVeinID();
+						packetChunkVeinRequest.veinLocation = currPos;
+						WarForgeMod.NETWORK.sendToServer(packetChunkVeinRequest);
+					}
+
+					renderVeinData(mc, veinInfo, event);
 				}
 
 				// New Area Toast
@@ -261,6 +291,10 @@ public class ClientTickHandler
 		}
 
 		return closestInfo;
+	}
+
+	private void renderVeinData(Minecraft mc, Pair<Vein, VeinKey.Quality> veinInfo, RenderGameOverlayEvent event) {
+
 	}
 
 	private void renderSiegeOverlay(Minecraft mc, SiegeCampProgressInfo infoToRender, RenderGameOverlayEvent event)
