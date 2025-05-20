@@ -59,7 +59,7 @@ public class GUIUpgradePanel {
             return createNoMoreLevelsGui();
         }
 
-// Sorted by quantity
+        // Sorted by quantity
         Map<StackComparable, Integer> requirements = UPGRADE_HANDLER.getRequirementsFor(level + 1)
                 .entrySet().stream()
                 .sorted(Comparator.comparingInt(Map.Entry::getValue))

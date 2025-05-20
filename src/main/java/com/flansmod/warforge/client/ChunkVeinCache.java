@@ -31,4 +31,8 @@ public class ChunkVeinCache {
     public Pair<Vein, VeinKey.Quality> get(DimChunkPos chunkPos) {
         return cache.get(chunkPos);
     }
+
+    public boolean contains(DimChunkPos chunkPosKey) {
+        return cache.contains(chunkPosKey);
+    }
 }

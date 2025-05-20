@@ -180,6 +180,10 @@ public class VeinKey implements Comparable<VeinKey> {
                     return POOR;
             }
         }
+
+        public String getTranslationKey() {
+            return "warforge.info.vein." + this.toString().toLowerCase();
+        }
     }
 
     public static Pair<Vein, Quality> getVein(int dim, int chunkX, int chunkZ, long seed) {
