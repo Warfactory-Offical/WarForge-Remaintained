@@ -10,6 +10,9 @@ import io.netty.channel.ChannelHandlerContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import static com.flansmod.warforge.client.ClientProxy.CHUNK_VEIN_CACHE;
 
@@ -28,7 +31,7 @@ public class PacketChunkPosVeinID extends PacketBase {
         data.writeInt(veinLocation.z);
 
         // encode the vein index on the server
-        if (!Minecraft.getMinecraft().world.isRemote) {
+        if (FMLCommonHandler.instance().getSide().isServer()) {
             Pair<Vein, VeinKey.Quality> veinInfo = VeinKey.getVein(veinLocation, Minecraft.getMinecraft().world.getSeed());
             data.writeInt(veinInfo.first().getID());  // the client should have a copy of the vein to refer the ID w/
             data.writeByte((byte) veinInfo.second().ordinal());  // we need to tell them the quality
@@ -41,7 +44,7 @@ public class PacketChunkPosVeinID extends PacketBase {
         veinLocation = new DimChunkPos(data.readInt(), data.readInt(), data.readInt());
 
         // receive the ID on the client
-        if (Minecraft.getMinecraft().world.isRemote) {
+        if (FMLCommonHandler.instance().getSide().isClient()) {
             resultID = data.readInt();
             resultQualOrd = data.readByte();
         }
@@ -55,6 +58,7 @@ public class PacketChunkPosVeinID extends PacketBase {
 
     // always called on packet after decodeInto has been called
     @Override
+    @SideOnly(Side.CLIENT)
     public void handleClientSide(EntityPlayer clientPlayer) {
         CHUNK_VEIN_CACHE.add(veinLocation, resultID, resultQualOrd);  // we now have the necessary data about the vein
     }

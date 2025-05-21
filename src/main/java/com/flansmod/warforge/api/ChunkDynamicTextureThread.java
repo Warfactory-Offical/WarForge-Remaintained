@@ -6,6 +6,9 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.util.ResourceLocation;
 
 import java.awt.image.BufferedImage;
+import java.util.Queue;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 public class ChunkDynamicTextureThread extends Thread {
     final int[] rawChunk;
@@ -16,7 +19,7 @@ public class ChunkDynamicTextureThread extends Thread {
     DynamicTexture mapTexture;
     String name;
 
-    public ChunkDynamicTextureThread(int scale, String name, int[] rawChunk1, int[] heightMapCopy1, int maxHeight, int minHeight) {
+    public ChunkDynamicTextureThread( int scale, String name, int[] rawChunk1, int[] heightMapCopy1, int maxHeight, int minHeight) {
         this.scale = scale;
         this.name = name;
         this.rawChunk = rawChunk1;
@@ -119,11 +122,15 @@ public class ChunkDynamicTextureThread extends Thread {
         image.setRGB(0, 0, size, size, scaledBuffer, 0, size);
         if (mapTexture == null) {
             mapTexture = new DynamicTexture(image);
-            Minecraft.getMinecraft().getTextureManager().loadTexture(new ResourceLocation(WarForgeMod.MODID, name), mapTexture);
         }
+        Minecraft.getMinecraft().addScheduledTask(() -> {
+            Minecraft.getMinecraft().getTextureManager().loadTexture(
+                    new ResourceLocation(WarForgeMod.MODID, name),
+                    mapTexture
+            );
+            mapTexture.updateDynamicTexture();
+        });
 
-
-        mapTexture.updateDynamicTexture();
 
     }
 
@@ -135,7 +142,7 @@ public class ChunkDynamicTextureThread extends Thread {
             int rgb = colorBuffer[i];
 
             // Normalize height: 0.0 to 1.0
-            float normalized = (heightMap[i] - minHeight) / range;
+            float normalized = (float)Math.log(heightMap[i] - minHeight + 1) / (float)Math.log(maxHeight - minHeight + 1);
 
             // Extract original RGB
             int alpha = (rgb >>> 24) & 0xFF;
