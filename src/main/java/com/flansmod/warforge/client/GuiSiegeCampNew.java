@@ -37,14 +37,14 @@ public class GuiSiegeCampNew {
         int centerX = centerChunk.x;
         int centerZ = centerChunk.z;
         List<Thread> threads = new ArrayList<>();
-        Map<Chunk, ChunkPos> chunks = new LinkedHashMap<>();
+        Map<ChunkPos, Chunk> chunks = new LinkedHashMap<>();
         for (int x = centerX - radius; x <= centerX + radius; x++) {
             for (int z = centerZ - radius; z <= centerZ + radius; z++) {
                 Chunk chunk = world.getChunkProvider().getLoadedChunk(x, z);
-                if (chunk != null) chunks.put(chunk, chunk.getPos());
+                if (chunk != null) chunks.put(chunk.getPos(), chunk);
             }
         }
-        int[] minMax = chunks.keySet().parallelStream()
+        int[] minMax = chunks.values().parallelStream()
                 .map(chunk -> {
                     int localMin = Integer.MAX_VALUE;
                     int localMax = Integer.MIN_VALUE;
@@ -63,23 +63,50 @@ public class GuiSiegeCampNew {
         int globalMin = minMax[0];
         int globalMax = minMax[1];
         int chunkID = 0;
-        for (Chunk chunk : chunks.keySet()) {
-            int chunkX = chunk.x;
-            int chunkZ = chunk.z;
-            int[] rawChunk = new int[16 * 16];
-            for (int localX = 0; localX < 16; localX++) {
-                for (int localZ = 0; localZ < 16; localZ++) {
-                    int y = chunk.getHeightValue(localX, localZ);
-                    BlockPos blockPos = new BlockPos((chunkX << 4) | localX, y - 1, (chunkZ << 4) | localZ);
-                    IBlockState state = chunk.getBlockState(localX, y - 1, localZ);
-                    MapColor blockcolor = state.getMapColor(world, blockPos);
-                    int index = localX + localZ * 16;
-                    rawChunk[index] = (0xFF << 24) | blockcolor.colorValue;
+
+        for (Chunk chunk : chunks.values()) {
+            ChunkPos pos = chunk.getPos();
+            int chunkX = pos.x;
+            int chunkZ = pos.z;
+
+            // 17×17 padded color + height
+            int[] rawChunk17 = new int[17 * 17];
+            int[] heightMap17 = new int[17 * 17];
+
+            for (int dz = -1; dz <= 15; dz++) {
+                for (int dx = -1; dx <= 15; dx++) {
+                    int worldX = (chunkX << 4) + dx;
+                    int worldZ = (chunkZ << 4) + dz;
+                    int neighborCX = worldX >> 4;
+                    int neighborCZ = worldZ >> 4;
+                    int localX = worldX & 15;
+                    int localZ = worldZ & 15;
+
+                    Chunk neighbor = chunks.get(new ChunkPos(neighborCX, neighborCZ));
+                    int index = (dx + 1) + (dz + 1) * 17;
+
+                    if (neighbor != null) {
+                        int y = neighbor.getHeightValue(localX, localZ);
+                        heightMap17[index] = y;
+                        IBlockState state = neighbor.getBlockState(localX, y - 1, localZ);
+                        MapColor mapColor = state.getMapColor(world, new BlockPos(worldX, y - 1, worldZ));
+                        rawChunk17[index] = 0xFF000000 | mapColor.colorValue;
+                    } else {
+                        heightMap17[index] = 0; // Fallback: sea level or void
+                        rawChunk17[index] = 0xFF000000; // Black
+                    }
                 }
             }
-            int[] heightMapCopy = chunk.getHeightMap().clone();
 
-            ChunkDynamicTextureThread thread = new ChunkDynamicTextureThread(4, "chunk" + chunkID, rawChunk, heightMapCopy, globalMax, globalMin);
+            ChunkDynamicTextureThread thread = new ChunkDynamicTextureThread(
+                    4,
+                    "chunk" + chunkID,
+                    rawChunk17,
+                    heightMap17,
+                    globalMax,
+                    globalMin
+            );
+
             threads.add(thread);
             thread.start();
             chunkID++;

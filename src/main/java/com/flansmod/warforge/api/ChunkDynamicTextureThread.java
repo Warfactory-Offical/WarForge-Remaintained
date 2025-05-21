@@ -37,7 +37,6 @@ public class ChunkDynamicTextureThread extends Thread {
             for (int x = 0; x < originalWidth; x++) {
                 int color = originalPixels[x + y * originalWidth];
 
-                // Fill scale x scale block in scaledPixels
                 int startX = x * scale;
                 int startY = y * scale;
 
@@ -53,47 +52,34 @@ public class ChunkDynamicTextureThread extends Thread {
         return scaledPixels;
     }
 
-    public static void applyShading(int[] rawChunk, int width, int height) {
+    public static void applyShadingWithHeight(int[] rawChunk, int[] heightMap, int width, int height) {
         int[] shaded = new int[rawChunk.length];
 
         for (int z = 0; z < height; z++) {
             for (int x = 0; x < width; x++) {
                 int idx = x + z * width;
                 int baseColor = rawChunk[idx];
+                int baseHeight = heightMap[idx];
 
-                // Avoid edge overflow by clamping neighbors
                 int idxEast = (x < width - 1) ? idx + 1 : idx;
                 int idxSouth = (z < height - 1) ? idx + width : idx;
 
-                // Extract brightness from color (simple approximation)
-                int baseBrightness = brightness(rawChunk[idx]);
-                int eastBrightness = brightness(rawChunk[idxEast]);
-                int southBrightness = brightness(rawChunk[idxSouth]);
+                int eastHeight = heightMap[idxEast];
+                int southHeight = heightMap[idxSouth];
 
-                // Calculate brightness difference (a simple lighting gradient)
-                int diffEast = baseBrightness - eastBrightness;
-                int diffSouth = baseBrightness - southBrightness;
+                int heightDiffEast = baseHeight - eastHeight;
+                int heightDiffSouth = baseHeight - southHeight;
 
-                // Combine diffs to get shading factor (clamped)
-                float shadeFactor = 1.0f - (diffEast + diffSouth) * 0.05f;
-                shadeFactor = Math.max(0.7f, Math.min(1.0f, shadeFactor)); // Clamp between 0.6 and 1.0
+                float shadeFactor = 1.0f - ((heightDiffEast + heightDiffSouth) / 2f) * 0.7f;
+                shadeFactor = Math.max(0.7f, Math.min(1.0f, shadeFactor));
 
-                // Apply shading by scaling RGB channels
                 shaded[idx] = applyBrightness(baseColor, shadeFactor);
             }
         }
-
-        // Copy back shaded colors to original buffer
         System.arraycopy(shaded, 0, rawChunk, 0, rawChunk.length);
     }
 
-    // Helper: approximate brightness as average of RGB channels
-    private static int brightness(int color) {
-        int r = (color >> 16) & 0xFF;
-        int g = (color >> 8) & 0xFF;
-        int b = color & 0xFF;
-        return (r + g + b) / 3;
-    }
+
 
     // Helper: multiply RGB by brightness factor, keep alpha unchanged
     private static int applyBrightness(int color, float factor) {
@@ -112,17 +98,29 @@ public class ChunkDynamicTextureThread extends Thread {
 
     @Override
     public void run() {
-        int size = 16 * scale;
+        int padded = 17;
+        int paddedScaled = padded * scale;
+
         applyHeightMap(rawChunk, heightMapCopy);
-        int[] scaledBuffer = scaleRGBAArray(rawChunk, 16, 16, scale);
-        applyShading(scaledBuffer, size, size);
-        BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-        image.setRGB(0, 0, size, size, scaledBuffer, 0, size);
 
+        int[] scaled = scaleRGBAArray(rawChunk, padded, padded, scale);
+
+        applyShadingWithHeight(scaled, scaleRGBAArray(heightMapCopy, 17, 17, 4), paddedScaled, paddedScaled);
+
+        // Crop 16×16 center
+        int[] finalBuffer = new int[16 * scale * 16 * scale];
+        for (int z = 0; z < 16 * scale; z++) {
+            int srcOffset = (z + scale) * paddedScaled + scale;
+            int dstOffset = z * 16 * scale;
+            System.arraycopy(scaled, srcOffset, finalBuffer, dstOffset, 16 * scale);
+        }
+
+        // Final image
+        BufferedImage image = new BufferedImage(16 * scale, 16 * scale, BufferedImage.TYPE_INT_ARGB);
+        image.setRGB(0, 0, 16 * scale, 16 * scale, finalBuffer, 0, 16 * scale);
         queue.add(new RegisterTextureAction(image, name));
-
-
     }
+
 
     public void applyHeightMap(int[] colorBuffer, int[] heightMap) {
 
