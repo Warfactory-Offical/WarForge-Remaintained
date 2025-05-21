@@ -70,6 +70,7 @@ public class GuiSiegeCampNew {
             int chunkZ = pos.z;
 
             // 17×17 padded color + height
+            //FIXME: fucked up the border I think, not major but can cause tiling artifacts
             int[] rawChunk17 = new int[17 * 17];
             int[] heightMap17 = new int[17 * 17];
 
@@ -92,8 +93,13 @@ public class GuiSiegeCampNew {
                         MapColor mapColor = state.getMapColor(world, new BlockPos(worldX, y - 1, worldZ));
                         rawChunk17[index] = 0xFF000000 | mapColor.colorValue;
                     } else {
-                        heightMap17[index] = 0; // Fallback: sea level or void
-                        rawChunk17[index] = 0xFF000000; // Black
+                        int fallbackX = Math.min(Math.max(localX, 0), 15);
+                        int fallbackZ = Math.min(Math.max(localZ, 0), 15);
+                        int y = chunk.getHeightValue(fallbackX, fallbackZ);
+                        heightMap17[index] = y;
+                        IBlockState state = chunk.getBlockState(fallbackX, y - 1, fallbackZ);
+                        MapColor mapColor = state.getMapColor(world, new BlockPos((chunkX << 4) + fallbackX, y - 1, (chunkZ << 4) + fallbackZ));
+                        rawChunk17[index] = 0xFF000000 | mapColor.colorValue;
                     }
                 }
             }
