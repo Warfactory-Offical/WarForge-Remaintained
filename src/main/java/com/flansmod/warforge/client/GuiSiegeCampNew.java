@@ -16,10 +16,11 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import scala.Int;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class GuiSiegeCampNew {
 
@@ -36,14 +37,14 @@ public class GuiSiegeCampNew {
         int centerX = centerChunk.x;
         int centerZ = centerChunk.z;
         List<Thread> threads = new ArrayList<>();
-        List<Chunk> chunks = new ArrayList<>();
+        Map<Chunk, ChunkPos> chunks = new LinkedHashMap<>();
         for (int x = centerX - radius; x <= centerX + radius; x++) {
             for (int z = centerZ - radius; z <= centerZ + radius; z++) {
                 Chunk chunk = world.getChunkProvider().getLoadedChunk(x, z);
-                if (chunk != null) chunks.add(chunk);
+                if (chunk != null) chunks.put(chunk, chunk.getPos());
             }
         }
-        int[] minMax = chunks.parallelStream()
+        int[] minMax = chunks.keySet().parallelStream()
                 .map(chunk -> {
                     int localMin = Integer.MAX_VALUE;
                     int localMax = Integer.MIN_VALUE;
@@ -60,9 +61,9 @@ public class GuiSiegeCampNew {
                         });
 
         int globalMin = minMax[0];
-        int globalMax =  minMax[1];
+        int globalMax = minMax[1];
         int chunkID = 0;
-        for (Chunk chunk : chunks) {
+        for (Chunk chunk : chunks.keySet()) {
             int chunkX = chunk.x;
             int chunkZ = chunk.z;
             int[] rawChunk = new int[16 * 16];
@@ -89,14 +90,18 @@ public class GuiSiegeCampNew {
             if (textureAction != null)
                 textureAction.register();
         }
+        int offset = 6;
 
-        ModularPanel panel = ModularPanel.defaultPanel("citadel_upgrade_panel").width(500).height(500);
+        ModularPanel panel = ModularPanel.defaultPanel("citadel_upgrade_panel")
+                .width((16 * 4) * 5 + (2 * offset))
+                .height((16 * 4) * 5 + (2 * offset)
+                );
 
         int id = 0;
 
         for (int i = 0; i < 5; i++) {
             for (int j = 0; j < 5; j++) {
-                panel.child(new MapDrawable("chunk" + id).asWidget().size(16 * 4).pos((i * (16 * 4)), (j * (16 * 4))));
+                panel.child(new MapDrawable("chunk" + id).asWidget().size(16 * 4).pos((i * (16 * 4) + offset), (j * (16 * 4) + offset)));
                 id++;
             }
         }

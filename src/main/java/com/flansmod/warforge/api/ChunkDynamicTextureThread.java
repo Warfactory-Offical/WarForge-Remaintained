@@ -112,10 +112,9 @@ public class ChunkDynamicTextureThread extends Thread {
 
     @Override
     public void run() {
-        int[] scaledBuffer = scaleRGBAArray(rawChunk, 16, 16, scale);
-        int[] scaledHeightMap = scaleRGBAArray(heightMapCopy, 16, 16, scale);
         int size = 16 * scale;
-        applyHeightMap(scaledBuffer, scaledHeightMap);
+        applyHeightMap(rawChunk, heightMapCopy);
+        int[] scaledBuffer = scaleRGBAArray(rawChunk, 16, 16, scale);
         applyShading(scaledBuffer, size, size);
         BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
         image.setRGB(0, 0, size, size, scaledBuffer, 0, size);
