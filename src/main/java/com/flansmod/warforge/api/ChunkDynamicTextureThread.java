@@ -1,25 +1,25 @@
 package com.flansmod.warforge.api;
 
 import com.flansmod.warforge.common.WarForgeMod;
+import lombok.RequiredArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.util.ResourceLocation;
 
 import java.awt.image.BufferedImage;
 import java.util.Queue;
-import java.util.function.BiFunction;
-import java.util.function.Function;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ChunkDynamicTextureThread extends Thread {
+    public static Queue<RegisterTextureAction> queue = new ConcurrentLinkedQueue<>();
     final int[] rawChunk;
     final int[] heightMapCopy;
-    int scale;
     final int maxHeight;
     final int minHeight;
-    DynamicTexture mapTexture;
+    int scale;
     String name;
 
-    public ChunkDynamicTextureThread( int scale, String name, int[] rawChunk1, int[] heightMapCopy1, int maxHeight, int minHeight) {
+    public ChunkDynamicTextureThread(int scale, String name, int[] rawChunk1, int[] heightMapCopy1, int maxHeight, int minHeight) {
         this.scale = scale;
         this.name = name;
         this.rawChunk = rawChunk1;
@@ -115,21 +115,12 @@ public class ChunkDynamicTextureThread extends Thread {
         int[] scaledBuffer = scaleRGBAArray(rawChunk, 16, 16, scale);
         int[] scaledHeightMap = scaleRGBAArray(heightMapCopy, 16, 16, scale);
         int size = 16 * scale;
-        applyHeightMap(scaledBuffer,scaledHeightMap);
+        applyHeightMap(scaledBuffer, scaledHeightMap);
         applyShading(scaledBuffer, size, size);
-
         BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
         image.setRGB(0, 0, size, size, scaledBuffer, 0, size);
-        if (mapTexture == null) {
-            mapTexture = new DynamicTexture(image);
-        }
-        Minecraft.getMinecraft().addScheduledTask(() -> {
-            Minecraft.getMinecraft().getTextureManager().loadTexture(
-                    new ResourceLocation(WarForgeMod.MODID, name),
-                    mapTexture
-            );
-            mapTexture.updateDynamicTexture();
-        });
+
+        queue.add(new RegisterTextureAction(image, name));
 
 
     }
@@ -142,7 +133,7 @@ public class ChunkDynamicTextureThread extends Thread {
             int rgb = colorBuffer[i];
 
             // Normalize height: 0.0 to 1.0
-            float normalized = (float)Math.log(heightMap[i] - minHeight + 1) / (float)Math.log(maxHeight - minHeight + 1);
+            float normalized = (float) Math.log(heightMap[i] - minHeight + 1) / (float) Math.log(maxHeight - minHeight + 1);
 
             // Extract original RGB
             int alpha = (rgb >>> 24) & 0xFF;
@@ -163,6 +154,21 @@ public class ChunkDynamicTextureThread extends Thread {
             blue = Math.min(255, blue);
 
             colorBuffer[i] = (alpha << 24) | (red << 16) | (green << 8) | blue;
+        }
+
+
+    }
+
+    @RequiredArgsConstructor
+    public static class RegisterTextureAction {
+        final BufferedImage mapTexture;
+        final String name;
+
+        public void register() {
+            Minecraft.getMinecraft().getTextureManager().loadTexture(
+                    new ResourceLocation(WarForgeMod.MODID, name),
+                    new DynamicTexture(mapTexture)
+            );
         }
 
 
