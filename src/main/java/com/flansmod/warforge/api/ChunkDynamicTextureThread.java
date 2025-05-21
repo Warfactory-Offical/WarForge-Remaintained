@@ -127,8 +127,6 @@ public class ChunkDynamicTextureThread extends Thread {
 
     public void applyHeightMap(int[] colorBuffer, int[] heightMap) {
 
-        float range = maxHeight - minHeight + 1e-5f;
-
         for (int i = 0; i < colorBuffer.length; i++) {
             int rgb = colorBuffer[i];
 

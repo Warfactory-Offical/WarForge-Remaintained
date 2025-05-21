@@ -16,6 +16,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 import static com.flansmod.warforge.client.ClientProxy.CHUNK_VEIN_CACHE;
 
+//FIXME: this seems to completely break the fucking networking
 public class PacketChunkPosVeinID extends PacketBase {
     public DimChunkPos veinLocation = null;
     public int resultID = -1;
@@ -31,11 +32,11 @@ public class PacketChunkPosVeinID extends PacketBase {
         data.writeInt(veinLocation.z);
 
         // encode the vein index on the server
-        if (FMLCommonHandler.instance().getSide().isServer()) {
+
+        //PS: do not do sided stuff in encode/decode
             Pair<Vein, VeinKey.Quality> veinInfo = VeinKey.getVein(veinLocation, Minecraft.getMinecraft().world.getSeed());
             data.writeInt(veinInfo.first().getID());  // the client should have a copy of the vein to refer the ID w/
             data.writeByte((byte) veinInfo.second().ordinal());  // we need to tell them the quality
-        }
     }
 
     // called by the packet handler to make the packet from a byte stream after construction
@@ -44,10 +45,8 @@ public class PacketChunkPosVeinID extends PacketBase {
         veinLocation = new DimChunkPos(data.readInt(), data.readInt(), data.readInt());
 
         // receive the ID on the client
-        if (FMLCommonHandler.instance().getSide().isClient()) {
             resultID = data.readInt();
             resultQualOrd = data.readByte();
-        }
     }
 
     // always called on packet after decodeInto has been called
