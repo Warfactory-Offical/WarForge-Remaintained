@@ -84,7 +84,7 @@ public class ClientTickHandler
 
 		// clear stale data
 		CHUNK_VEIN_CACHE.purge();
-		ClientProxy.VEIN_ENTRIES.clear();
+		//ClientProxy.VEIN_ENTRIES.clear(); //FIXME: doesnt init properly
 		WarForgeMod.NAMETAG_CACHE.purge(); //Purge to remove possible stale data
 	}
 
@@ -126,60 +126,62 @@ public class ClientTickHandler
 			CLAIMS_DIRTY = true;
 		}
 
-		DimChunkPos standing = new DimChunkPos(player.dimension, player.getPosition());
+		if(player != null) {
+			DimChunkPos standing = new DimChunkPos(player.dimension, player.getPosition());
 
-		// when we leave a chunk, restart iteration on vein members
-		if (standing != playerChunkPos) {
-			veinRenderStartTime = -1;
-		}
+			// when we leave a chunk, restart iteration on vein members
+			if (standing != playerChunkPos) {
+				veinRenderStartTime = -1;
+			}
 
-		// Show new area timer if configured
-		if (WarForgeConfig.SHOW_NEW_AREA_TIMER > 0.0f && player != null) {
+			// Show new area timer if configured
+			if (WarForgeConfig.SHOW_NEW_AREA_TIMER > 0.0f) {
 
-			// Only perform claim checks if the player has moved to a new chunk
-			if (!standing.equals(playerChunkPos)) {
-				IClaim preClaim = null;
-				IClaim postClaim = null;
+				// Only perform claim checks if the player has moved to a new chunk
+				if (!standing.equals(playerChunkPos)) {
+					IClaim preClaim = null;
+					IClaim postClaim = null;
 
-				// Iterate only through the necessary tile entities (avoid loading all entities unnecessarily)
-				for (TileEntity te : player.world.loadedTileEntityList) {
-					if (te instanceof IClaim) {
-						DimChunkPos tePos = ((IClaim) te).getClaimPos().toChunkPos();
-						if (tePos.equals(playerChunkPos)) {
-							preClaim = (IClaim) te;
-						}
-						if (tePos.equals(standing)) {
-							postClaim = (IClaim) te;
+					// Iterate only through the necessary tile entities (avoid loading all entities unnecessarily)
+					for (TileEntity te : player.world.loadedTileEntityList) {
+						if (te instanceof IClaim) {
+							DimChunkPos tePos = ((IClaim) te).getClaimPos().toChunkPos();
+							if (tePos.equals(playerChunkPos)) {
+								preClaim = (IClaim) te;
+							}
+							if (tePos.equals(standing)) {
+								postClaim = (IClaim) te;
+							}
 						}
 					}
-				}
 
-				// Generate area message only if needed (reduce redundant logic)
-				if (preClaim == null) {
-					if (postClaim != null) {
-						// Entered a new claim
-						areaMessage = "Entering " + postClaim.getClaimDisplayName();
-						areaMessageColour = postClaim.getColour();
-						newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
-					}
-				} else // Left a claim
-				{
-					if (postClaim == null) {
-						// Gone to nowhere
-						areaMessage = "Leaving " + preClaim.getClaimDisplayName();
-						areaMessageColour = preClaim.getColour();
-						newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
-					} else {
-						// Entered another claim, possibly different faction
-						if (!preClaim.getFaction().equals(postClaim.getFaction())) {
-							areaMessage = "Leaving " + preClaim.getClaimDisplayName() + ", Entering " + postClaim.getClaimDisplayName();
+					// Generate area message only if needed (reduce redundant logic)
+					if (preClaim == null) {
+						if (postClaim != null) {
+							// Entered a new claim
+							areaMessage = "Entering " + postClaim.getClaimDisplayName();
 							areaMessageColour = postClaim.getColour();
 							newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
 						}
+					} else // Left a claim
+					{
+						if (postClaim == null) {
+							// Gone to nowhere
+							areaMessage = "Leaving " + preClaim.getClaimDisplayName();
+							areaMessageColour = preClaim.getColour();
+							newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
+						} else {
+							// Entered another claim, possibly different faction
+							if (!preClaim.getFaction().equals(postClaim.getFaction())) {
+								areaMessage = "Leaving " + preClaim.getClaimDisplayName() + ", Entering " + postClaim.getClaimDisplayName();
+								areaMessageColour = postClaim.getColour();
+								newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
+							}
+						}
 					}
-				}
 
-				playerChunkPos = standing;
+					playerChunkPos = standing;
+				}
 			}
 		}
 
