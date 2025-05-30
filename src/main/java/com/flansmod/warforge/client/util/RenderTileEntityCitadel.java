@@ -28,7 +28,7 @@ public class RenderTileEntityCitadel extends TileEntitySpecialRenderer<TileEntit
 
         GlStateManager.translate(x, y + 1, z+1);
         GlStateManager.translate(+0.5, 0, -0.5);
-        GlStateManager.rotate(te.rotation + partialTicks, 0, 1, 0);
+        GlStateManager.rotate(te.rotation, 0, 1, 0);
         GlStateManager.translate(-0.5, 0, +0.5);
         Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelRenderer().renderModelBrightness(model, blockState, 1, false);
 

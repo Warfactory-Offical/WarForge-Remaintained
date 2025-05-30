@@ -7,8 +7,11 @@ import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketFactionInfo;
 import com.flansmod.warforge.server.Faction;
 import com.flansmod.warforge.server.FactionStorage;
+import net.minecraft.block.BlockHorizontal;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.properties.PropertyDirection;
+import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
@@ -23,6 +26,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
@@ -38,11 +42,14 @@ import static com.flansmod.warforge.common.blocks.BlockDummy.modelEnum.KING;
 import static com.flansmod.warforge.common.blocks.BlockDummy.modelEnum.TRANSLUCENT;
 
 public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvider, IMultiBlock {
+    public static final PropertyDirection FACING = BlockHorizontal.FACING;
+
     public BlockCitadel(Material materialIn) {
         super(materialIn);
         this.setCreativeTab(CreativeTabs.COMBAT);
         this.setBlockUnbreakable();
-        this.setResistance(30000000f);
+        this.setResistance(30000000f); //Makes sense. We probably don't wanna let people bomb it
+        this.setDefaultState(this.blockState.getBaseState().withProperty(FACING, EnumFacing.NORTH));
     }
 
     public void initMap() {
@@ -97,6 +104,8 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
 
     @Override
     public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack) {
+        EnumFacing facing = placer.getHorizontalFacing().getOpposite();
+        world.setBlockState(pos, state.withProperty(FACING, facing), 2);
         TileEntity te = world.getTileEntity(pos);
         if (te != null) {
             TileEntityCitadel citadel = (TileEntityCitadel) te;
@@ -105,6 +114,22 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
 //            super.onBlockPlacedBy(world, pos, state, placer, stack);
         }
     }
+
+    @Override
+    protected BlockStateContainer createBlockState() {
+        return new BlockStateContainer(this, FACING);
+    }
+
+    @Override
+    public IBlockState getStateFromMeta(int meta) {
+        return this.getDefaultState().withProperty(FACING, EnumFacing.HORIZONTALS[meta]);
+    }
+
+    @Override
+    public int getMetaFromState(IBlockState state) {
+        return state.getValue(FACING).getHorizontalIndex();
+    }
+
 
     @Override
     public boolean eventReceived(IBlockState state, World worldIn, BlockPos pos, int id, int param) {
@@ -152,9 +177,16 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
 
     @Override
     public boolean canEntityDestroy(IBlockState state, IBlockAccess world, BlockPos pos, Entity entity) {
-        return false;
+        TileEntityCitadel thisCitadel = (TileEntityCitadel) world.getTileEntity(pos);
+        if (!thisCitadel.factionUUID.equals(Faction.nullUuid)) {
+            return false;
+        }
+        return true;
     }
 
+    /*
+    We'll worry about this later o algo
+     */
     @Override
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
         TileEntity tileentity = worldIn.getTileEntity(pos);
@@ -163,7 +195,13 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
             InventoryHelper.dropInventoryItems(worldIn, pos, (TileEntityYieldCollector) tileentity);
             worldIn.updateComparatorOutputLevel(pos, this);
         }
-
-        super.breakBlock(worldIn, pos, state);
+        TileEntityCitadel thisCitadel = (TileEntityCitadel) worldIn.getTileEntity(pos);
+        if(thisCitadel.factionUUID.equals(Faction.nullUuid)) {
+            worldIn.setBlockToAir(pos);
+            worldIn.setBlockToAir(pos.up(1));
+            worldIn.setBlockToAir(pos.up(2));
+            thisCitadel.clear();
+            super.breakBlock(worldIn, pos, state);
+        }
     }
 }

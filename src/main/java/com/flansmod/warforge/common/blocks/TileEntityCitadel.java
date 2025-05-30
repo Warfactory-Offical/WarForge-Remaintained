@@ -12,22 +12,25 @@ import net.minecraft.item.ItemShield;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.WorldServer;
 
 import java.util.UUID;
 
+import static com.flansmod.warforge.common.blocks.BlockCitadel.FACING;
 import static com.flansmod.warforge.common.blocks.BlockDummy.MODEL;
 
-public class TileEntityCitadel extends TileEntityYieldCollector implements IClaim, ITickable {
+public class   TileEntityCitadel extends TileEntityYieldCollector implements IClaim {
     public static final int BANNER_SLOT_INDEX = NUM_BASE_SLOTS;
     public static final int NUM_SLOTS = NUM_BASE_SLOTS + 1;
 
     public UUID placer = Faction.nullUuid;
-    public float rotation = 0f;
+    public float rotation;
 
     // The banner stack is an optional slot that sets all banners in owned chunks to copy the design
     protected ItemStack bannerStack;
@@ -39,6 +42,23 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
     public void onPlacedBy(EntityLivingBase placer) {
         // This locks in the placer as the only person who can create a faction using the interface on this citadel
         this.placer = placer.getUniqueID();
+        int newRot = Math.round((placer.getRotationYawHead())/90) * 90;
+        rotation = 0;
+        EnumFacing CorysJewNose = world.getBlockState(new BlockPos(pos.getX(),pos.getY(),pos.getZ())).getValue(FACING);
+        switch(CorysJewNose) {
+            case NORTH: //WORKING
+                rotation = 270;
+                break;
+            case EAST: //WORKING
+                rotation = 180;
+                break;
+            case SOUTH: //WORKING
+                rotation = 90;
+                break;
+            case WEST: //WORKING
+                rotation = 0;
+        }
+
     }
 
     // IClaim
@@ -150,9 +170,14 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
         bannerStack = ItemStack.EMPTY;
     }
 
+    /**
+     * Builds the statue and assigns rotation.
+     * @param faction faction to build with.
+     */
     @Override
     public void onServerSetFaction(Faction faction) {
 
+        //To do: save rotation to NBT
         IBlockState state = world.getBlockState(pos);
         world.setBlockState(pos.up(), Content.statue.getDefaultState().withProperty(MODEL, BlockDummy.modelEnum.KNIGHT), 3);
         world.notifyBlockUpdate(pos.up(), state, state, 3);
@@ -215,9 +240,4 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
         placer = nbt.getUniqueId("placer");
     }
 
-    @Override
-    public void update() {
-        rotation++;
-
-    }
 }
