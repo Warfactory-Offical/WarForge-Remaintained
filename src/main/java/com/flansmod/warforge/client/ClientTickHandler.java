@@ -84,7 +84,7 @@ public class ClientTickHandler
 
 		// clear stale data
 		CHUNK_VEIN_CACHE.purge();
-		//ClientProxy.VEIN_ENTRIES.clear(); //FIXME: doesnt init properly
+		ClientProxy.VEIN_ENTRIES.clear();
 		WarForgeMod.NAMETAG_CACHE.purge(); //Purge to remove possible stale data
 	}
 
@@ -209,18 +209,20 @@ public class ClientTickHandler
 
 				// get the vein info
 				if (player.isSneaking()) {
+					WarForgeMod.LOGGER.atInfo().log("You are sneaking");
 					DimChunkPos currPos = new DimChunkPos(player.dimension, player.getPosition());
+					boolean hasPos = CHUNK_VEIN_CACHE.contains(currPos);
 					Pair<Vein, VeinKey.Quality> veinInfo = CHUNK_VEIN_CACHE.get(currPos);
 
 					// probe the server for the data for this chunk
-					if (veinInfo == null && permitChunkReprobeMs.getLong(currPos) <= System.currentTimeMillis()) {
+					if (!hasPos && permitChunkReprobeMs.getLong(currPos) <= System.currentTimeMillis()) {
 						permitChunkReprobeMs.put(currPos, System.currentTimeMillis() + 60000);  // only ping every min
 						PacketChunkPosVeinID packetChunkVeinRequest = new PacketChunkPosVeinID();
 						packetChunkVeinRequest.veinLocation = currPos;
 						WarForgeMod.NETWORK.sendToServer(packetChunkVeinRequest);
 					}
 
-					renderVeinData(mc, veinInfo, CHUNK_VEIN_CACHE.contains(currPos), event);
+					renderVeinData(mc, veinInfo, hasPos, event);
 				}
 
 				// New Area Toast
@@ -282,23 +284,33 @@ public class ClientTickHandler
 		// even if we aren't rendering, count up start time to indicate we are within the same chunk as before
 		long currTimeMs = System.currentTimeMillis();
 		if (veinRenderStartTime == -1) { veinRenderStartTime = currTimeMs; }  // timer restarted
-		float displayXPos = Minecraft.getMinecraft().displayWidth / 4;
-		float yText = 16;
+		float displayXPos = (float) event.getResolution().getScaledWidth() / 2; // Centered;
+		float yText = 32;
 
 		// even though intelliJ thinks veinInfo is never null, it definitely should be able to be
 		// we render either the item, or some waiting icon
 		String itemTranslationKey = null;
+		int index = -1;
+		ItemStack currMemberItemStack = null;
 		if (veinInfo != null)  {
-			int index = (int) ((currTimeMs - veinRenderStartTime) / WarForgeConfig.VEIN_MEMBER_DISPLAY_TIME_MS);
+			index = (int) ((currTimeMs - veinRenderStartTime) / WarForgeConfig.VEIN_MEMBER_DISPLAY_TIME_MS);
 			Item currMemberItem = ForgeRegistries.ITEMS.getValue(veinInfo.first().component_ids[index % veinInfo.first().component_ids.length]);
 			if (currMemberItem == null) {
 				WarForgeMod.LOGGER.atError().log("Got null item for vein " + veinInfo.first().VEIN_ENTRY);
 				return;
 			}
 
-			ItemStack currMemberItemStack = new ItemStack(currMemberItem, 1);
+			currMemberItemStack = new ItemStack(currMemberItem, 1);
 			itemTranslationKey = currMemberItem.getTranslationKey();
+		}
 
+		// either use the cached string or make a new one if either no cached exists or we are in a new chunk
+		ArrayList<String> veinInfoStrings = cachedVeinStrings;
+		if (cachedVeinStrings == null || veinRenderStartTime == -1) {
+			veinInfoStrings = createVeinInfoStrings(veinInfo, itemTranslationKey, hasCached);
+		}
+
+		if (veinInfo != null) {
 			// prepare to render
 			GlStateManager.pushMatrix();
 			RenderHelper.enableGUIStandardItemLighting();
@@ -317,25 +329,19 @@ public class ClientTickHandler
 			GlStateManager.popMatrix();
 		}
 
-		// either use the cached string or make a new one if either no cached exists or we are in a new chunk
-		ArrayList<String> veinInfoStrings = cachedVeinStrings;
-		if (cachedVeinStrings == null || veinRenderStartTime == -1) {
-			veinInfoStrings = createVeinInfoString(veinInfo, itemTranslationKey, hasCached);
-		}
-
-		float xText = displayXPos + (veinInfo == null ? 0 : 20);  // shift away from component texture if it was displayed
+		final float xTextCenter = displayXPos + (veinInfo == null ? 0 : 20);  // shift away from component texture if it was displayed
 
 		// draw the vein info
-		mc.fontRenderer.drawStringWithShadow(veinInfoStrings.get(0), xText, yText, 0xFFFFFF);
-		xText += 4;
+		mc.fontRenderer.drawStringWithShadow(veinInfoStrings.get(0), xTextCenter - (float) mc.fontRenderer.getStringWidth(veinInfoStrings.get(0)) / 2, yText, 0xFFFFFF);
 
-		for (String currFormattedComp : veinInfoStrings) {
-			yText += 6;
-			mc.fontRenderer.drawStringWithShadow(currFormattedComp, xText, yText, 0xFFFFFF);
+		for (int i = 1; i < veinInfoStrings.size(); ++i) {
+			String currFormattedComp = veinInfoStrings.get(i);
+			yText += mc.fontRenderer.FONT_HEIGHT + 2;
+			mc.fontRenderer.drawStringWithShadow(currFormattedComp, xTextCenter - (float) mc.fontRenderer.getStringWidth(currFormattedComp) / 2, yText, 0xFFFFFF);
 		}
 	}
 
-	private ArrayList<String> createVeinInfoString(Pair<Vein, VeinKey.Quality> veinInfo, String memberTranslationKey, boolean hasCached) {
+	private ArrayList<String> createVeinInfoStrings(Pair<Vein, VeinKey.Quality> veinInfo, String memberTranslationKey, boolean hasCached) {
 		ArrayList<String> result = new ArrayList<>(1);
 		if (veinInfo != null && memberTranslationKey != null) {
 			// translate and format the vein name by supplying the localized quality name as an argument

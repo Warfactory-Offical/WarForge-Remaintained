@@ -188,7 +188,13 @@ public class VeinKey implements Comparable<VeinKey> {
 
     public static Pair<Vein, Quality> getVein(int dim, int chunkX, int chunkZ, long seed) {
         int[] chunk_hash = generateChunkHash(chunkX, chunkZ, seed);
-        return new Pair<>(VEIN_MAP.get(dim).get(new VeinKey(chunk_hash[0], true)), Quality.getQuality(chunk_hash[1]));
+
+        // if no veins exist for this dim, or at all, we just return null
+        try {
+            return new Pair<>(VEIN_MAP.get(dim).get(new VeinKey(chunk_hash[0], true)), Quality.getQuality(chunk_hash[1]));
+        } catch (Exception exception) {
+            return null;
+        }
     }
 
     public static Pair<Vein, Quality> getVein(DimChunkPos dimChunkPos, long seed) {

@@ -24,7 +24,12 @@ public class ChunkVeinCache {
         cache.clear();
     }
 
-    public void add(DimChunkPos chunkPos, int veinID, int qualOrd){
+    public void add(DimChunkPos chunkPos, int veinID, byte qualOrd){
+        if (veinID == -1 || qualOrd == -1) {
+            cache.put(chunkPos, null);
+            return;
+        }
+
         cache.put(chunkPos, new Pair<>(VEIN_ENTRIES.get(veinID), VeinKey.Quality.values()[qualOrd]));
     }
 

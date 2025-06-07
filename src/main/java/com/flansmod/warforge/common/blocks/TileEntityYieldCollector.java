@@ -44,6 +44,11 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 
 		// get vein data
 		Pair<Vein, VeinKey.Quality> vein_info = VeinKey.getVein(world.provider.getDimension(), chunk.x, chunk.z, world.getSeed());
+		if (vein_info == null) {
+			// extra precaution in case something goes wrong
+			WarForgeMod.LOGGER.atError().log("Unexpected null vein info. Terminating yield processing.");
+			return;
+		}
 		Vein chunk_vein = vein_info.first();
 		VeinKey.Quality vein_quality = vein_info.second();
 

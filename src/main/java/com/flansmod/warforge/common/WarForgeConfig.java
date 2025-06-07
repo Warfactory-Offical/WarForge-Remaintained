@@ -188,6 +188,7 @@ public class WarForgeConfig
         CLAIM_FOE.ALLOW_DISMOUNT_ENTITY = false;
 
         UNCLAIMED.EXPLOSION_DAMAGE = true;
+        VEIN_MAP.defaultReturnValue(null);
     }
 
 	public static void initializeVeins() {
