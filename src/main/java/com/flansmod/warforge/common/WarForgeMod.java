@@ -710,8 +710,6 @@ public class WarForgeMod implements ILateMixinLoader {
         CommandHandler handler = ((CommandHandler) MC_SERVER.getCommandManager());
         handler.registerCommand(new CommandFactions());
 
-        WarForgeConfig.initializeVeins();
-
         try {
             // try to read from data or backup, then generates a new file if both fail
             File dataFile = getFactionsFile();

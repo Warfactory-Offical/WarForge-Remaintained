@@ -27,7 +27,7 @@ public class VeinKey implements Comparable<VeinKey> {
     public VeinKey(int weight) {
         this.lower_bound = lower_bound_start;
         this.upper_bound = lower_bound_start + weight - 1;
-        lower_bound_start = upper_bound + 1;
+        lower_bound_start = (upper_bound + 1) % 10000;
     }
 
     // useful because it will be equal to whatever bounds it is inside of
@@ -137,7 +137,7 @@ public class VeinKey implements Comparable<VeinKey> {
         Int2IntOpenHashMap all_dims = new Int2IntOpenHashMap();
         all_dims.defaultReturnValue(0);
         for (String entry : vein_entries) {
-            Vein curr_vein = new Vein(entry, Vein.getNextID());  // store all veins provided for later use
+            Vein curr_vein = new Vein(entry);  // store all veins provided for later use
             all_veins.add(curr_vein);
 
             // determine the dims this vein is present in
@@ -157,7 +157,7 @@ public class VeinKey implements Comparable<VeinKey> {
         int hash = (int) (seed * 2654435761L);
         hash = (int) ((hash + chunk_x) * 2654435761L);
         hash = (int) ((hash + chunk_z) * 2654435761L);
-        hash = (hash << 1) >> 1;  // ensure non-negative
+        hash = (hash << 1) >>> 1;  // ensure non-negative
 
         int quality = hash % 3;  // quality factor possibilities of poor, fair, rich
         hash %= 10000;

@@ -193,7 +193,7 @@ public class WarForgeConfig
 
 	public static void initializeVeins() {
 		final String VEIN_ENTRY_EXPLANATION = "All veins should be entered in the follow format: \n" +
-				"<translation_key>, {<yield_amount#component item id>}, {<valid dim id's>}, {<vein dim weights 0.0000 - 1.0000>}, {<component weights 0.0000 - 1.0000>}; \n" +
+				"<translation_key>, {<valid dim id's>}, {<vein dim weights 0.0000 - 1.0000>}, {<yield_amount>~<component item id>, ...}, {<component weights 0.0000 - 1.0000>}; \n" +
 				"Example: veins.pure_iron, {2#minecraft:iron_ore, 1#minecraft:coal_ore}, {-1, 0, 1}, {0.5, 0.4215, 1}, {1, 0.2}. \n" +
 				"The above is a vein which yields two iron ore and one coal in all dimensions with 3 respective dimension weights and which always gives iron, but only gives coal 20% of the time. \n" +
 				"If component weights entry is left as {} [empty], then all are assumed to have a value of 1. All other fields are mandatory and must have equal counts.";
@@ -263,7 +263,7 @@ public class WarForgeConfig
 		// Vault parameters
 		VAULT_BLOCK_IDS = configFile.getStringList("Valuable Blocks", Configuration.CATEGORY_GENERAL, VAULT_BLOCK_IDS, "The block IDs that count towards the value of your citadel's vault");
 
-		// Yield paramters
+		// Yield parameters
 		NUM_IRON_PER_DAY_PER_ORE = configFile.getFloat("#Iron Per Day Per Ore", CATEGORY_YIELDS, NUM_IRON_PER_DAY_PER_ORE, 0.001f, 1000f, "For each dense iron ore block in a claim, how many resources do players get per yield timer");
 		NUM_GOLD_PER_DAY_PER_ORE = configFile.getFloat("#Gold Per Day Per Ore", CATEGORY_YIELDS, NUM_GOLD_PER_DAY_PER_ORE, 0.001f, 1000f, "For each dense gold ore block in a claim, how many resources do players get per yield timer");
 		NUM_DIAMOND_PER_DAY_PER_ORE = configFile.getFloat("#Diamond Per Day Per Ore", CATEGORY_YIELDS, NUM_DIAMOND_PER_DAY_PER_ORE, 0.001f, 1000f, "For each dense diamond ore block in a claim, how many resources do players get per yield timer");
