@@ -4,20 +4,23 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import akka.japi.Pair;
 import com.flansmod.warforge.api.Vein;
+import com.flansmod.warforge.api.VeinKey;
 import com.flansmod.warforge.common.*;
 import com.flansmod.warforge.common.blocks.IClaim;
+import com.flansmod.warforge.common.network.PacketChunkPosVeinID;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
-import com.flansmod.warforge.client.*;
 
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.model.ModelBanner;
-import net.minecraft.client.renderer.GLAllocation;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.*;
@@ -34,6 +37,9 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
+
+import static com.flansmod.warforge.client.ClientProxy.CHUNK_VEIN_CACHE;
 
 public class ClientTickHandler 
 {
@@ -51,6 +57,11 @@ public class ClientTickHandler
 	public static long nextSiegeDayMs = 0L;
 	public static long nextYieldDayMs = 0L;
 
+	// -1 indicates the chunk has never been probed
+	private static ArrayList<String> cachedVeinStrings = null;
+	public static Object2LongOpenHashMap<DimChunkPos> permitChunkReprobeMs = new Object2LongOpenHashMap<>();
+	public static long veinRenderStartTime = -1;  // (curr time - this) / (display time (ms)) to get index
+
 	private final HashMap<ItemStack, ResourceLocation> bannerTextures = new HashMap<ItemStack, ResourceLocation>();
 
 	public static boolean CLAIMS_DIRTY = false;
@@ -62,14 +73,24 @@ public class ClientTickHandler
 	public ClientTickHandler() {
 		tess = Tessellator.getInstance();
 	}
+
 	@SubscribeEvent
 	public void onPlayerLogin(FMLNetworkEvent.ClientConnectedToServerEvent event) {
+		// init and clear stale data
+		permitChunkReprobeMs = new Object2LongOpenHashMap<>();
+		permitChunkReprobeMs.defaultReturnValue(-1);
+		veinRenderStartTime = -1;
+		cachedVeinStrings = null;
+
+		// clear stale data
+		CHUNK_VEIN_CACHE.purge();
+		ClientProxy.VEIN_ENTRIES.clear();
 		WarForgeMod.NAMETAG_CACHE.purge(); //Purge to remove possible stale data
 	}
 
 	@SubscribeEvent
-	public void onTick(ClientTickEvent tick)
-	{
+	public void onTick(ClientTickEvent tick) {
+
 		// Handle client packets and perform the client-side tick
 		WarForgeMod.NETWORK.handleClientPackets();
 		WarForgeMod.proxy.TickClient();
@@ -78,143 +99,141 @@ public class ClientTickHandler
 		ArrayList<DimBlockPos> expired = null;
 
 		// Iterate over entries and mark completed ones for removal
-		for (HashMap.Entry<DimBlockPos, SiegeCampProgressInfo> kvp : ClientProxy.sSiegeInfo.entrySet())
-		{
+		for (HashMap.Entry<DimBlockPos, SiegeCampProgressInfo> kvp : ClientProxy.sSiegeInfo.entrySet()) {
 			SiegeCampProgressInfo siegeInfo = kvp.getValue();
 			siegeInfo.ClientTick();
-			if (siegeInfo.Completed())
-			{
+			if (siegeInfo.Completed()) {
 				if (expired == null) expired = new ArrayList<>();
 				expired.add(kvp.getKey());
 			}
 		}
 
 		// Remove completed siege camps from the map
-		if (expired != null)
-		{
-			for (DimBlockPos pos : expired)
-			{
+		if (expired != null) {
+			for (DimBlockPos pos : expired) {
 				ClientProxy.sSiegeInfo.remove(pos);
 			}
 		}
 
 		// Handle new area toast time
-		if (newAreaToastTime > 0.0f)
-		{
+		if (newAreaToastTime > 0.0f) {
 			newAreaToastTime--;
 		}
 
 		// Avoid calling Minecraft.getMinecraft() multiple times
 		EntityPlayerSP player = Minecraft.getMinecraft().player;
-		if (player != null && player.ticksExisted % 200 == 0)
-		{
+		if (player != null && player.ticksExisted % 200 == 0) {
 			CLAIMS_DIRTY = true;
 		}
 
-		// Show new area timer if configured
-		if (WarForgeConfig.SHOW_NEW_AREA_TIMER > 0.0f && player != null)
-		{
+		if(player != null) {
 			DimChunkPos standing = new DimChunkPos(player.dimension, player.getPosition());
 
-			// Only perform claim checks if the player has moved to a new chunk
-			if (!standing.equals(playerChunkPos))
-			{
-				IClaim preClaim = null;
-				IClaim postClaim = null;
+			// when we leave a chunk, restart iteration on vein members
+			if (!standing.equals(playerChunkPos)) {
+				veinRenderStartTime = -1;
+			}
 
-				// Iterate only through the necessary tile entities (avoid loading all entities unnecessarily)
-				for (TileEntity te : player.world.loadedTileEntityList)
-				{
-					if (te instanceof IClaim)
-					{
-						DimChunkPos tePos = ((IClaim) te).getClaimPos().toChunkPos();
-						if (tePos.equals(playerChunkPos))
-						{
-							preClaim = (IClaim) te;
-						}
-						if (tePos.equals(standing))
-						{
-							postClaim = (IClaim) te;
-						}
-					}
-				}
+			// Show new area timer if configured
+			if (WarForgeConfig.SHOW_NEW_AREA_TIMER > 0.0f) {
 
-				// Generate area message only if needed (reduce redundant logic)
-				if (preClaim == null)
-				{
-					if (postClaim != null)
-					{
-						// Entered a new claim
-						areaMessage = "Entering " + postClaim.getClaimDisplayName();
-						areaMessageColour = postClaim.getColour();
-						newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
+				// Only perform claim checks if the player has moved to a new chunk
+				if (!standing.equals(playerChunkPos)) {
+					IClaim preClaim = null;
+					IClaim postClaim = null;
+
+					// Iterate only through the necessary tile entities (avoid loading all entities unnecessarily)
+					for (TileEntity te : player.world.loadedTileEntityList) {
+						if (te instanceof IClaim) {
+							DimChunkPos tePos = ((IClaim) te).getClaimPos().toChunkPos();
+							if (tePos.equals(playerChunkPos)) {
+								preClaim = (IClaim) te;
+							}
+							if (tePos.equals(standing)) {
+								postClaim = (IClaim) te;
+							}
+						}
 					}
-				}
-				else // Left a claim
-				{
-					if (postClaim == null)
-					{
-						// Gone to nowhere
-						areaMessage = "Leaving " + preClaim.getClaimDisplayName();
-						areaMessageColour = preClaim.getColour();
-						newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
-					}
-					else
-					{
-						// Entered another claim, possibly different faction
-						if (!preClaim.getFaction().equals(postClaim.getFaction()))
-						{
-							areaMessage = "Leaving " + preClaim.getClaimDisplayName() + ", Entering " + postClaim.getClaimDisplayName();
+
+					// Generate area message only if needed (reduce redundant logic)
+					if (preClaim == null) {
+						if (postClaim != null) {
+							// Entered a new claim
+							areaMessage = "Entering " + postClaim.getClaimDisplayName();
 							areaMessageColour = postClaim.getColour();
 							newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
 						}
+					} else // Left a claim
+					{
+						if (postClaim == null) {
+							// Gone to nowhere
+							areaMessage = "Leaving " + preClaim.getClaimDisplayName();
+							areaMessageColour = preClaim.getColour();
+							newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
+						} else {
+							// Entered another claim, possibly different faction
+							if (!preClaim.getFaction().equals(postClaim.getFaction())) {
+								areaMessage = "Leaving " + preClaim.getClaimDisplayName() + ", Entering " + postClaim.getClaimDisplayName();
+								areaMessageColour = postClaim.getColour();
+								newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
+							}
+						}
 					}
-				}
 
-				playerChunkPos = standing;
+					playerChunkPos = standing;
+				}
 			}
 		}
 
 
 	}
 
-
-
 	@SubscribeEvent
-	public void onRenderHUD(RenderGameOverlayEvent event)
-	{
-		if (event.getType() == ElementType.BOSSHEALTH)
-		{
+	public void onRenderHUD(RenderGameOverlayEvent event) {
+		if (event.getType() == ElementType.BOSSHEALTH) {
 			Minecraft mc = Minecraft.getMinecraft();
 			EntityPlayerSP player = mc.player;
 
-			if (player != null)
-			{
+			if (player != null) {
 				// Timer info
-				if (WarForgeConfig.SHOW_YIELD_TIMERS)
-				{
+				if (WarForgeConfig.SHOW_YIELD_TIMERS) {
 					renderTimers(mc);
 				}
 
 				// Siege camp info
 				SiegeCampProgressInfo infoToRender = getClosestSiegeCampInfo(player);
 
-				if (infoToRender != null)
-				{
+				if (infoToRender != null) {
 					renderSiegeOverlay(mc, infoToRender, event);
 				}
 
+				// get the vein info
+				if (player.isSneaking()) {
+					DimChunkPos currPos = new DimChunkPos(player.dimension, player.getPosition());
+					boolean hasPos = CHUNK_VEIN_CACHE.contains(currPos);
+					Pair<Vein, VeinKey.Quality> veinInfo = CHUNK_VEIN_CACHE.get(currPos);
+
+					// probe the server for the data for this chunk
+					if (!hasPos && permitChunkReprobeMs.getLong(currPos) <= System.currentTimeMillis()) {
+						WarForgeMod.LOGGER.atInfo().log("Pinging server for chunk vein info");
+						permitChunkReprobeMs.put(currPos, System.currentTimeMillis() + 60000);  // only ping every min
+						PacketChunkPosVeinID packetChunkVeinRequest = new PacketChunkPosVeinID();
+						packetChunkVeinRequest.veinLocation = currPos;
+						WarForgeMod.NETWORK.sendToServer(packetChunkVeinRequest);
+					}
+
+					renderVeinData(mc, veinInfo, hasPos, event);
+				}
+
 				// New Area Toast
-				if (newAreaToastTime > 0.0f)
-				{
+				if (newAreaToastTime > 0.0f) {
 					renderNewAreaToast(mc, event);
 				}
 			}
 		}
 	}
 
-	private void renderTimers(Minecraft mc)
-	{
+	private void renderTimers(Minecraft mc) {
 		int j = 0, k = 0;
 
 		// Siege progress
@@ -228,8 +247,7 @@ public class ClientTickHandler
 				j + 4, k + 14, 0xffffff);
 	}
 
-	private String formatTime(long msRemaining)
-	{
+	private String formatTime(long msRemaining) {
 		long s = msRemaining / 1000;
 		long m = s / 60;
 		long h = m / 60;
@@ -241,19 +259,15 @@ public class ClientTickHandler
 				+ String.format("%02d", (s % 60));
 	}
 
-	private SiegeCampProgressInfo getClosestSiegeCampInfo(EntityPlayerSP player)
-	{
+	private SiegeCampProgressInfo getClosestSiegeCampInfo(EntityPlayerSP player) {
 		SiegeCampProgressInfo closestInfo = null;
 		double bestDistanceSq = Double.MAX_VALUE;
 
-		for (SiegeCampProgressInfo info : ClientProxy.sSiegeInfo.values())
-		{
+		for (SiegeCampProgressInfo info : ClientProxy.sSiegeInfo.values()) {
 			double distSq = info.defendingPos.distanceSq(player.posX, player.posY, player.posZ);
 			if (info.defendingPos.dim == player.dimension
-					&& distSq < WarForgeConfig.SIEGE_INFO_RADIUS * WarForgeConfig.SIEGE_INFO_RADIUS)
-			{
-				if (distSq < bestDistanceSq)
-				{
+					&& distSq < WarForgeConfig.SIEGE_INFO_RADIUS * WarForgeConfig.SIEGE_INFO_RADIUS) {
+				if (distSq < bestDistanceSq) {
 					bestDistanceSq = distSq;
 					closestInfo = info;
 				}
@@ -263,8 +277,120 @@ public class ClientTickHandler
 		return closestInfo;
 	}
 
-	private void renderSiegeOverlay(Minecraft mc, SiegeCampProgressInfo infoToRender, RenderGameOverlayEvent event)
-	{
+	private void renderVeinData(Minecraft mc, Pair<Vein, VeinKey.Quality> veinInfo, boolean hasCached, RenderGameOverlayEvent event) {
+		GlStateManager.enableAlpha();
+		GlStateManager.enableBlend();
+
+		// even if we aren't rendering, count up start time to indicate we are within the same chunk as before
+		long currTimeMs = System.currentTimeMillis();
+		if (veinRenderStartTime == -1) { veinRenderStartTime = currTimeMs; }  // timer restarted
+		float xTextCenter = (float) event.getResolution().getScaledWidth() / 2; // Centered;
+		float yText = 32;
+
+		// even though intelliJ thinks veinInfo is never null, it definitely should be able to be
+		// we render either the item, or some waiting icon
+		int index = -1;
+		ItemStack currMemberItemStack = null;
+		boolean invalidRenderAttempt = veinInfo == null || veinInfo.first() == null || veinInfo.second() == null;
+		if (!invalidRenderAttempt)  {
+			index = (int) ((currTimeMs - veinRenderStartTime) / WarForgeConfig.VEIN_MEMBER_DISPLAY_TIME_MS);
+			Item currMemberItem = ForgeRegistries.ITEMS.getValue(veinInfo.first().component_ids[index % veinInfo.first().component_ids.length]);
+			if (currMemberItem == null) {
+				WarForgeMod.LOGGER.atError().log("Got null item for vein " + veinInfo.first().VEIN_ENTRY);
+				return;
+			}
+
+			currMemberItemStack = new ItemStack(currMemberItem, 1);
+		}
+
+		// either use the cached string or make a new one if either no cached exists or we are in a new chunk
+		ArrayList<String> veinInfoStrings = cachedVeinStrings;
+		if (cachedVeinStrings == null || veinRenderStartTime == -1) {
+			veinInfoStrings = createVeinInfoStrings(veinInfo, hasCached);
+		}
+
+		final int imageSize = invalidRenderAttempt ? 0 : 24;
+		final int imageTextOverlap = imageSize / 2;
+		final int nameWidth =  mc.fontRenderer.getStringWidth(veinInfoStrings.get(0));
+		final float titleLeftShift = (float) (imageSize + nameWidth - imageTextOverlap) / 2;
+
+		// draw the vein info
+		mc.fontRenderer.drawStringWithShadow(veinInfoStrings.get(0), xTextCenter + imageSize - imageTextOverlap - titleLeftShift, yText, 0xFFFFFF);
+
+		if (veinInfo != null && currMemberItemStack != null) {
+			// prepare to render
+			GlStateManager.pushMatrix();
+			RenderHelper.disableStandardItemLighting();
+			GlStateManager.enableDepth();
+
+			// render the item
+			GlStateManager.translate(xTextCenter - titleLeftShift, yText + 4, 0);
+			GlStateManager.scale(imageSize, imageSize, 1);
+			GlStateManager.rotate(180, 0, 1, 0);
+			GlStateManager.rotate(180, 0, 0, 1);
+
+			RenderItem renderItem = Minecraft.getMinecraft().getRenderItem();
+			renderItem.renderItem(currMemberItemStack, ItemCameraTransforms.TransformType.GUI);
+
+			// disable the things we just used
+			GlStateManager.disableDepth();
+			RenderHelper.enableStandardItemLighting();
+			GlStateManager.disableLighting();
+			GlStateManager.popMatrix();
+		}
+
+		for (int i = 1; i < veinInfoStrings.size(); ++i) {
+			String currFormattedComp = veinInfoStrings.get(i);
+			yText += mc.fontRenderer.FONT_HEIGHT + 2;
+			mc.fontRenderer.drawStringWithShadow(currFormattedComp, xTextCenter - (float) mc.fontRenderer.getStringWidth(currFormattedComp) / 2, yText, 0xFFFFFF);
+		}
+	}
+
+	private ArrayList<String> createVeinInfoStrings(Pair<Vein, VeinKey.Quality> veinInfo, boolean hasCached) {
+		ArrayList<String> result = new ArrayList<>(1);
+		if (veinInfo != null) {
+			// translate and format the vein name by supplying the localized quality name as an argument
+			Vein currVein = veinInfo.first();
+			VeinKey.Quality currQual = veinInfo.second();
+			result.add(I18n.format(currVein.translation_key, I18n.format(currQual.getTranslationKey())));
+
+			for (int i = 0; i < currVein.component_ids.length; ++i) {
+				Item currItem = ForgeRegistries.ITEMS.getValue(currVein.component_ids[i]);
+				if (currItem == null) {
+					WarForgeMod.LOGGER.atError().log("Couldn't find item with component id " +
+						currVein.component_ids[i] + " in vein " + currVein.VEIN_ENTRY);
+					continue;
+				}
+
+				result.add(I18n.format(currItem.getItemStackDisplayName(new ItemStack(currItem))));
+			}
+
+			return result;
+		}
+
+		if (veinInfo != null) {
+			if (veinInfo.first() == null) {
+				result.add(I18n.format("warforge.info.vein.unknown_vein_id"));
+				return result;
+			}
+
+			if (veinInfo.second() == null) {
+				result.add(I18n.format("warforge.info.vein.unknown_qual_id"));
+				return result;
+			}
+		}
+
+		// at this point, vein info must be null
+		if (hasCached) {
+			result.add(I18n.format("warforge.info.vein.null"));
+			return result;
+		}
+
+		result.add(I18n.format("warforge.info.vein.waiting"));
+		return result;
+	}
+
+	private void renderSiegeOverlay(Minecraft mc, SiegeCampProgressInfo infoToRender, RenderGameOverlayEvent event) {
 		GlStateManager.enableAlpha();
 		GlStateManager.enableBlend();
 
@@ -294,8 +420,7 @@ public class ClientTickHandler
 	}
 
 	private void renderSiegeProgressBar(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText,
-										float attackR, float attackG, float attackB, float defendR, float defendG, float defendB, float scroll)
-	{
+										float attackR, float attackG, float attackB, float defendR, float defendG, float defendB, float scroll) {
 		int xSize = 256;
 		float siegeLength = infoToRender.completionPoint + 5;
 		float notchDistance = 224 / siegeLength;
@@ -305,24 +430,19 @@ public class ClientTickHandler
 
 		boolean isIncreasing = infoToRender.progress > infoToRender.mPreviousProgress;
 
-		if (isIncreasing)
-		{
+		if (isIncreasing) {
 			GlStateManager.color(attackR, attackG, attackB, 1.0F);
 			drawTexturedModalRect(xText + 16 + firstPx, yText + 17, 16 + (10 - scroll), 44, lastPx - firstPx, 8);
-		}
-		else
-		{
+		} else {
 			GlStateManager.color(defendR, defendG, defendB, 1.0F);
 			drawTexturedModalRect(xText + 16 + firstPx, yText + 17, 16 + scroll, 54, lastPx - firstPx, 8);
 		}
 	}
 
-	private void renderSiegeNotches(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText)
-	{
+	private void renderSiegeNotches(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText) {
 		float notchDistance = 224 / (infoToRender.completionPoint + 5);
 
-		for (int i = -4; i < infoToRender.completionPoint; i++)
-		{
+		for (int i = -4; i < infoToRender.completionPoint; i++) {
 			int x = (int) ((i + 5) * notchDistance + 16);
 			if (i == 0)
 				drawTexturedModalRect(xText + x - 2, yText + 17, 6, 43, 5, 8);
@@ -331,8 +451,7 @@ public class ClientTickHandler
 		}
 	}
 
-	private void renderSiegeText(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText)
-	{
+	private void renderSiegeText(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText) {
 		mc.fontRenderer.drawStringWithShadow(infoToRender.defendingName, xText + 6, yText + 6, infoToRender.defendingColour);
 		mc.fontRenderer.drawStringWithShadow("VS", xText + 128 - mc.fontRenderer.getStringWidth("VS") / 2, yText + 6, 0xffffff);
 		mc.fontRenderer.drawStringWithShadow(infoToRender.attackingName, xText + 256 - 6 - mc.fontRenderer.getStringWidth(infoToRender.attackingName), yText + 6, infoToRender.attackingColour);
@@ -343,8 +462,7 @@ public class ClientTickHandler
 		mc.fontRenderer.drawStringWithShadow(toDefend, xText + 8, yText + 32, infoToRender.attackingColour);
 	}
 
-	private void renderNewAreaToast(Minecraft mc, RenderGameOverlayEvent event)
-	{
+	private void renderNewAreaToast(Minecraft mc, RenderGameOverlayEvent event) {
 		int xText = event.getResolution().getScaledWidth() / 2;
 		int yText = 0;
 
@@ -368,29 +486,25 @@ public class ClientTickHandler
 	}
 
 
-
-	private void drawTexturedModalRect(int x, int y, float u, float v, int w, int h)
-	{
+	private void drawTexturedModalRect(int x, int y, float u, float v, int w, int h) {
 		float texScale = 1f / 256f;
 
 		tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 
-		tess.getBuffer().pos(x, y + h, -90d)		.tex(u * texScale, (v + h) * texScale).endVertex();
-		tess.getBuffer().pos(x + w, y + h, -90d)	.tex((u + w) * texScale, (v + h) * texScale).endVertex();
-		tess.getBuffer().pos(x + w, y, -90d)		.tex((u + w) * texScale, (v) * texScale).endVertex();
-		tess.getBuffer().pos(x, y, -90d)			.tex(u * texScale, (v) * texScale).endVertex();
+		tess.getBuffer().pos(x, y + h, -90d).tex(u * texScale, (v + h) * texScale).endVertex();
+		tess.getBuffer().pos(x + w, y + h, -90d).tex((u + w) * texScale, (v + h) * texScale).endVertex();
+		tess.getBuffer().pos(x + w, y, -90d).tex((u + w) * texScale, (v) * texScale).endVertex();
+		tess.getBuffer().pos(x, y, -90d).tex(u * texScale, (v) * texScale).endVertex();
 
 		tess.draw();
 	}
 
-	private static class BorderRenderData
-	{
+	private static class BorderRenderData {
 		public IClaim claim;
 		public int renderList = -1;
 	}
 
-	private void renderZAlignedSquare(int x, int y, double z, int ori)
-	{
+	private void renderZAlignedSquare(int x, int y, double z, int ori) {
 		tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 		tess.getBuffer().pos(x, y, z).tex(((ori) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
 		tess.getBuffer().pos(x + 1, y, z).tex(((ori + 1) / 2) % 2, ((ori) / 2) % 2).endVertex();
@@ -399,8 +513,7 @@ public class ClientTickHandler
 		tess.draw();
 	}
 
-	private void renderZAlignedRecangle(double x, int y, double z, int ori, double width)
-	{
+	private void renderZAlignedRecangle(double x, int y, double z, int ori, double width) {
 		tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 		tess.getBuffer().pos(x + 0 - width, y, z).tex(((ori) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
 		tess.getBuffer().pos(x + 1, y, z).tex(((ori + 1) / 2) % 2, ((ori) / 2) % 2).endVertex();
@@ -409,8 +522,7 @@ public class ClientTickHandler
 		tess.draw();
 	}
 
-	private void renderXAlignedSquare(double x, int y, int z, int ori)
-	{
+	private void renderXAlignedSquare(double x, int y, int z, int ori) {
 		tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 		tess.getBuffer().pos(x, y, z).tex(((ori) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
 		tess.getBuffer().pos(x, y, z + 1).tex(((ori + 1) / 2) % 2, ((ori) / 2) % 2).endVertex();
@@ -419,8 +531,7 @@ public class ClientTickHandler
 		tess.draw();
 	}
 
-	private void renderXAlignedRecangle(double x, int y, double z, int ori, double width)
-	{
+	private void renderXAlignedRecangle(double x, int y, double z, int ori, double width) {
 		tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 		tess.getBuffer().pos(x, y, z + 0 - width).tex(((ori) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
 		tess.getBuffer().pos(x, y, z + 1).tex(((ori + 1) / 2) % 2, ((ori) / 2) % 2).endVertex();
@@ -430,10 +541,7 @@ public class ClientTickHandler
 	}
 
 
-
-
-	private void updateRenderData()
-	{
+	private void updateRenderData() {
 		World world = Minecraft.getMinecraft().world;
 		if(world == null)
 			return;
@@ -442,19 +550,14 @@ public class ClientTickHandler
 		HashMap<DimChunkPos, BorderRenderData> tempData = new HashMap<DimChunkPos, BorderRenderData>();
 
 		// Find all our data entries first
-		for(TileEntity te : world.loadedTileEntityList)
-		{
-			if(te instanceof IClaim)
-			{
+		for(TileEntity te : world.loadedTileEntityList) {
+			if(te instanceof IClaim) {
 				DimBlockPos blockPos = ((IClaim) te).getClaimPos();
 				DimChunkPos chunkPos = blockPos.toChunkPos();
 
-				if(renderData.containsKey(chunkPos))
-				{
+				if(renderData.containsKey(chunkPos)) {
 					tempData.put(chunkPos, renderData.get(chunkPos));
-				}
-				else
-				{
+				} else {
 					BorderRenderData data = new BorderRenderData();
 					data.claim = (IClaim)te;
 					tempData.put(chunkPos, data);
@@ -465,21 +568,19 @@ public class ClientTickHandler
 		renderData = tempData;
 
 	}
+
 	final static double alignment = 0.25d;
 	final static double smaller_alignment = alignment - 0.125d;
 
-	private void updateRandomMesh()
-	{
+	private void updateRandomMesh() {
 		World world = Minecraft.getMinecraft().world;
 		if(world == null || renderData.isEmpty())
 			return;
 		int index = world.rand.nextInt(renderData.size());
 
 		// Then construct the mesh for one random entry
-		for(HashMap.Entry<DimChunkPos, BorderRenderData> kvp : renderData.entrySet())
-		{
-			if(index > 0)
-			{
+		for(HashMap.Entry<DimChunkPos, BorderRenderData> kvp : renderData.entrySet()) {
+			if(index > 0) {
 				index--;
 				continue;
 			}
@@ -511,11 +612,9 @@ public class ClientTickHandler
 				renderSouthEast = !renderData.get(pos.South().East()).claim.getFaction().equals(data.claim.getFaction());
 
 			// North edge, [0,0] -> [16,0] wall
-			if(renderNorth)
-			{
+			if(renderNorth) {
 				// A smidge of semi-translucent wall from [0,0,0] to [2,256,0] offset by 0.25
-				if(renderWest)
-				{
+				if(renderWest) {
 					tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 					tess.getBuffer().pos(0+alignment, 0, alignment).tex(64f, 0.5f).endVertex();
 					tess.getBuffer().pos(2+alignment, 0, alignment).tex(64f, 0f).endVertex();
@@ -525,8 +624,7 @@ public class ClientTickHandler
 				}
 
 				// A smidge of semi-translucent wall from [14,0,0] to [16,256,0] offset by 0.25
-				if(renderEast)
-				{
+				if(renderEast) {
 					tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 					tess.getBuffer().pos(16-alignment, 0, alignment).tex(64f, 0.5f).endVertex();
 					tess.getBuffer().pos(14-alignment, 0, alignment).tex(64f, 0f).endVertex();
@@ -537,10 +635,8 @@ public class ClientTickHandler
 			}
 
 			// South edge
-			if(renderSouth)
-			{
-				if(renderWest)
-				{
+			if(renderSouth) {
+				if(renderWest) {
 					tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 					tess.getBuffer().pos(0+alignment, 0, 16d - alignment).tex(64f, 0.5f).endVertex();
 					tess.getBuffer().pos(2+alignment, 0, 16d - alignment).tex(64f, 0f).endVertex();
@@ -549,8 +645,7 @@ public class ClientTickHandler
 					tess.draw();
 				}
 
-				if(renderEast)
-				{
+				if(renderEast) {
 					tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 					tess.getBuffer().pos(16-alignment, 0, 16d - alignment).tex(64f, 0.5f).endVertex();
 					tess.getBuffer().pos(14-alignment, 0, 16d - alignment).tex(64f, 0f).endVertex();
@@ -561,10 +656,8 @@ public class ClientTickHandler
 			}
 
 			// East edge, [0,0] -> [0,16] wall
-			if(renderWest)
-			{
-				if(renderNorth)
-				{
+			if(renderWest) {
+				if(renderNorth) {
 					tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 					tess.getBuffer().pos(alignment, 0, 0+alignment).tex(64f, 0.5f).endVertex();
 					tess.getBuffer().pos(alignment, 0, 2+alignment).tex(64f, 0f).endVertex();
@@ -573,8 +666,7 @@ public class ClientTickHandler
 					tess.draw();
 				}
 
-				if(renderSouth)
-				{
+				if(renderSouth) {
 					tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 					tess.getBuffer().pos(alignment, 0, 16-alignment).tex(64f, 0.5f).endVertex();
 					tess.getBuffer().pos(alignment, 0, 14-alignment).tex(64f, 0f).endVertex();
@@ -585,10 +677,8 @@ public class ClientTickHandler
 			}
 
 			// West edge
-			if(renderEast)
-			{
-				if(renderNorth)
-				{
+			if(renderEast) {
+				if(renderNorth) {
 					tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 					tess.getBuffer().pos(16d - alignment, 0, 0+alignment).tex(64f, 0.5f).endVertex();
 					tess.getBuffer().pos(16d - alignment, 0, 2+alignment).tex(64f, 0f).endVertex();
@@ -597,8 +687,7 @@ public class ClientTickHandler
 					tess.draw();
 				}
 
-				if(renderSouth)
-				{
+				if(renderSouth) {
 					tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
 					tess.getBuffer().pos(16d - alignment, 0, 16-alignment).tex(64f, 0.5f).endVertex();
 					tess.getBuffer().pos(16d - alignment, 0, 14-alignment).tex(64f, 0f).endVertex();
@@ -742,6 +831,7 @@ public class ClientTickHandler
 			break;
 		}
 	}
+
 	// Helper for rendering horizontal edges (along X-axis)
 	private void renderZEdge(World world, int x, int y, int z, double align, boolean air0, boolean air1, int dir) {
 		if (!air0 && air1)
@@ -788,8 +878,7 @@ public class ClientTickHandler
 	}
 
 	@SubscribeEvent
-	public void onRenderLast(RenderWorldLastEvent event)
-	{
+	public void onRenderLast(RenderWorldLastEvent event) {
 		// Cache Minecraft instance
 		Minecraft mc = Minecraft.getMinecraft();
 		EntityPlayer player = mc.player;
@@ -995,8 +1084,7 @@ public class ClientTickHandler
 //		GlStateManager.popMatrix();
 //	}
 
-	private void vertexAt(DimChunkPos chunkPos, World world, int x, int z, double groundLevelBlend, double playerHeight)
-	{
+	private void vertexAt(DimChunkPos chunkPos, World world, int x, int z, double groundLevelBlend, double playerHeight) {
 		double topHeight = playerHeight + 128;
 
 		double maxHeight = world.getHeight(chunkPos.x * 16 + x, chunkPos.z * 16 + z) + 8;

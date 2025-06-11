@@ -59,7 +59,7 @@ public class GUIUpgradePanel {
             return createNoMoreLevelsGui();
         }
 
-// Sorted by quantity
+        // Sorted by quantity
         Map<StackComparable, Integer> requirements = UPGRADE_HANDLER.getRequirementsFor(level + 1)
                 .entrySet().stream()
                 .sorted(Comparator.comparingInt(Map.Entry::getValue))
@@ -223,7 +223,7 @@ public class GUIUpgradePanel {
                 .expanded();
 
 
-        Widget levelIntecator = new Column()
+        Widget levelIndicator = new Column()
                 .child(newLevel)
                 .child(claimIncrease)
                 .size(80, 20);
@@ -232,7 +232,7 @@ public class GUIUpgradePanel {
         // Button row
         Widget buttonRow = new Row()
                 .child(closeButton)
-                .child(levelIntecator)
+                .child(levelIndicator)
                 .child(upgradeButton)
                 .expanded()
                 .height(20)

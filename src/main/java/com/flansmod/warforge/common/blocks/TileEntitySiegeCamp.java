@@ -353,7 +353,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 	// once this exceeds the offline time, it is automatically set to -1, so passing certain amounts need not be considered
 	private void incrementOfflineTimer(long msPassed) {
 		defenderOfflineTimerMs += hasLiveQuitSiege() ? -msPassed : msPassed;
-        /* useful if the offline timer needs to be manually capped, though currentlyw it doesn't
+        /* useful if the offline timer needs to be manually capped, though currently it doesn't
 		boolean haveDefendersLiveQuit = hasLiveQuitSiege();
 		if (haveDefendersLiveQuit) defenderOfflineTimerMs = Math.max(defenderOfflineTimerMs - msPassed, -WarForgeConfig.QUITTER_FAIL_TIMER);
 		else defenderOfflineTimerMs = Math.min(defenderOfflineTimerMs + msPassed, WarForgeConfig.LIVE_QUIT_TIMER);

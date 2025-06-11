@@ -15,7 +15,7 @@ public class PacketVeinEntries extends PacketBase {
     // clients ask for data, servers send data
     // called by the packet handler to convert to a byte stream to send
     int startID = -1;
-    private ArrayList<String> orderedEntryList = null;
+    private ArrayList<String> orderedEntryList = new ArrayList<>();
 
     // tries to fill up a packet to be at least 512 bytes
     public PacketVeinEntries fillFrom(ArrayList<Vein> orderedVeins, int index) {
@@ -78,6 +78,7 @@ public class PacketVeinEntries extends PacketBase {
         // store the received veins
         for (int idOffset = 0; idOffset < orderedEntryList.size(); ++idOffset) {
             VEIN_ENTRIES.put(startID + idOffset, new Vein(orderedEntryList.get(idOffset), startID + idOffset));
+            WarForgeMod.LOGGER.atDebug().log("Received vein entry of <" + orderedEntryList.get(idOffset) + "> w/ id: " + (startID + idOffset));
         }
     }
 }

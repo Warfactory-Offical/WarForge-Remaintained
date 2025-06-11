@@ -44,6 +44,11 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 
 		// get vein data
 		Pair<Vein, VeinKey.Quality> vein_info = VeinKey.getVein(world.provider.getDimension(), chunk.x, chunk.z, world.getSeed());
+		if (vein_info == null) {
+			// extra precaution in case something goes wrong
+			WarForgeMod.LOGGER.atError().log("Unexpected null vein info. Terminating yield processing.");
+			return;
+		}
 		Vein chunk_vein = vein_info.first();
 		VeinKey.Quality vein_quality = vein_info.second();
 
@@ -57,16 +62,29 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 			int num_items = 0;  // figure out how many items of this component are needed
 
 			// determine yield amount based on quality and component base yield
-			int curr_yield = chunk_vein.component_yields[i];
-			if (vein_quality == VeinKey.Quality.POOR) { curr_yield /= YIELD_QUALITY_MULTIPLIER; }  // if poor quality, half yield
-			else if (vein_quality == VeinKey.Quality.RICH) { curr_yield *= YIELD_QUALITY_MULTIPLIER; }  // if rich quality, double yield
+			float curr_yield = chunk_vein.component_yields[i];
+
+			// modify yield based on quality
+			if (vein_quality == VeinKey.Quality.POOR) { curr_yield /= YIELD_QUALITY_MULTIPLIER; }
+			else if (vein_quality == VeinKey.Quality.RICH) { curr_yield *= YIELD_QUALITY_MULTIPLIER; }
 
 			// calculate the number of times to yield this component
 			for (int j = 0; j < numYields; ++j) {
-				if (rand.nextInt(10000) < chunk_vein.component_weights[i]) {
-					num_items += curr_yield;
+				if (rand.nextInt(1000) < chunk_vein.component_weights[i]) {
+					num_items += (int) curr_yield;
+					float remaining_yield = curr_yield - (float) num_items;
+
+					// handle fractional yield cases
+					if (remaining_yield != 0) {
+						int yield_chance = (int) (remaining_yield * 1000);
+						if (rand.nextInt(1000) < yield_chance) {
+							num_items += 1;
+						}
+					}
 				}
 			}
+
+			if (num_items == 0) { continue; } // adding an itemstack with 0 of the item will result in an air itemstack
 
 			// attempt to locate the item and append the new item stack representing yield amounts
 			final Item curr_component = ForgeRegistries.ITEMS.getValue(chunk_vein.component_ids[i]);

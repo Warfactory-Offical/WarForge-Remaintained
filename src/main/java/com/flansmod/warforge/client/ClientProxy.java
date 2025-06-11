@@ -38,7 +38,9 @@ public class ClientProxy extends CommonProxy
 {
 	public static HashMap<DimBlockPos, SiegeCampProgressInfo> sSiegeInfo = new HashMap<DimBlockPos, SiegeCampProgressInfo>();
 
-	public static Int2ObjectOpenHashMap<Vein> VEIN_ENTRIES = null;
+	public static Int2ObjectOpenHashMap<Vein> VEIN_ENTRIES = new Int2ObjectOpenHashMap<>();
+
+	public static ChunkVeinCache CHUNK_VEIN_CACHE = new ChunkVeinCache();
 
 	public static KeyBinding factionChatKey = new KeyBinding("key.factionchat.desc",
 			KeyConflictContext.IN_GAME,

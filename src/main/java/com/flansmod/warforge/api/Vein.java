@@ -36,8 +36,6 @@ public class Vein {
 
     private static int idCounter = 0;
 
-    public static int getNextID() { return idCounter++; }
-
     // should only be called by the server
     public Vein(final String vein_entry) {
         this(vein_entry, idCounter++);
@@ -45,7 +43,7 @@ public class Vein {
     }
 
     // we assume the values are in order as described by the other constructor
-    // translation_key, {mc:comp1, mc:comp2}, {-1, 0, 1}, {0.5, 0.5, 1}, {0.4525, 0.5475}
+    // translation_key, {-1, 0, 1}, {0.5, 0.5, 1}, {<amount>#mc:comp1, <amount>#mc:comp2}, {0.4525, 0.5475}
     public Vein(final String vein_entry, int id) {
         VEIN_ENTRY = vein_entry;
         ID = id;
@@ -53,37 +51,37 @@ public class Vein {
         // splits on all spaces/ commas in any combination not within curly brackets
         // looks ahead to see if either there are any number of {} combinations, or if there are no }
         // this should return the arguments as string in order
-        String[] values = vein_entry.split("[((\\s*,\\s*)\\s*)](?=([^{}]*\\{[^{}]*}[^{}]*)|(?!.*}))");
+        String[] values = vein_entry.split("(,{1}\\s*|\\s+)(?=([^{}]*\\{[^{}]*}[^{}]*)|(?!.*}))");
 
         this.translation_key = values[0];
 
-        // extract component yield and id data
-        String[] component_id_strings = values[1].substring(1, values[1].length() - 1).split("[((\\s*,\\s*)\\s*)]");
-        this.component_yields = new int[component_id_strings.length];
-        this.component_ids = new ResourceLocation[component_id_strings.length];
-        for (int i = 0; i < component_id_strings.length; ++i) {
-            int yield_amount_end_index = component_id_strings[i].indexOf('#');
-            this.component_yields[i] = Integer.decode(component_id_strings[i].substring(0, yield_amount_end_index));
-            this.component_ids[i] = new ResourceLocation(component_id_strings[i].substring(yield_amount_end_index + 1));
-        }
-
         // get the dimension information
-        String[] dim_strings = values[2].substring(1, values[2].length() - 1).split("[((\\s*,\\s*)\\s*)]");
+        String[] dim_strings = values[1].substring(1, values[1].length() - 1).split("(,{1}\\s*|\\s+)");
         int[] valid_dims = new int[dim_strings.length];
         for (int i = 0; i < dim_strings.length; ++i) {
             valid_dims[i] = Integer.decode(dim_strings[i]);
         }
 
         // get the dimension weights
-        String[] dim_weight_strings = values[3].substring(1, values[3].length() - 1).split("[((\\s*,\\s*)\\s*)]");
+        String[] dim_weight_strings = values[2].substring(1, values[2].length() - 1).split("(,{1}\\s*|\\s+)");
         this.dim_weights = new Int2IntOpenHashMap(valid_dims.length);
         this.dim_weights.defaultReturnValue(0);  // by default, any dim not mentioned here results in 0 weight
         for (int i = 0; i < dim_weight_strings.length; ++i) {
             dim_weights.put(valid_dims[i], percentToInt(dim_weight_strings[i], WEIGHT_FRACTION_DIGIT_COUNT));
         }
 
+        // extract component yield and id data
+        String[] component_id_strings = values[3].substring(1, values[3].length() - 1).split("(,{1}\\s*|\\s+)");
+        this.component_yields = new int[component_id_strings.length];
+        this.component_ids = new ResourceLocation[component_id_strings.length];
+        for (int i = 0; i < component_id_strings.length; ++i) {
+            int yield_amount_end_index = component_id_strings[i].indexOf('~');
+            this.component_yields[i] = Integer.decode(component_id_strings[i].substring(0, yield_amount_end_index));
+            this.component_ids[i] = new ResourceLocation(component_id_strings[i].substring(yield_amount_end_index + 1));
+        }
+
         // get the component weights
-        String[] comp_weight_strings = values[4].substring(1, values[4].length() - 1).split("[((\\s*,\\s*)\\s*)]");
+        String[] comp_weight_strings = values[4].substring(1, values[4].length() - 1).split("(,{1}\\s*|\\s+)");
         this.component_weights = new int[comp_weight_strings.length];
         for (int i = 0; i < comp_weight_strings.length; ++i) {
             component_weights[i] = percentToInt(comp_weight_strings[i], WEIGHT_FRACTION_DIGIT_COUNT);

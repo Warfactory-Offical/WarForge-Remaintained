@@ -60,6 +60,8 @@ dependencies {
     //     transitive = false
     // }
 
+    implementation ("org.yaml:snakeyaml:2.4")
+
     implementation rfg.deobf("curse.maven:effortlessbuilding-302113:2847346")
 
     implementation rfg.deobf("curse.maven:littletiles-257818:5180387")

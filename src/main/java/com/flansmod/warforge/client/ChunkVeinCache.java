@@ -1,6 +1,8 @@
 package com.flansmod.warforge.client;
 
+import akka.japi.Pair;
 import com.flansmod.warforge.api.Vein;
+import com.flansmod.warforge.api.VeinKey;
 import com.flansmod.warforge.api.WarforgeCache;
 import com.flansmod.warforge.common.DimChunkPos;
 import net.minecraftforge.fml.relauncher.Side;
@@ -10,7 +12,7 @@ import static com.flansmod.warforge.client.ClientProxy.VEIN_ENTRIES;
 
 @SideOnly(Side.CLIENT)
 public class ChunkVeinCache {
-    protected WarforgeCache<DimChunkPos, Vein> cache;
+    protected WarforgeCache<DimChunkPos, Pair<Vein, VeinKey.Quality>> cache;
 
     @SideOnly(Side.CLIENT)
     public ChunkVeinCache() {
@@ -22,7 +24,20 @@ public class ChunkVeinCache {
         cache.clear();
     }
 
-    public void add(DimChunkPos chunkPos, int veinID){
-        cache.put(chunkPos, VEIN_ENTRIES.get(veinID));
+    public void add(DimChunkPos chunkPos, int veinID, byte qualOrd){
+        if (veinID == -1 || qualOrd == -1) {
+            cache.put(chunkPos, null);
+            return;
+        }
+
+        cache.put(chunkPos, new Pair<>(VEIN_ENTRIES.get(veinID), VeinKey.Quality.values()[qualOrd]));
+    }
+
+    public Pair<Vein, VeinKey.Quality> get(DimChunkPos chunkPos) {
+        return cache.get(chunkPos);
+    }
+
+    public boolean contains(DimChunkPos chunkPosKey) {
+        return cache.contains(chunkPosKey);
     }
 }

@@ -172,7 +172,7 @@ public class CommandFactions extends CommandBase {
                     }
                 } else {
                     if (sender instanceof EntityPlayer && faction != null) {
-                        WarForgeMod.FACTIONS.RequestDisbandFaction((EntityPlayer) sender, faction.uuid);
+                        WarForgeMod.FACTIONS.requestDisbandFaction((EntityPlayer) sender, faction.uuid);
                     } else {
                         sender.sendMessage(new TextComponentString("You aren't in a faction"));
                     }

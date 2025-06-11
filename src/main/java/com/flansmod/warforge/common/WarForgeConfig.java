@@ -114,6 +114,7 @@ public class WarForgeConfig
 	public static boolean DO_FANCY_RENDERING = true;
 	public static boolean SHOW_OPPONENT_BORDERS = true;
 	public static boolean SHOW_ALLY_BORDERS = true;
+    public static long VEIN_MEMBER_DISPLAY_TIME_MS = 1000;
 
 	// Warps
 	public static final String CATEGORY_WARPS = "Warps";
@@ -187,11 +188,12 @@ public class WarForgeConfig
         CLAIM_FOE.ALLOW_DISMOUNT_ENTITY = false;
 
         UNCLAIMED.EXPLOSION_DAMAGE = true;
+        VEIN_MAP.defaultReturnValue(null);
     }
 
 	public static void initializeVeins() {
 		final String VEIN_ENTRY_EXPLANATION = "All veins should be entered in the follow format: \n" +
-				"<translation_key>, {<yield_amount#component item id>}, {<valid dim id's>}, {<vein dim weights 0.0000 - 1.0000>}, {<component weights 0.0000 - 1.0000>}; \n" +
+				"<translation_key>, {<valid dim id's>}, {<vein dim weights 0.0000 - 1.0000>}, {<yield_amount>~<component item id>, ...}, {<component weights 0.0000 - 1.0000>}; \n" +
 				"Example: veins.pure_iron, {2#minecraft:iron_ore, 1#minecraft:coal_ore}, {-1, 0, 1}, {0.5, 0.4215, 1}, {1, 0.2}. \n" +
 				"The above is a vein which yields two iron ore and one coal in all dimensions with 3 respective dimension weights and which always gives iron, but only gives coal 20% of the time. \n" +
 				"If component weights entry is left as {} [empty], then all are assumed to have a value of 1. All other fields are mandatory and must have equal counts.";
@@ -261,7 +263,7 @@ public class WarForgeConfig
 		// Vault parameters
 		VAULT_BLOCK_IDS = configFile.getStringList("Valuable Blocks", Configuration.CATEGORY_GENERAL, VAULT_BLOCK_IDS, "The block IDs that count towards the value of your citadel's vault");
 
-		// Yield paramters
+		// Yield parameters
 		NUM_IRON_PER_DAY_PER_ORE = configFile.getFloat("#Iron Per Day Per Ore", CATEGORY_YIELDS, NUM_IRON_PER_DAY_PER_ORE, 0.001f, 1000f, "For each dense iron ore block in a claim, how many resources do players get per yield timer");
 		NUM_GOLD_PER_DAY_PER_ORE = configFile.getFloat("#Gold Per Day Per Ore", CATEGORY_YIELDS, NUM_GOLD_PER_DAY_PER_ORE, 0.001f, 1000f, "For each dense gold ore block in a claim, how many resources do players get per yield timer");
 		NUM_DIAMOND_PER_DAY_PER_ORE = configFile.getFloat("#Diamond Per Day Per Ore", CATEGORY_YIELDS, NUM_DIAMOND_PER_DAY_PER_ORE, 0.001f, 1000f, "For each dense diamond ore block in a claim, how many resources do players get per yield timer");
@@ -297,6 +299,7 @@ public class WarForgeConfig
 		SHOW_OPPONENT_BORDERS = configFile.getBoolean("Show Opponent Chunk Borders", Configuration.CATEGORY_GENERAL, SHOW_OPPONENT_BORDERS, "Turns the in-world border rendering on/off for opponent chunks");
 		SHOW_ALLY_BORDERS = configFile.getBoolean("Show Ally Chunk Borders", Configuration.CATEGORY_GENERAL, SHOW_ALLY_BORDERS, "Turns the in-world border rendering on/off for ally chunks");
 		SHOW_YIELD_TIMERS = configFile.getBoolean("Show yield timers", CATEGORY_CLIENT, SHOW_YIELD_TIMERS, "Whether to show a readout of the time until the next yield / siege in top left of your screen");
+        VEIN_MEMBER_DISPLAY_TIME_MS = configFile.getInt("Vein Member Display Time", CATEGORY_CLIENT, (int) VEIN_MEMBER_DISPLAY_TIME_MS, 100, Integer.MAX_VALUE, "The time in milliseconds for which each member of a vein will be displayed when it is being cycled through, to the precision allowed by the client tick system.");
 
 		// Other permissions
 		BLOCK_ENDER_CHEST = configFile.getBoolean("Disable Ender Chest", Configuration.CATEGORY_GENERAL, BLOCK_ENDER_CHEST, "Prevent players from opening ender chests");

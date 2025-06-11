@@ -27,12 +27,11 @@ public class WarforgeCache<K, V> {
         this.maxSize = maxSize;
     }
 
+    // put the key in, overriding any previous association
     public synchronized void put(K key, V value) {
         purgeExpired();
 
-        if (cache.containsKey(key)) {
-            queue.remove(cache.get(key));
-        } else if (maxSize > 0 && cache.size() >= maxSize) {
+        if (!cache.containsKey(key) && maxSize > 0 && cache.size() >= maxSize) {
             evictOldest();
         }
 
@@ -47,20 +46,23 @@ public class WarforgeCache<K, V> {
         return entry != null ? entry.value : null;
     }
 
+    // evicts oldest due to space constraints
     private void evictOldest() {
         Entry oldest = queue.pollFirst();
         if (oldest != null) {
             cache.remove(oldest.key);
         }
     }
+
     public synchronized boolean contains(K key){
         purgeExpired();
         return cache.containsKey(key);
     }
 
+    // removes oldest due
     private void purgeExpired() {
         long now = System.currentTimeMillis();
-        while (!queue.isEmpty()) {
+        while (!queue.isEmpty() && maxAgeMillis > 0) {
             Entry oldest = queue.peekFirst();
             if (now - oldest.timestamp > maxAgeMillis) {
                 queue.pollFirst();
