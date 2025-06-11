@@ -18,7 +18,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumBlockRenderType;
@@ -26,7 +25,6 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
@@ -53,10 +51,10 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
     }
 
     public void initMap() {
-         multiBlockMap = Collections.unmodifiableMap(new HashMap<>() {{
-             put(statue.getDefaultState().withProperty(MODEL, KING), new Vec3i(0, 1, 0));
-             put(dummyTranslusent.getDefaultState().withProperty(MODEL, TRANSLUCENT), new Vec3i(0, 2, 0));
-         }});
+        multiBlockMap = Collections.unmodifiableMap(new HashMap<>() {{
+            put(statue.getDefaultState().withProperty(MODEL, KING), new Vec3i(0, 1, 0));
+            put(dummyTranslusent.getDefaultState().withProperty(MODEL, TRANSLUCENT), new Vec3i(0, 2, 0));
+        }});
 
     }
 
@@ -177,11 +175,12 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
 
     @Override
     public boolean canEntityDestroy(IBlockState state, IBlockAccess world, BlockPos pos, Entity entity) {
-        TileEntityCitadel thisCitadel = (TileEntityCitadel) world.getTileEntity(pos);
-        if (!thisCitadel.factionUUID.equals(Faction.nullUuid)) {
-            return false;
-        }
-        return true;
+        return false;
+//        TileEntityCitadel thisCitadel = (TileEntityCitadel) world.getTileEntity(pos);
+//        if (!thisCitadel.factionUUID.equals(Faction.nullUuid)) {
+//            return false;
+//        }
+//        return true;
     }
 
     /*
@@ -189,19 +188,21 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
      */
     @Override
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-        TileEntity tileentity = worldIn.getTileEntity(pos);
 
-        if (tileentity instanceof TileEntityYieldCollector) {
-            InventoryHelper.dropInventoryItems(worldIn, pos, (TileEntityYieldCollector) tileentity);
-            worldIn.updateComparatorOutputLevel(pos, this);
-        }
-        TileEntityCitadel thisCitadel = (TileEntityCitadel) worldIn.getTileEntity(pos);
-        if(thisCitadel.factionUUID.equals(Faction.nullUuid)) {
-            worldIn.setBlockToAir(pos);
-            worldIn.setBlockToAir(pos.up(1));
-            worldIn.setBlockToAir(pos.up(2));
-            thisCitadel.clear();
-            super.breakBlock(worldIn, pos, state);
-        }
+        super.breakBlock(worldIn, pos, state);
+//        TileEntity tileentity = worldIn.getTileEntity(pos);
+//
+//        if (tileentity instanceof TileEntityYieldCollector) {
+//            InventoryHelper.dropInventoryItems(worldIn, pos, (TileEntityYieldCollector) tileentity);
+//            worldIn.updateComparatorOutputLevel(pos, this);
+//        }
+//        TileEntityCitadel thisCitadel = (TileEntityCitadel) worldIn.getTileEntity(pos);
+//        if(thisCitadel.factionUUID.equals(Faction.nullUuid)) {
+//            worldIn.setBlockToAir(pos);
+//            worldIn.setBlockToAir(pos.up(1));
+//            worldIn.setBlockToAir(pos.up(2));
+//            thisCitadel.clear();
+//            super.breakBlock(worldIn, pos, state);
+//        }
     }
 }
