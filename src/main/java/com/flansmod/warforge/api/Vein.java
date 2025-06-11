@@ -1,8 +1,10 @@
 package com.flansmod.warforge.api;
 
 
+import com.flansmod.warforge.common.VeinConfigHandler;
 import com.flansmod.warforge.common.network.PacketBase;
 import io.netty.buffer.ByteBuf;
+import it.unimi.dsi.fastutil.Function;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -11,6 +13,8 @@ import net.minecraft.util.ResourceLocation;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 
 public class Vein {
     public static ArrayList<Vein> orderedVeins = new ArrayList<>();
@@ -35,6 +39,37 @@ public class Vein {
     final int ID;
 
     private static int idCounter = 0;
+
+    public Vein(final VeinConfigHandler.VeinEntry vein_entry) {
+        this(vein_entry, idCounter++);
+        orderedVeins.add(this);  // only the server will create these veins in order
+    }
+
+    public Vein(final VeinConfigHandler.VeinEntry vein_entry, int id) {
+        BiFunction<Double, Integer, Integer> percentToInteger = (x, frac) -> {
+            double scale = Math.pow(10, frac);
+            return (int) Math.round(x * scale);
+        };
+        this.translation_key = vein_entry.name;
+        ID = id;
+        VEIN_ENTRY = vein_entry.serializeVeinEntry();
+        dim_weights = new Int2IntOpenHashMap(vein_entry.dims.size());
+        dim_weights.defaultReturnValue(0);
+        for(VeinConfigHandler.DimWeight dimWeight : vein_entry.dims) {
+            dim_weights.put(dimWeight.id, (int) percentToInteger.apply(dimWeight.weight, WEIGHT_FRACTION_DIGIT_COUNT));
+        }
+        this.component_yields = new int[vein_entry.components.size()];
+        this.component_ids = new ResourceLocation[vein_entry.components.size()];
+        this.component_weights = new int[vein_entry.components.size()];
+        int index = 0;
+        for(VeinConfigHandler.Component component : vein_entry.components){
+            component_yields[index] =  component.yield;
+            component_weights[index] = percentToInteger.apply(component.weight, WEIGHT_FRACTION_DIGIT_COUNT);
+            component_ids[index] = new ResourceLocation(component.item);
+            index++;
+        }
+
+    }
 
     // should only be called by the server
     public Vein(final String vein_entry) {

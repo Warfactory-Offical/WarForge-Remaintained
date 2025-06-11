@@ -2,14 +2,16 @@ package com.flansmod.warforge.common;
 
 import com.flansmod.warforge.api.ObjectIntPair;
 import com.flansmod.warforge.api.Vein;
+import com.flansmod.warforge.api.VeinKey;
 import com.flansmod.warforge.client.PlayerNametagCache;
-import com.flansmod.warforge.common.effect.EffectRegistry;
 import com.flansmod.warforge.common.blocks.IMultiBlockInit;
 import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
+import com.flansmod.warforge.common.effect.EffectRegistry;
 import com.flansmod.warforge.common.network.*;
 import com.flansmod.warforge.common.potions.PotionsModule;
 import com.flansmod.warforge.server.*;
 import com.flansmod.warforge.server.Faction.Role;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandHandler;
@@ -50,7 +52,6 @@ import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.logging.log4j.Logger;
-import scala.tools.nsc.doc.model.Public;
 import zone.rong.mixinbooter.ILateMixinLoader;
 
 import java.io.File;
@@ -77,11 +78,11 @@ public class WarForgeMod implements ILateMixinLoader {
     public static final TeleportsModule TELEPORTS = new TeleportsModule();
     public static final PotionsModule POTIONS = new PotionsModule();
     public static final UpgradeHandler UPGRADE_HANDLER = new UpgradeHandler();
-
-    @SideOnly(Side.CLIENT)
-    public static PlayerNametagCache NAMETAG_CACHE;
     // Discord integration
     private static final String DISCORD_MODID = "discordintegration";
+    public static Int2ObjectOpenHashMap<TreeMap<VeinKey, Vein>> VEIN_MAP = new Int2ObjectOpenHashMap<>();
+    @SideOnly(Side.CLIENT)
+    public static PlayerNametagCache NAMETAG_CACHE;
     @Instance(MODID)
     public static WarForgeMod INSTANCE;
     @SidedProxy(clientSide = "com.flansmod.warforge.client.ClientProxy", serverSide = "com.flansmod.warforge.common.CommonProxy")
@@ -181,6 +182,11 @@ public class WarForgeMod implements ILateMixinLoader {
         return sender instanceof MinecraftServer;
     }
 
+    @SubscribeEvent
+    public static void onRegisterSounds(RegistryEvent.Register<SoundEvent> event) {
+        Sounds.register(event.getRegistry());
+    }
+
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         LOGGER = event.getModLog();
@@ -245,19 +251,23 @@ public class WarForgeMod implements ILateMixinLoader {
                 e.printStackTrace();
             }
         }
+        List<VeinConfigHandler.VeinEntry> veinList = new ArrayList<>();
+        try {
+            VeinConfigHandler.writeStubIfEmpty();
+             veinList = VeinConfigHandler.loadVeins();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        if(!veinList.isEmpty() && veinList != null)
+            VeinKey.populateVeinMap(WarForgeMod.VEIN_MAP, veinList);
 
-        if(FMLCommonHandler.instance().getSide() == Side.CLIENT){
+        if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
             NAMETAG_CACHE = new PlayerNametagCache(60_000, 200);
         }
 
 
     }
-
-    @SubscribeEvent
-    public static void onRegisterSounds(RegistryEvent.Register<SoundEvent> event){
-        Sounds.register(event.getRegistry());
-    }
-
 
     public long getSiegeDayLengthMS() {
         return (long) (
@@ -655,14 +665,14 @@ public class WarForgeMod implements ILateMixinLoader {
             }
 
             // go over all ordered veins that the server has and send them to the client
-            for (int veinID = 0; veinID < Vein.orderedVeins.size();) {
+            for (int veinID = 0; veinID < Vein.orderedVeins.size(); ) {
                 PacketVeinEntries currEntries = new PacketVeinEntries().fillFrom(Vein.orderedVeins, veinID);
                 veinID += currEntries.entryCount();
 
                 // queue up each compressed packet to be sent
                 SyncQueueHandler.enqueue(() -> {
-                        NETWORK.sendTo(currEntries, (EntityPlayerMP) event.player);
-                    }
+                            NETWORK.sendTo(currEntries, (EntityPlayerMP) event.player);
+                        }
                 );
             }
         }

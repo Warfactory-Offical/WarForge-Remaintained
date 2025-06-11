@@ -54,7 +54,6 @@ public class WarForgeConfig
 
 	// Yield - veins:
 	// maps each dimension id to a map of vein keys to veins for quick access
-	public static Int2ObjectOpenHashMap<TreeMap<VeinKey, Vein>> VEIN_MAP = new Int2ObjectOpenHashMap<>();
 
 	// Sieges
 	public static final String CATEGORY_SIEGES = "Sieges";
@@ -188,7 +187,7 @@ public class WarForgeConfig
         CLAIM_FOE.ALLOW_DISMOUNT_ENTITY = false;
 
         UNCLAIMED.EXPLOSION_DAMAGE = true;
-        VEIN_MAP.defaultReturnValue(null);
+        WarForgeMod.VEIN_MAP.defaultReturnValue(null);
     }
 
 	public static void initializeVeins() {
@@ -199,7 +198,7 @@ public class WarForgeConfig
 				"If component weights entry is left as {} [empty], then all are assumed to have a value of 1. All other fields are mandatory and must have equal counts.";
 
 		String[] vein_entries = configFile.getStringList("Vein list", CATEGORY_YIELDS, new String[0], VEIN_ENTRY_EXPLANATION);  // if the default value is null then the returned result is null which causes a npe
-		VeinKey.populateVeinMap(VEIN_MAP, vein_entries);
+		VeinKey.populateVeinMap(WarForgeMod.VEIN_MAP, vein_entries);
 	}
 
 	public static void syncConfig(File suggestedFile) {
@@ -282,7 +281,7 @@ public class WarForgeConfig
 		YIELD_DAY_LENGTH = configFile.getFloat("Yield Day Length", CATEGORY_YIELDS, YIELD_DAY_LENGTH, 0.0001f, 100000f, "The length of time between yields, in real-world hours.");
 
 		YIELD_QUALITY_MULTIPLIER = configFile.getFloat("Yield Quality Multiplier", CATEGORY_YIELDS, YIELD_QUALITY_MULTIPLIER, 1, 10000, "A number to be used to vary yield amounts for every vein's components, dividing by this for poor quality veins and multiplying for high quality. Set to 1 to effectively have no difference.");
-		initializeVeins();
+		//initializeVeins();
 
 		// Notoriety
 		NOTORIETY_PER_PLAYER_KILL = configFile.getInt("Notoriety gain per PVP kill", CATEGORY_NOTORIETY, NOTORIETY_PER_PLAYER_KILL, 0, 1024, "How much notoriety a player earns for their faction when killing another player");

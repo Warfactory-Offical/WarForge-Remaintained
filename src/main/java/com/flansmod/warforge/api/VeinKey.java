@@ -2,15 +2,18 @@ package com.flansmod.warforge.api;
 
 import akka.japi.Pair;
 import com.flansmod.warforge.common.DimChunkPos;
+import com.flansmod.warforge.common.VeinConfigHandler;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.TreeMap;
 
-import static com.flansmod.warforge.common.WarForgeConfig.VEIN_MAP;
+import static com.flansmod.warforge.common.VeinConfigHandler.*;
 import static com.flansmod.warforge.common.WarForgeMod.LOGGER;
+import static com.flansmod.warforge.common.WarForgeMod.VEIN_MAP;
 
 // used to more efficiently handle lots of veins
 // random number generated from 1-10000 will turn into a key with that # as both bounds
@@ -151,6 +154,27 @@ public class VeinKey implements Comparable<VeinKey> {
             populateDimVeinMap(vein_map.get(dim), dim, all_veins);
         }
     }
+
+    public static void populateVeinMap(Int2ObjectOpenHashMap<TreeMap<VeinKey, Vein>> vein_map, List<VeinEntry> vein_entries) {
+        ArrayList<Vein> all_veins = new ArrayList<>(vein_entries.size());
+        Int2IntOpenHashMap all_dims = new Int2IntOpenHashMap();
+        all_dims.defaultReturnValue(0);
+        for (VeinEntry entry : vein_entries) {
+            Vein curr_vein = new Vein(entry);  // store all veins provided for later use
+            all_veins.add(curr_vein);
+
+            // determine the dims this vein is present in
+            for (int dim : curr_vein.getValidDims()) {
+                all_dims.put(dim, all_dims.get(dim) + 1);  // increment the number of veins this dim has (unused)
+            }
+        }
+
+        for (int dim : all_dims.keySet()) {
+            vein_map.put(dim, new TreeMap<>());
+            populateDimVeinMap(vein_map.get(dim), dim, all_veins);
+        }
+    }
+
 
     public static int[] generateChunkHash(int chunk_x, int chunk_z, long seed) {
         // "hash" to determine the vein for this chunk

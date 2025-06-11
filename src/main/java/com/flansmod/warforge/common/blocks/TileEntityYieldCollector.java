@@ -19,7 +19,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 import static com.flansmod.warforge.common.CommonProxy.YIELD_QUALITY_MULTIPLIER;
-import static com.flansmod.warforge.common.WarForgeConfig.VEIN_MAP;
+import static com.flansmod.warforge.common.WarForgeMod.VEIN_MAP;
 
 public abstract class TileEntityYieldCollector extends TileEntityClaim implements IInventory
 {
