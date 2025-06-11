@@ -70,7 +70,7 @@ public class ChunkDynamicTextureThread extends Thread {
                 int heightDiffEast = baseHeight - eastHeight;
                 int heightDiffSouth = baseHeight - southHeight;
 
-                float shadeFactor = 1.0f - ((heightDiffEast + heightDiffSouth) / 2f) * 0.7f;
+                float shadeFactor = 1.0f - ((heightDiffEast + heightDiffSouth) / 2f) * 0.2f;
                 shadeFactor = Math.max(0.7f, Math.min(1.0f, shadeFactor));
 
                 shaded[idx] = applyBrightness(baseColor, shadeFactor);
