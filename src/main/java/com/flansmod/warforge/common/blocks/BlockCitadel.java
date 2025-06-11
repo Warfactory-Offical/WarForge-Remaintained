@@ -136,8 +136,13 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
 
     @Override
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing side, float par7, float par8, float par9) {
-        if (player.isSneaking())
-            return false;
+        if (player.isSneaking()) {
+            TileEntityCitadel citadel = (TileEntityCitadel) world.getTileEntity(pos);
+            assert citadel != null;
+            citadel.increaseRotation(45f);
+
+            return true;
+        }
         if (!world.isRemote) {
             Faction playerFaction = WarForgeMod.FACTIONS.getFactionOfPlayer(player.getUniqueID());
             TileEntityCitadel citadel = (TileEntityCitadel) world.getTileEntity(pos);
