@@ -130,7 +130,13 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
         if (player.isSneaking()) {
             TileEntityClaim citadel = (TileEntityClaim) world.getTileEntity(pos);
             assert citadel != null;
-            citadel.increaseRotation(45f);
+            if(!citadel.getFaction().equals(Faction.nullUuid))
+                citadel.increaseRotation(45f);
+            else
+                if(!world.isRemote) {
+                    breakBlock(world, pos, state);
+                    world.destroyBlock(pos, true);
+                }
             return true;
         }
         if (!world.isRemote) {
@@ -170,12 +176,9 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
 
     @Override
     public boolean canEntityDestroy(IBlockState state, IBlockAccess world, BlockPos pos, Entity entity) {
+        if(world.getTileEntity(pos) instanceof TileEntityClaim te && te.getFaction().equals(Faction.nullUuid))
+            return true;
         return false;
-//        TileEntityCitadel thisCitadel = (TileEntityCitadel) world.getTileEntity(pos);
-//        if (!thisCitadel.factionUUID.equals(Faction.nullUuid)) {
-//            return false;
-//        }
-//        return true;
     }
 
     /*
@@ -183,21 +186,6 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
      */
     @Override
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-
         super.breakBlock(worldIn, pos, state);
-//        TileEntity tileentity = worldIn.getTileEntity(pos);
-//
-//        if (tileentity instanceof TileEntityYieldCollector) {
-//            InventoryHelper.dropInventoryItems(worldIn, pos, (TileEntityYieldCollector) tileentity);
-//            worldIn.updateComparatorOutputLevel(pos, this);
-//        }
-//        TileEntityCitadel thisCitadel = (TileEntityCitadel) worldIn.getTileEntity(pos);
-//        if(thisCitadel.factionUUID.equals(Faction.nullUuid)) {
-//            worldIn.setBlockToAir(pos);
-//            worldIn.setBlockToAir(pos.up(1));
-//            worldIn.setBlockToAir(pos.up(2));
-//            thisCitadel.clear();
-//            super.breakBlock(worldIn, pos, state);
-//        }
     }
 }

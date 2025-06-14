@@ -5,6 +5,7 @@ import com.flansmod.warforge.api.Vein;
 import com.flansmod.warforge.api.VeinKey;
 import com.flansmod.warforge.client.PlayerNametagCache;
 import com.flansmod.warforge.common.blocks.IMultiBlockInit;
+import com.flansmod.warforge.common.blocks.TileEntityClaim;
 import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
 import com.flansmod.warforge.common.effect.EffectRegistry;
 import com.flansmod.warforge.common.network.*;
@@ -33,6 +34,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -80,6 +82,7 @@ public class WarForgeMod implements ILateMixinLoader {
     public static final UpgradeHandler UPGRADE_HANDLER = new UpgradeHandler();
     // Discord integration
     private static final String DISCORD_MODID = "discordintegration";
+    private static final HashMap<String, UUID> discordUserIdMap = new HashMap<String, UUID>();
     public static Int2ObjectOpenHashMap<TreeMap<VeinKey, Vein>> VEIN_MAP = new Int2ObjectOpenHashMap<>();
     @SideOnly(Side.CLIENT)
     public static PlayerNametagCache NAMETAG_CACHE;
@@ -99,17 +102,16 @@ public class WarForgeMod implements ILateMixinLoader {
     // Timers
     public static long serverTick = 0L;
     public static long currTickTimestamp = 0L;
-    private static HashMap<String, UUID> discordUserIdMap = new HashMap<String, UUID>();
 
     public static boolean containsInt(final int[] base, int compare) {
         return Arrays.stream(base).anyMatch(i -> i == compare);
     }
 
     public static boolean isClaim(Item item) {
-        return item != null && (item.equals(CONTENT.citadelBlockItem)
-                || item.equals(CONTENT.basicClaimBlockItem)
-                || item.equals(CONTENT.reinforcedClaimBlockItem)
-                || item.equals(CONTENT.siegeCampBlockItem));
+        return item != null && (item.equals(Content.citadelBlockItem)
+                || item.equals(Content.basicClaimBlockItem)
+                || item.equals(Content.reinforcedClaimBlockItem)
+                || item.equals(Content.siegeCampBlockItem));
     }
 
     public static boolean isClaim(Block block, Block... notEquals) {
@@ -123,12 +125,12 @@ public class WarForgeMod implements ILateMixinLoader {
             }
         }
 
-        return !matchesAnyInvalidBlocks && (block.equals(CONTENT.citadelBlock)
-                || block.equals(CONTENT.basicClaimBlock)
-                || block.equals(CONTENT.reinforcedClaimBlock)
-                || block.equals(CONTENT.siegeCampBlock)
-                || block.equals(CONTENT.statue)
-                || block.equals(CONTENT.dummyTranslusent));
+        return !matchesAnyInvalidBlocks && (block.equals(Content.citadelBlock)
+                || block.equals(Content.basicClaimBlock)
+                || block.equals(Content.reinforcedClaimBlock)
+                || block.equals(Content.siegeCampBlock)
+                || block.equals(Content.statue)
+                || block.equals(Content.dummyTranslusent));
     }
 
     public static String formatTime(long ms) {
@@ -254,12 +256,12 @@ public class WarForgeMod implements ILateMixinLoader {
         List<VeinConfigHandler.VeinEntry> veinList = new ArrayList<>();
         try {
             VeinConfigHandler.writeStubIfEmpty();
-             veinList = VeinConfigHandler.loadVeins();
+            veinList = VeinConfigHandler.loadVeins();
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(1);
         }
-        if(!veinList.isEmpty() && veinList != null)
+        if (!veinList.isEmpty() && veinList != null)
             VeinKey.populateVeinMap(WarForgeMod.VEIN_MAP, veinList);
 
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
@@ -298,9 +300,7 @@ public class WarForgeMod implements ILateMixinLoader {
         long ticks = (long) cooldown; // why did you convert it into ticks if its already in ticks
         long elapsed = startOfCooldown - ticks;
 
-        return (long) (
-                (serverTick - elapsed) * 20
-        );
+        return (serverTick - elapsed) * 20;
     }
 
     public int getCooldownRemainingMinutes(float cooldown, long startOfCooldown) {
@@ -435,13 +435,14 @@ public class WarForgeMod implements ILateMixinLoader {
     @SubscribeEvent
     public void blockRemoved(BlockEvent.BreakEvent event) {
         IBlockState state = event.getState();
-        if (isClaim(state.getBlock(), CONTENT.siegeCampBlock)) {
+        if (isClaim(state.getBlock(), Content.siegeCampBlock) )  {
+            if(event.getWorld().getTileEntity(event.getPos()) instanceof  TileEntityClaim te && te.getFaction().equals(Faction.nullUuid)) return;
             event.setCanceled(true);
             return;
         }
 
         if (!event.getWorld().isRemote) {
-            if (state.getBlock() == CONTENT.siegeCampBlock) {
+            if (state.getBlock() == Content.siegeCampBlock) {
                 TileEntitySiegeCamp siegeBlock = (TileEntitySiegeCamp) event.getWorld().getTileEntity(event.getPos());
                 if (siegeBlock != null) siegeBlock.onDestroyed();
             }
@@ -518,15 +519,14 @@ public class WarForgeMod implements ILateMixinLoader {
         }
 
         // Cancel block placement for a couple of reasons
-        if (block == CONTENT.citadelBlock) {
+        if (block == Content.citadelBlock) {
             if (playerFaction != null) // Can't place a second citadel
             {
                 player.sendMessage(new TextComponentString("You are already in a faction"));
                 event.setCanceled(true);
-                return;
             }
-        } else if (block == CONTENT.basicClaimBlock
-                || block == CONTENT.reinforcedClaimBlock) {
+        } else if (block == Content.basicClaimBlock
+                || block == Content.reinforcedClaimBlock) {
             if (playerFaction == null) // Can't expand your claims if you aren't in a faction
             {
                 player.sendMessage(new TextComponentString("You aren't in a faction. Craft a citadel or join a faction"));
@@ -543,7 +543,6 @@ public class WarForgeMod implements ILateMixinLoader {
             if (WarForgeConfig.ENABLE_CITADEL_UPGRADES && !playerFaction.canPlaceClaim()) {
                 player.sendMessage(new TextComponentString("Your faction reached it's level's claim limit, upgrade the level to incrase the limit"));
                 event.setCanceled(true);
-                return;
             }
         } else // Must be siege block
         {
@@ -580,7 +579,6 @@ public class WarForgeMod implements ILateMixinLoader {
             if (numTargets == 0) {
                 player.sendMessage(new TextComponentString("There are no adjacent claims to siege; Siege camp Y level must be w/in " + WarForgeConfig.VERTICAL_SIEGE_DIST + " of target."));
                 event.setCanceled(true);
-                return;
             }
 
             // TODO: Check for alliances with those claims

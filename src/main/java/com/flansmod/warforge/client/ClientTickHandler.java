@@ -145,7 +145,7 @@ public class ClientTickHandler
 
 					// Iterate only through the necessary tile entities (avoid loading all entities unnecessarily)
 					for (TileEntity te : player.world.loadedTileEntityList) {
-						if (te instanceof IClaim) {
+						if (te instanceof IClaim && !((IClaim) te).getFaction().equals(Faction.nullUuid)) {
 							DimChunkPos tePos = ((IClaim) te).getClaimPos().toChunkPos();
 							if (tePos.equals(playerChunkPos)) {
 								preClaim = (IClaim) te;
