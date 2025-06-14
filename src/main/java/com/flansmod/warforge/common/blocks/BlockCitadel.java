@@ -181,9 +181,6 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
         return false;
     }
 
-    /*
-    We'll worry about this later o algo
-     */
     @Override
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
         super.breakBlock(worldIn, pos, state);

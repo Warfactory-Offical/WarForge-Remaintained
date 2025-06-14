@@ -170,7 +170,6 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim {
         tags.setUniqueId("faction", factionUUID);
         tags.setInteger("colour", colour);
         tags.setString("name", factionName);
-        tags.setFloat("name", rotation);
         tags.setFloat("rotation", rotation);
         return tags;
     }
