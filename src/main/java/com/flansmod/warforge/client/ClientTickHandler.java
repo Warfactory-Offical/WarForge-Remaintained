@@ -44,7 +44,6 @@ import static com.flansmod.warforge.client.ClientProxy.CHUNK_VEIN_CACHE;
 
 public class ClientTickHandler 
 {
-	// FIXME: use something other than a tessellator
 	private final Tessellator tess;
 	private static final ResourceLocation texture = new ResourceLocation(WarForgeMod.MODID, "world/borders.png");
 	private static final ResourceLocation fastTexture = new ResourceLocation(WarForgeMod.MODID, "world/borders_fast.png");
@@ -936,6 +935,8 @@ public class ClientTickHandler
 		// Reset OpenGL state
 		GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 		GlStateManager.disableLighting();
+		GlStateManager.disableBlend();
+		GlStateManager.disableAlpha();
 		GlStateManager.popAttrib();
 		GlStateManager.popMatrix();
 	}
@@ -1030,61 +1031,6 @@ public class ClientTickHandler
 		return canPlace;
 	}
 
-//	private void renderCitadelFlags(double x, double y, double z) {
-//		for (TileEntity te : Minecraft.getMinecraft().world.loadedTileEntityList) {
-//			if (te instanceof TileEntityCitadel citadel) {
-//				DimBlockPos blockPos = ((IClaim) te).getClaimPos();
-//				double distance = Math.sqrt(Math.pow(blockPos.getX() - x, 2) + Math.pow(blockPos.getY() - y, 2) + Math.pow(blockPos.getZ() - z, 2));
-//				double groundLevelBlend = Math.max(0.0d, Math.min(1.0d, (skyRenderDistance - distance) / (skyRenderDistance - groundRenderDistance)));
-//				groundLevelBlend = groundLevelBlend * groundLevelBlend * (3 - 2 * groundLevelBlend);
-//
-//				ItemStack bannerStack = citadel.getStackInSlot(TileEntityCitadel.BANNER_SLOT_INDEX);
-//				if (bannerTextures.containsKey(bannerStack)) {
-//					Minecraft.getMinecraft().renderEngine.bindTexture(bannerTextures.get(bannerStack));
-//				} else {
-//					loadAndRenderBanner(citadel, bannerStack, groundLevelBlend, x, y, z);
-//				}
-//			}
-//		}
-//	}
-
-//	private void loadAndRenderBanner(TileEntityCitadel citadel, ItemStack bannerStack, double groundLevelBlend, double x, double y, double z) {
-//		ItemBanner banner = (ItemBanner) bannerStack.getItem();
-//		EnumDyeColor baseColour = ItemBanner.getBaseColor(bannerStack);
-//		List<BannerPattern> patternList = new ArrayList<>();
-//		List<EnumDyeColor> colorList = new ArrayList<>();
-//		patternList.add(BannerPattern.BASE);
-//		colorList.add(baseColour);
-//
-//		if (bannerStack.hasTagCompound() && bannerStack.getTagCompound().hasKey("Patterns", 9)) {
-//			NBTTagList patterns = bannerStack.getTagCompound().getTagList("Patterns", 10).copy();
-//			for (int p = 0; p < patterns.tagCount(); p++) {
-//				NBTTagCompound nbttagcompound = patterns.getCompoundTagAt(p);
-//				BannerPattern bannerpattern = BannerPattern.byHash(nbttagcompound.getString("Pattern"));
-//				if (bannerpattern != null) {
-//					patternList.add(bannerpattern);
-//					colorList.add(EnumDyeColor.byDyeDamage(nbttagcompound.getInteger("Color")));
-//				}
-//			}
-//		}
-//
-//		StringBuilder patternResourceLocation = new StringBuilder("b" + baseColour.getDyeDamage());
-//		ResourceLocation resLoc = BannerTextures.BANNER_DESIGNS.getResourceLocation(patternResourceLocation.toString(), patternList, colorList);
-//		bannerTextures.put(bannerStack, resLoc);
-//		Minecraft.getMinecraft().renderEngine.bindTexture(resLoc);
-//
-//		GlStateManager.pushMatrix();
-//		double deltaX = citadel.getPos().getX() - x;
-//		double deltaZ = citadel.getPos().getZ() - z;
-//		float angle = (float) Math.atan2(deltaZ, deltaX) * 180f / (float) Math.PI + 90f;
-//		double yPos = citadel.getPos().getY() + 2d;
-//		yPos = 256 + (yPos - 256) * groundLevelBlend;
-//		float scale = (float) (1d * groundLevelBlend + 10d * (1d - groundLevelBlend));
-//		GlStateManager.translate(0.5d + citadel.getPos().getX() - x, yPos - y, 0.5d + citadel.getPos().getZ() - z);
-//		GlStateManager.rotate(angle, 0.0F, 1.0F, 0.0F);
-//		this.bannerModel.renderBanner(1.0f);
-//		GlStateManager.popMatrix();
-//	}
 
 	private void vertexAt(DimChunkPos chunkPos, World world, int x, int z, double groundLevelBlend, double playerHeight) {
 		double topHeight = playerHeight + 128;

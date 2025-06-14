@@ -59,15 +59,15 @@ public class ClientProxy extends CommonProxy
 	@Override
 	public void Init(FMLInitializationEvent event)
 	{
-		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityCitadel.class, new TileEntityClaimRenderer());
-		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityBasicClaim.class, new TileEntityClaimRenderer());
-		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityReinforcedClaim.class, new TileEntityClaimRenderer());
-		ClientRegistry.bindTileEntitySpecialRenderer(TileEntitySiegeCamp.class, new TileEntityClaimRenderer());
-
+//		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityCitadel.class, new TileEntityClaimRenderer());
+//		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityBasicClaim.class, new TileEntityClaimRenderer());
+//		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityReinforcedClaim.class, new TileEntityClaimRenderer());
+//		ClientRegistry.bindTileEntitySpecialRenderer(TileEntitySiegeCamp.class, new TileEntityClaimRenderer());
+//
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityDummy.class, new RenderTileEntityDummy());
 
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityLeaderboard.class, new TileEntityLeaderboardRenderer());
-		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityCitadel.class, new RenderTileEntityCitadel());
+		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityCitadel.class, new RenderTileEntityClaim());
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityBasicClaim.class, new RenderTileEntityClaim());
 	}
 	
