@@ -193,7 +193,7 @@ public class WarForgeConfig
 	public static void initializeVeins() {
 		final String VEIN_ENTRY_EXPLANATION = "All veins should be entered in the follow format: \n" +
 				"<translation_key>, {<valid dim id's>}, {<vein dim weights 0.0000 - 1.0000>}, {<yield_amount>~<component item id>, ...}, {<component weights 0.0000 - 1.0000>}; \n" +
-				"Example: veins.pure_iron, {2#minecraft:iron_ore, 1#minecraft:coal_ore}, {-1, 0, 1}, {0.5, 0.4215, 1}, {1, 0.2}. \n" +
+				"Example: warforge.veins.pure_iron, {-1, 0, 1}, {0.5, 0.4215, 1}, {2~minecraft:iron_ore, 1~minecraft:coal_ore}, {1, 0.2}. \n" +
 				"The above is a vein which yields two iron ore and one coal in all dimensions with 3 respective dimension weights and which always gives iron, but only gives coal 20% of the time. \n" +
 				"If component weights entry is left as {} [empty], then all are assumed to have a value of 1. All other fields are mandatory and must have equal counts.";
 

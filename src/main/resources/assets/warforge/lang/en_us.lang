@@ -24,9 +24,7 @@ warforge.info.vein.null=This chunk has no vein.
 warforge.info.vein.unknown_vein_id=Received an unrecognized id for the vein in this chunk; try re-logging.
 warforge.info.vein.unknown_qual_id=Received an unrecognized id for the quality of the vein in this chunk...
 
-warforge.veins.testing= %s Iron-Coal Vein
-veins.pure_iron= %s Iron-Coal Vein
-veins.gold= %s Gold Vein
+warforge.veins.gold= %s Gold Vein
 
 warforge.info.too_many_siege_blocks=Your faction has reached the maximum number of sieges.
 warforge.info.siege_count=Your faction's current number of sieges: %d.
