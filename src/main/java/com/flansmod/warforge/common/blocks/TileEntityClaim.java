@@ -4,9 +4,11 @@ import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.server.Faction;
 import net.minecraft.block.Block;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -16,12 +18,14 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.UUID;
 
+import static com.flansmod.warforge.common.blocks.BlockCitadel.FACING;
+
 public abstract class TileEntityClaim extends TileEntity implements IClaim {
     public int colour = 0xFF_FF_FF;
     public String factionName = "";
     protected UUID factionUUID = Faction.nullUuid;
+    public float rotation;
 
-    //public ArrayList<String> playerFlags = new ArrayList<String>();
     // This is so weird
     private World worldCreate;
 
@@ -30,6 +34,13 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim {
     public UUID getFaction() {
         return factionUUID;
     }
+
+    public void increaseRotation(float inc) {
+        rotation += inc;
+        rotation %= 360;
+        updateTileEntity();
+    }
+
 
     @Override
     public void updateColour(int colour) {
@@ -66,32 +77,6 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim {
     public boolean canBeSieged() {
         return true;
     }
-//	@Override
-//	public List<String> getPlayerFlags() { return playerFlags; }
-    //-----------
-
-
-//	@Override
-//	public void onServerSetPlayerFlag(String playerName)
-//	{
-//		playerFlags.add(playerName);
-//
-//		world.markBlockRangeForRenderUpdate(pos, pos);
-//		world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 3);
-//		world.scheduleBlockUpdate(pos, this.getBlockType(), 0, 0);
-//		markDirty();
-//	}
-//
-//	@Override
-//	public void onServerRemovePlayerFlag(String playerName)
-//	{
-//		playerFlags.remove(playerName);
-//
-//		world.markBlockRangeForRenderUpdate(pos, pos);
-//		world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 3);
-//		world.scheduleBlockUpdate(pos, this.getBlockType(), 0, 0);
-//		markDirty();
-//	}
 
     @Override
     public String getClaimDisplayName() {
@@ -117,6 +102,7 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim {
     }
 
     private void updateTileEntity() {
+        if(world.isRemote) return;
         world.markBlockRangeForRenderUpdate(pos, pos);
         world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 3);
         world.scheduleBlockUpdate(pos, this.getBlockType(), 0, 0);
@@ -133,36 +119,18 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim {
         super.writeToNBT(nbt);
 
         nbt.setUniqueId("faction", factionUUID);
-				
-		/*
-		NBTTagList list = new NBTTagList();
-		for(int i = 0; i < mPlayerFlags.size(); i++)
-		{
-			list.appendTag(new NBTTagString(mPlayerFlags.get(i)));
-		}
-		nbt.setTag("flags", list);
-		*/
+        nbt.setFloat("rotation", rotation);
+
+
         return nbt;
     }
-
 
     @Override
     public void readFromNBT(NBTTagCompound nbt) {
         super.readFromNBT(nbt);
 
         factionUUID = nbt.getUniqueId("faction");
-
-        // Read player flags
-        //playerFlags.clear();
-		/*
-		NBTTagList list = nbt.getTagList("flags", 8); // String
-		if(list != null)
-		{
-			for(NBTBase base : list)
-			{
-				mPlayerFlags.add(((NBTTagString)base).getString());
-			}
-		}			*/
+        rotation = nbt.getFloat("rotation");
 
         // Verifications
         if (FMLCommonHandler.instance().getEffectiveSide() == Side.SERVER) {
@@ -174,15 +142,6 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim {
             if (faction != null) {
                 colour = faction.colour;
                 factionName = faction.name;
-                //for(HashMap.Entry<UUID, PlayerData> kvp : faction.members.entrySet())
-                //{
-                //if(kvp.getValue().flagPosition.equals(this.getClaimPos()))
-                //{
-                //GameProfile profile = WarForgeMod.MC_SERVER.getPlayerProfileCache().getProfileByUUID(kvp.getKey());
-                //if(profile != null)
-                //playerFlags.add(profile.getName());
-                //}
-                //}
             }
         } else {
             WarForgeMod.LOGGER.error("Loaded TileEntity from NBT on client?");
@@ -211,13 +170,8 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim {
         tags.setUniqueId("faction", factionUUID);
         tags.setInteger("colour", colour);
         tags.setString("name", factionName);
-
-//		NBTTagList list = new NBTTagList();
-//        for (String playerFlag : playerFlags) {
-//            list.appendTag(new NBTTagString(playerFlag));
-//        }
-//		tags.setTag("flags", list);
-
+        tags.setFloat("name", rotation);
+        tags.setFloat("rotation", rotation);
         return tags;
     }
 
@@ -226,15 +180,7 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim {
         factionUUID = tags.getUniqueId("faction");
         colour = tags.getInteger("colour");
         factionName = tags.getString("name");
-
-
-        // Read player flags
-//		playerFlags.clear();
-//		NBTTagList list = tags.getTagList("flags", 8); // String
-//		for(NBTBase base : list)
-//		{
-//			playerFlags.add(((NBTTagString)base).getString());
-//		}
+        rotation = tags.getFloat("rotation");
     }
 
     @Override

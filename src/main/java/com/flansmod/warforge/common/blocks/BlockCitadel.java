@@ -73,16 +73,7 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
     public EnumBlockRenderType getRenderType(IBlockState state) {
         return EnumBlockRenderType.MODEL;
     }
-//	@Override
-//	public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
-//		return layer == BlockRenderLayer.TRANSLUCENT;
-//	}
 
-    /* Unused code that errors #3
-    @SideOnly(Side.CLIENT)
-    @Override
-    public BlockRenderLayer getBlockLayer() { return BlockRenderLayer.CUTOUT; }
-    */
     @Override
     public TileEntity createNewTileEntity(World worldIn, int meta) {
         return new TileEntityCitadel();
@@ -137,10 +128,9 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
     @Override
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing side, float par7, float par8, float par9) {
         if (player.isSneaking()) {
-            TileEntityCitadel citadel = (TileEntityCitadel) world.getTileEntity(pos);
+            TileEntityClaim citadel = (TileEntityClaim) world.getTileEntity(pos);
             assert citadel != null;
             citadel.increaseRotation(45f);
-
             return true;
         }
         if (!world.isRemote) {

@@ -104,14 +104,19 @@ public class BlockBasicClaim extends MultiBlockColumn implements ITileEntityProv
 				WarForgeMod.FACTIONS.onNonCitadelClaimPlaced(claim, placer);
 				super.onBlockPlacedBy(world,pos,state,placer,stack);
 			}
+
 		}
     }
 	
 	@Override
 	public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing side, float par7, float par8, float par9)
 	{
-		if(player.isSneaking())
-			return false;
+		if(player.isSneaking()) {
+			TileEntityBasicClaim claim = (TileEntityBasicClaim) world.getTileEntity(pos);
+			assert claim != null;
+			claim.increaseRotation(45f);
+			return true;
+		}
 		if(!world.isRemote)
 		{
 			Faction playerFaction = WarForgeMod.FACTIONS.getFactionOfPlayer(player.getUniqueID());

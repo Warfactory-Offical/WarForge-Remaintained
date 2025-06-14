@@ -17,7 +17,6 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
@@ -105,15 +104,30 @@ public class BlockDummy extends Block implements ITileEntityProvider {
     }
 
     @Override
-    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
-        if (playerIn.isSneaking()) return false;
+    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state,
+                                    EntityPlayer playerIn, EnumHand hand, EnumFacing facing,
+                                    float hitX, float hitY, float hitZ) {
         TileEntity tileEntity = worldIn.getTileEntity(pos);
-        if (tileEntity instanceof IBlockDummy) {
-            BlockPos masterPos = ((IBlockDummy) tileEntity).getMasterTile();
-            if (masterPos == null) return false;
-            if (!worldIn.isAirBlock(masterPos))
-                return worldIn.getBlockState(masterPos).getBlock().onBlockActivated(worldIn, masterPos, state, playerIn, hand, facing, hitX, hitY, hitZ);
+        if (!(tileEntity instanceof IBlockDummy dummy)) return false;
+
+        BlockPos masterPos = dummy.getMasterTile();
+        if (masterPos == null) return false;
+
+        if (playerIn.isSneaking()) {
+            TileEntity masterTile = worldIn.getTileEntity(masterPos);
+            if (masterTile instanceof TileEntityClaim claim) {
+                claim.increaseRotation(45f);
+                return true;
+            }
+            return false;
         }
+
+        if (!worldIn.isAirBlock(masterPos)) {
+            return worldIn.getBlockState(masterPos).getBlock().onBlockActivated(
+                    worldIn, masterPos, state, playerIn, hand, facing, hitX, hitY, hitZ
+            );
+        }
+
         return false;
     }
 

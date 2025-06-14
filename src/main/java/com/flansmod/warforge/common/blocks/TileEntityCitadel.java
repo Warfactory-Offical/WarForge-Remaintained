@@ -27,7 +27,6 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
     public static final int NUM_SLOTS = NUM_BASE_SLOTS + 1;
 
     public UUID placer = Faction.nullUuid;
-    public float rotation;
 
     // The banner stack is an optional slot that sets all banners in owned chunks to copy the design
     protected ItemStack bannerStack;
@@ -40,8 +39,8 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
         // This locks in the placer as the only person who can create a faction using the interface on this citadel
         this.placer = placer.getUniqueID();
         rotation = 0;
-        EnumFacing CorysJewNose = world.getBlockState(new BlockPos(pos.getX(), pos.getY(), pos.getZ())).getValue(FACING);
-        switch (CorysJewNose) {
+        EnumFacing blockRotation = world.getBlockState(new BlockPos(pos.getX(), pos.getY(), pos.getZ())).getValue(FACING);
+        switch (blockRotation) {
             case NORTH: //WORKING
                 rotation = 270;
                 break;
@@ -79,7 +78,7 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
     }
 
     @Override
-    public String getClaimDisplayName() {
+    public String getClaimDisplayName() { //FIXME
         if (factionName == null || factionName.isEmpty()) {
             return "Unclaimed Citadel";
         }
@@ -88,9 +87,6 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
     //-----------
 
 
-    public void increaseRotation(float inc) {
-        rotation = (rotation + inc) % 360;
-    }
 
     // IInventory Overrides for banner stack
     @Override
@@ -136,22 +132,6 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
     public void setInventorySlotContents(int index, ItemStack stack) {
         if (index == BANNER_SLOT_INDEX) {
             bannerStack = stack;
-			/*
-			if(stack.getItem() instanceof ItemBanner)
-			{
-				int newColour = ItemBanner.getBaseColor(stack).getColorValue();
-				if(!world.isRemote) 
-				{
-					Faction faction = WarForgeMod.INSTANCE.GetFaction(mFactionUUID);
-					if(faction != null)
-					{
-						faction.mColour = newColour;
-						mColour = newColour;
-						markDirty();
-					}
-				}
-			}
-			*/
         } else
             super.setInventorySlotContents(index, stack);
     }
@@ -225,6 +205,7 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
         super.writeToNBT(nbt);
 
         nbt.setUniqueId("placer", placer);
+        nbt.setFloat("rotation", rotation);
 
         NBTTagCompound bannerStackTags = new NBTTagCompound();
         bannerStack.writeToNBT(bannerStackTags);
@@ -236,6 +217,7 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
     @Override
     public void readFromNBT(NBTTagCompound nbt) {
         super.readFromNBT(nbt);
+        rotation = nbt.getFloat("rotation");
 
         bannerStack = new ItemStack(nbt.getCompoundTag("banner"));
         placer = nbt.getUniqueId("placer");
