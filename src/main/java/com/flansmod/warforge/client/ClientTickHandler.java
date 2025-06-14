@@ -12,6 +12,7 @@ import com.flansmod.warforge.common.blocks.IClaim;
 import com.flansmod.warforge.common.network.PacketChunkPosVeinID;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
 
+import com.flansmod.warforge.server.Faction;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -551,7 +552,8 @@ public class ClientTickHandler
 
 		// Find all our data entries first
 		for(TileEntity te : world.loadedTileEntityList) {
-			if(te instanceof IClaim) {
+			if(te instanceof IClaim ) {
+				if (((IClaim) te).getFaction().equals(Faction.nullUuid)) continue;
 				DimBlockPos blockPos = ((IClaim) te).getClaimPos();
 				DimChunkPos chunkPos = blockPos.toChunkPos();
 

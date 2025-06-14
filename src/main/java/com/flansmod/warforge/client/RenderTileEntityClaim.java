@@ -3,6 +3,7 @@ package com.flansmod.warforge.client;
 import com.flansmod.warforge.common.Content;
 import com.flansmod.warforge.common.blocks.BlockDummy;
 import com.flansmod.warforge.common.blocks.TileEntityClaim;
+import com.flansmod.warforge.server.Faction;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
@@ -18,6 +19,7 @@ public class RenderTileEntityClaim extends TileEntitySpecialRenderer<TileEntityC
 
     @Override
     public void render(TileEntityClaim te, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
+        if(te.getFaction().equals(Faction.nullUuid)) return;
         GlStateManager.pushMatrix();
         this.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 
