@@ -13,12 +13,21 @@ import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import org.lwjgl.opengl.GL11;
 
 public class RenderTileEntityClaim extends TileEntitySpecialRenderer<TileEntityClaim> {
+    public RenderTileEntityClaim(BlockDummy.modelEnum anEnum) {
+        this.anEnum = anEnum;
+    }
 
-    private final IBlockState blockState = Content.statue.getDefaultState().withProperty(BlockDummy.MODEL, BlockDummy.modelEnum.KNIGHT);
-    private final IBakedModel model = Minecraft.getMinecraft().getBlockRendererDispatcher().getModelForState(blockState);
-
+    private BlockDummy.modelEnum anEnum;
+    private  IBlockState blockState;
+    private  IBakedModel model;
+    public void init()
+    {
+        blockState = Content.statue.getDefaultState().withProperty(BlockDummy.MODEL, anEnum);
+        model = Minecraft.getMinecraft().getBlockRendererDispatcher().getModelForState(blockState);
+    }
     @Override
     public void render(TileEntityClaim te, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
+        if(blockState == null) init(); //Jank nation
         if(te.getFaction().equals(Faction.nullUuid)) return;
         GlStateManager.pushMatrix();
         this.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);

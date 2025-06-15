@@ -1,21 +1,15 @@
 package com.flansmod.warforge.client;
 
-import java.util.HashMap;
-import java.util.UUID;
-
 import com.flansmod.warforge.api.Vein;
-import com.flansmod.warforge.client.util.RenderTileEntityCitadel;
-import com.flansmod.warforge.common.effect.AnimatedEffectHandler;
-import com.flansmod.warforge.common.blocks.*;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.lwjgl.input.Keyboard;
-
 import com.flansmod.warforge.common.CommonProxy;
+import com.flansmod.warforge.common.Content;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
+import com.flansmod.warforge.common.blocks.*;
+import com.flansmod.warforge.common.effect.AnimatedEffectHandler;
 import com.flansmod.warforge.common.network.PacketRequestFactionInfo;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
-
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
@@ -33,6 +27,10 @@ import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import org.lwjgl.input.Keyboard;
+
+import java.util.HashMap;
+import java.util.UUID;
 
 public class ClientProxy extends CommonProxy
 {
@@ -67,8 +65,8 @@ public class ClientProxy extends CommonProxy
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityDummy.class, new RenderTileEntityDummy());
 
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityLeaderboard.class, new TileEntityLeaderboardRenderer());
-		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityCitadel.class, new RenderTileEntityClaim());
-		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityBasicClaim.class, new RenderTileEntityClaim());
+		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityCitadel.class, new RenderTileEntityClaim(BlockDummy.modelEnum.KING));
+		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityBasicClaim.class, new RenderTileEntityClaim(BlockDummy.modelEnum.KNIGHT));
 	}
 	
 	@Override
@@ -111,16 +109,16 @@ public class ClientProxy extends CommonProxy
 	@SubscribeEvent
 	public void registerModels(ModelRegistryEvent event)
 	{
-		RegisterModel(WarForgeMod.CONTENT.citadelBlockItem);
-		RegisterModel(WarForgeMod.CONTENT.basicClaimBlockItem);
-		RegisterModel(WarForgeMod.CONTENT.reinforcedClaimBlockItem);
-		RegisterModel(WarForgeMod.CONTENT.siegeCampBlockItem);
-		RegisterModel(WarForgeMod.CONTENT.adminClaimBlockItem);
+		RegisterModel(Content.citadelBlockItem);
+		RegisterModel(Content.basicClaimBlockItem);
+		RegisterModel(Content.reinforcedClaimBlockItem);
+		RegisterModel(Content.siegeCampBlockItem);
+		RegisterModel(Content.adminClaimBlockItem);
 
-		RegisterModel(WarForgeMod.CONTENT.topLeaderboardItem);
-		RegisterModel(WarForgeMod.CONTENT.legacyLeaderboardItem);
-		RegisterModel(WarForgeMod.CONTENT.wealthLeaderboardItem);
-		RegisterModel(WarForgeMod.CONTENT.notorietyLeaderboardItem);
+		RegisterModel(Content.topLeaderboardItem);
+		RegisterModel(Content.legacyLeaderboardItem);
+		RegisterModel(Content.wealthLeaderboardItem);
+		RegisterModel(Content.notorietyLeaderboardItem);
 	}
 	
 	private void RegisterModel(Item item)

@@ -5,13 +5,17 @@ import java.util.HashMap;
 import java.util.UUID;
 
 import com.flansmod.warforge.common.CommonProxy;
+import com.flansmod.warforge.common.Content;
 import com.flansmod.warforge.common.DimChunkPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketFactionInfo;
 import com.flansmod.warforge.server.Faction;
 
+import net.minecraft.block.BlockHorizontal;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.properties.PropertyDirection;
+import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
@@ -25,49 +29,44 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import static com.flansmod.warforge.common.Content.dummyTranslusent;
 import static com.flansmod.warforge.common.Content.statue;
 import static com.flansmod.warforge.common.blocks.BlockDummy.MODEL;
 import static com.flansmod.warforge.common.blocks.BlockDummy.modelEnum.*;
 
-public class BlockBasicClaim extends MultiBlockColumn implements ITileEntityProvider
+public class BlockBasicClaim extends MultiBlockColumn implements ITileEntityProvider, IMultiBlock
 {
-	public BlockBasicClaim(Material materialIn) 
+	public static final PropertyDirection FACING = BlockHorizontal.FACING;
+	public BlockBasicClaim(Material materialIn)
 	{
 		super(materialIn);
+		this.setDefaultState(this.blockState.getBaseState().withProperty(FACING, EnumFacing.NORTH));
 		this.setCreativeTab(CreativeTabs.COMBAT);
 		this.setBlockUnbreakable();
 		this.setResistance(30000000f);
 	}
+
 	
 	@Override
-    public boolean isOpaqueCube(IBlockState state) { return true; }
+    public boolean isOpaqueCube(IBlockState state) { return false; }
 	@Override
-    public boolean isFullCube(IBlockState state) { return true; }
+    public boolean isFullCube(IBlockState state) { return false; }
 	@Override
     public EnumBlockRenderType getRenderType(IBlockState state) { return EnumBlockRenderType.MODEL; }
-	@Override
-	public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
-		return layer == BlockRenderLayer.SOLID;
-	}
-
-
-	/* No usages but it errors sooooooooo
-	@SideOnly(Side.CLIENT)
-    @Override
-    public BlockRenderLayer getBlockLayer() { return BlockRenderLayer.CUTOUT; }
-    */
 
 	@Override
 	public TileEntity createNewTileEntity(World worldIn, int meta)
 	{
-		if(this == WarForgeMod.CONTENT.basicClaimBlock)
+		if(this == Content.basicClaimBlock)
 			return new TileEntityBasicClaim();
 		else
 			return new TileEntityReinforcedClaim();
@@ -94,8 +93,11 @@ public class BlockBasicClaim extends MultiBlockColumn implements ITileEntityProv
 	@Override
     public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack)
     {
-		if(!world.isRemote) 
+		EnumFacing facing = placer.getHorizontalFacing().getOpposite();
+		world.setBlockState(pos, state.withProperty(FACING, facing), 2);
+		if(!world.isRemote)
 		{
+
 			TileEntity te = world.getTileEntity(pos);
 			if(te != null)
 			{
@@ -107,7 +109,21 @@ public class BlockBasicClaim extends MultiBlockColumn implements ITileEntityProv
 
 		}
     }
-	
+
+	protected BlockStateContainer createBlockState() {
+		return new BlockStateContainer(this, FACING);
+	}
+
+	@Override
+	public IBlockState getStateFromMeta(int meta) {
+		return this.getDefaultState().withProperty(FACING, EnumFacing.HORIZONTALS[meta]);
+	}
+
+	@Override
+	public int getMetaFromState(IBlockState state) {
+		return state.getValue(FACING).getHorizontalIndex();
+	}
+
 	@Override
 	public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing side, float par7, float par8, float par9)
 	{
@@ -130,7 +146,7 @@ public class BlockBasicClaim extends MultiBlockColumn implements ITileEntityProv
 				{
 					PacketFactionInfo packet = new PacketFactionInfo();
 					packet.info = citadelFaction.createInfo();
-					WarForgeMod.INSTANCE.NETWORK.sendTo(packet, (EntityPlayerMP) player);
+					WarForgeMod.NETWORK.sendTo(packet, (EntityPlayerMP) player);
 				}
 				else
 				{
@@ -168,9 +184,9 @@ public class BlockBasicClaim extends MultiBlockColumn implements ITileEntityProv
 
 	@Override
 	public void initMap() {
-		multiBlockMap = Collections.unmodifiableMap(new HashMap<IBlockState, Vec3i>() {{
-			put(statue.getDefaultState().withProperty(MODEL, KNIGHT), new Vec3i(0, 1, 0));
-			put(dummyTranslusent.getDefaultState().withProperty(MODEL, TRANSLUCENT), new Vec3i(0, 2, 0));
-		}});
+		multiBlockMap = Collections.unmodifiableMap(new HashMap<>() {{
+            put(statue.getDefaultState().withProperty(MODEL, KING), new Vec3i(0, 1, 0));
+            put(dummyTranslusent.getDefaultState().withProperty(MODEL, TRANSLUCENT), new Vec3i(0, 2, 0));
+        }});
 	}
 }

@@ -69,18 +69,7 @@ public class BlockDummy extends Block implements ITileEntityProvider {
 
     @Override
     public IBlockState getActualState(IBlockState state, IBlockAccess worldIn, BlockPos pos) {
-        //TODO: Not ideal, use interface for that down the line
-        IBlockState down = worldIn.getBlockState(pos.down());
-        if (down.getBlock() instanceof BlockCitadel)
-            return state.withProperty(MODEL, modelEnum.KING);
-        else if (down.getBlock() instanceof BlockBasicClaim)
-            return state.withProperty(MODEL, modelEnum.KNIGHT);
-        else if (down.getBlock() instanceof BlockSiegeCamp)
-            return state.withProperty(MODEL, modelEnum.BERSERKER);
-        else {
             return state.withProperty(MODEL, modelEnum.TRANSLUCENT);
-        }
-
     }
 
 //    @Override

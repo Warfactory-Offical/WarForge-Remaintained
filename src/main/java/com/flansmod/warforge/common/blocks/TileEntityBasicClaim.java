@@ -9,11 +9,15 @@ import com.flansmod.warforge.server.Faction;
 
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class TileEntityBasicClaim extends TileEntityYieldCollector implements IClaim
 {
 	public static final int NUM_SLOTS = NUM_BASE_SLOTS; // No additional slots here
-	
+
+
 	public TileEntityBasicClaim()
 	{
 		
@@ -27,4 +31,5 @@ public class TileEntityBasicClaim extends TileEntityYieldCollector implements IC
 	public int getAttackStrength() { return 0; }
 	@Override
 	protected float getYieldMultiplier() { return 1.0f; }
+
 }
