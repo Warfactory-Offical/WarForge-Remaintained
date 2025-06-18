@@ -2,6 +2,7 @@ package com.flansmod.warforge.client;
 
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.ModularScreen;
+import com.cleanroommc.modularui.widgets.ButtonWidget;
 import com.flansmod.warforge.api.ChunkDynamicTextureThread;
 import com.flansmod.warforge.api.MapDrawable;
 import com.flansmod.warforge.common.DimBlockPos;
@@ -13,13 +14,12 @@ import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.stream.IntStream;
 
 public class GuiSiegeCampNew {
@@ -143,7 +143,16 @@ public class GuiSiegeCampNew {
 
         for (int i = 0; i < 5; i++) {
             for (int j = 0; j < 5; j++) {
-                panel.child(new MapDrawable("chunk" + id, possibleAttacks.get(id), adjesencyArray[id]).asWidget().size(16 * 4).pos((i * (16 * 4) + offset), (j * (16 * 4) + offset)));
+
+                int finalId = id;
+                panel.child(new ButtonWidget<>()
+                        .overlay(new MapDrawable("chunk" + id, possibleAttacks.get(id), adjesencyArray[id]))
+                                .onMousePressed(mouseButton -> {
+                                    player.sendMessage(new TextComponentString(possibleAttacks.get(finalId).mOffset.toString()));
+                                    return true;
+                                })
+                        .size(16 * 4)
+                        .pos((i * (16 * 4) + offset), (j * (16 * 4) + offset)));
                 id++;
             }
         }

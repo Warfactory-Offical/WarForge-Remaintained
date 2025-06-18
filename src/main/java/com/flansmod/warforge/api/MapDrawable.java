@@ -1,8 +1,12 @@
 package com.flansmod.warforge.api;
 
 import com.cleanroommc.modularui.api.drawable.IDrawable;
+import com.cleanroommc.modularui.api.widget.IGuiAction;
+import com.cleanroommc.modularui.api.widget.IWidget;
+import com.cleanroommc.modularui.api.widget.Interactable;
 import com.cleanroommc.modularui.screen.viewport.GuiContext;
 import com.cleanroommc.modularui.theme.WidgetTheme;
+import com.cleanroommc.modularui.widgets.ButtonWidget;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.SiegeCampAttackInfo;
 import com.flansmod.warforge.server.Faction;
@@ -16,12 +20,13 @@ import org.lwjgl.opengl.GL11;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MapDrawable implements IDrawable {
+public class MapDrawable implements IDrawable, Interactable {
 
 
     private final String mapData;
     private final SiegeCampAttackInfo chunkState;
     private boolean[] adjesency;
+    private Runnable onClick;
     private final ResourceLocation attackIcon = new ResourceLocation(WarForgeMod.MODID, "gui/icon_siege_attack.png");
 
     public MapDrawable(String mapData, SiegeCampAttackInfo chunkState, boolean[] adjesency) {
@@ -29,6 +34,19 @@ public class MapDrawable implements IDrawable {
         this.chunkState = chunkState;
         this.adjesency = adjesency;
     }
+
+    @Override
+    public Result onMouseTapped(int mouseButton) {
+        onClick.run();
+        Interactable.playButtonClickSound();
+        return Result.ACCEPT;
+    }
+
+    public void setOnClick(Runnable onClick) {
+        this.onClick = onClick;
+    }
+
+
 
     public static String extractNumbers(String input) {
         StringBuilder builder = new StringBuilder();
