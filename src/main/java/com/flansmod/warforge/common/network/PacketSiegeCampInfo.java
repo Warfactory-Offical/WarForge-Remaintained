@@ -83,6 +83,8 @@ public class PacketSiegeCampInfo extends PacketBase {
                 mSiegeCampPos, mPossibleAttacks
         ));
     }
+
+
 }
 
 

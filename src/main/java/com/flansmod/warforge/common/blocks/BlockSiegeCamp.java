@@ -181,11 +181,11 @@ public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvi
 
             SiegeCampAttackInfo info = new SiegeCampAttackInfo();
             info.mOffset = offset;
-            info.canAttack = validTargets.get(chunk);
+            info.canAttack = offset.getZ() * offset.getX() <= 1 && validTargets.get(chunk);
 
             info.mFactionUUID = claimedBy == null ? Faction.nullUuid : claimedBy.uuid;
             info.mFactionName = claimedBy == null ? "" : claimedBy.name;
-            info.mFactionColour = claimedBy == null ? -1 : claimedBy.colour;
+            info.mFactionColour = claimedBy == null ? 0 : claimedBy.colour;
 
             list.add(info);
             index++;

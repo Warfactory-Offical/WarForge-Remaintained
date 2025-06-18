@@ -4,34 +4,103 @@ import com.cleanroommc.modularui.api.drawable.IDrawable;
 import com.cleanroommc.modularui.screen.viewport.GuiContext;
 import com.cleanroommc.modularui.theme.WidgetTheme;
 import com.flansmod.warforge.common.WarForgeMod;
-import net.minecraft.block.material.MapColor;
+import com.flansmod.warforge.common.network.SiegeCampAttackInfo;
+import com.flansmod.warforge.server.Faction;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.MapItemRenderer;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.storage.MapData;
+import org.lwjgl.opengl.GL11;
 
-import java.awt.image.BufferedImage;
-import java.lang.reflect.Field;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MapDrawable implements IDrawable {
 
 
     private final String mapData;
+    private final SiegeCampAttackInfo chunkState;
+    private boolean[] adjesency;
 
-    public MapDrawable(String mapData) {
+    public MapDrawable(String mapData, SiegeCampAttackInfo chunkState, boolean[] adjesency) {
         this.mapData = mapData;
+        this.chunkState = chunkState;
+        this.adjesency = adjesency;
+    }
+
+    public static String extractNumbers(String input) {
+        StringBuilder builder = new StringBuilder();
+        Matcher matcher = Pattern.compile("\\d+").matcher(input);
+        while (matcher.find()) {
+            builder.append(matcher.group());
+        }
+        return builder.toString();
     }
 
     @Override
     public void draw(GuiContext context, int x, int y, int width, int height, WidgetTheme theme) {
-        GlStateManager.color(1f, 1f, 1f, 1f);
+
+        if (!chunkState.canAttack && chunkState.mFactionUUID.equals(Faction.nullUuid))
+            GlStateManager.color(0.8f, 0.8f, 0.8f, 1f);
+        else
+            GlStateManager.color(1f, 1f, 1f, 1f);
+
+        GlStateManager.enableBlend();
+        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GlStateManager.disableLighting();
+        GlStateManager.enableAlpha();
         Minecraft.getMinecraft().getTextureManager().bindTexture(new ResourceLocation(WarForgeMod.MODID, mapData));
-        Gui.drawModalRectWithCustomSizedTexture(x, y, 0, 0, width, height, 16*4, 16*4);
+        Gui.drawModalRectWithCustomSizedTexture(x, y, 0, 0, width, height, 16 * 4, 16 * 4);
+        FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
+        String numberText = extractNumbers(mapData);
+        fontRenderer.drawString(numberText, x + 10, y + 10, 0xFFFFFF); // index
+
+
+        GlStateManager.color(1f, 1f, 1f, 1f);
+        if (!chunkState.mFactionUUID.equals(Faction.nullUuid)) {
+            int THICKNESS = 2;
+            int baseNoAlpha = chunkState.mFactionColour & 0x00FFFFFF;
+            int base = baseNoAlpha | 0xFF000000;
+            int lightColor = brighten(base);
+            int darkColor = darken(base);
+
+            Gui.drawRect(x, y, x + width+1, y + height+1, baseNoAlpha | 0x20_000000);
+
+            // Top (light)
+            if (adjesency[3])
+                Gui.drawRect(x, y, x + width+1, y + THICKNESS, lightColor);
+            // Left (light)
+            if (adjesency[0])
+                Gui.drawRect(x, y + THICKNESS-2, x + THICKNESS, y + height, lightColor);
+
+            // Bottom (dark)
+            if (adjesency[1])
+                Gui.drawRect(x , y + height - THICKNESS, x + width, y + height, darkColor);
+            // Right (dark)
+            if (adjesency[2])
+                Gui.drawRect(x + width - THICKNESS, y, x + width, y + height, darkColor);
+        }
+
+        GlStateManager.disableBlend();
+        GlStateManager.disableAlpha();
+        GlStateManager.enableLighting();
     }
 
+    private int brighten(int color) {
+        int r = Math.min(((color >> 16) & 0xFF) + 16, 255);
+        int g = Math.min(((color >> 8) & 0xFF) + 16, 255);
+        int b = Math.min((color & 0xFF) + 16, 255);
+        return 0xFF000000 | (r << 16) | (g << 8) | b;
+    }
 
-
+    private int darken(int color) {
+        int r = Math.max(((color >> 16) & 0xFF) - 16, 0);
+        int g = Math.max(((color >> 8) & 0xFF) - 16, 0);
+        int b = Math.max((color & 0xFF) - 16, 0);
+        return 0xFF000000 | (r << 16) | (g << 8) | b;
+    }
 }
+
+
+
