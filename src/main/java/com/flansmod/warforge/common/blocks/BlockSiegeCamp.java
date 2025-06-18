@@ -3,6 +3,7 @@ package com.flansmod.warforge.common.blocks;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.DimChunkPos;
 import com.flansmod.warforge.common.WarForgeMod;
+import com.flansmod.warforge.common.network.PacketRemoveClaim;
 import com.flansmod.warforge.common.network.PacketSiegeCampInfo;
 import com.flansmod.warforge.common.network.SiegeCampAttackInfo;
 import com.flansmod.warforge.server.Faction;
@@ -23,6 +24,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
@@ -31,6 +33,7 @@ import java.util.*;
 import static com.flansmod.warforge.common.Content.dummyTranslusent;
 import static com.flansmod.warforge.common.Content.statue;
 import static com.flansmod.warforge.common.WarForgeMod.FACTIONS;
+import static com.flansmod.warforge.common.WarForgeMod.isOp;
 import static com.flansmod.warforge.common.blocks.BlockDummy.MODEL;
 import static com.flansmod.warforge.common.blocks.BlockDummy.modelEnum.BERSERKER;
 import static com.flansmod.warforge.common.blocks.BlockDummy.modelEnum.TRANSLUCENT;
@@ -137,9 +140,28 @@ public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvi
 
     @Override
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing side, float par7, float par8, float par9) {
-        if (player.isSneaking()) return false;
+        if (player.isSneaking()) {
+            if (!world.isRemote) return true;
+            TileEntityClaim te = (TileEntityClaim) world.getTileEntity(pos);
+            PacketRemoveClaim packet = new PacketRemoveClaim();
+
+            packet.pos = te.getClaimPos();
+
+            WarForgeMod.NETWORK.sendToServer(packet);
+
+            return true;
+        }
+
 
         if (!world.isRemote) {
+            TileEntityClaim te = (TileEntityClaim) world.getTileEntity(pos);
+            Faction faction = FACTIONS.getFaction(te.getFaction());
+
+            if (!isOp(player) && !faction.isPlayerRoleInFaction(player.getUniqueID(), Faction.Role.OFFICER)) {
+                player.sendMessage(new TextComponentString("You are not an officer of the faction"));
+                return false;
+            }
+
             DimChunkPos chunkPos = new DimChunkPos(world.provider.getDimension(), pos);
             if (FACTIONS.IsSiegeInProgress(chunkPos)) FACTIONS.sendAllSiegeInfoToNearby();
             PacketSiegeCampInfo info = new PacketSiegeCampInfo();

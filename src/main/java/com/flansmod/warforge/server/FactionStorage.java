@@ -909,6 +909,7 @@ public class FactionStorage {
 //	public boolean requestPlaceFlag(EntityPlayerMP player, DimBlockPos pos) {
 //		Faction faction = getFactionOfPlayer(player.getUniqueID());
 //		if(faction == null) {
+
 //			player.sendMessage(new TextComponentString("You are not in a faction"));
 //			return false;
 //		}
