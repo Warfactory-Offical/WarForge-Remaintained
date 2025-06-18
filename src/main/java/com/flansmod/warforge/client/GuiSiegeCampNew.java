@@ -18,6 +18,8 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.stream.IntStream;
 
 public class GuiSiegeCampNew {
@@ -39,11 +41,11 @@ public class GuiSiegeCampNew {
         int centerZ = centerChunk.z;
         List<Thread> threads = new ArrayList<>();
 
-        var adjesencyArray = computeAdjacency(possibleAttacks, radius);
-//        AtomicReference<AtomicReferenceArray<boolean[]>> adjesencyArray = new AtomicReference<>(new AtomicReferenceArray<>(new boolean[possibleAttacks.size()][4]));
-//        threads.add(new Thread(() ->
-//                adjesencyArray.set(new AtomicReferenceArray<>(computeAdjacency(possibleAttacks, radius)))
-//        ));
+        boolean[][] adjesencyArray = new boolean[possibleAttacks.size()][4];
+        threads.add(new Thread(() ->
+                computeAdjacency(possibleAttacks, radius, adjesencyArray))
+        );
+        threads.get(0).start();
         Map<ChunkPos, Chunk> chunks = new LinkedHashMap<>();
         for (int x = centerX - radius; x <= centerX + radius; x++) {
             for (int z = centerZ - radius; z <= centerZ + radius; z++) {
@@ -141,7 +143,7 @@ public class GuiSiegeCampNew {
 
         for (int i = 0; i < 5; i++) {
             for (int j = 0; j < 5; j++) {
-                panel.child(new MapDrawable("chunk" + id, possibleAttacks.get(id), adjesencyArray[id]/*.get().get(id)*/).asWidget().size(16 * 4).pos((i * (16 * 4) + offset), (j * (16 * 4) + offset)));
+                panel.child(new MapDrawable("chunk" + id, possibleAttacks.get(id), adjesencyArray[id]).asWidget().size(16 * 4).pos((i * (16 * 4) + offset), (j * (16 * 4) + offset)));
                 id++;
             }
         }
@@ -149,11 +151,10 @@ public class GuiSiegeCampNew {
         return new ModularScreen(panel);
     }
 
-    public static boolean[][] computeAdjacency(List<SiegeCampAttackInfo> list, int radius) {
+    public static void computeAdjacency(List<SiegeCampAttackInfo> list, int radius, boolean[][] retArr) {
         int size = 2 * radius + 1;
         int total = size * size;
 
-        boolean[][] result = new boolean[total][4];
 
         IntStream.range(0, total).parallel().forEach(i -> {
             SiegeCampAttackInfo current = list.get(i);
@@ -165,29 +166,28 @@ public class GuiSiegeCampNew {
             // North (z-1)
             if (z - 1 >= 0) {
                 SiegeCampAttackInfo neighbor = list.get(i - size);
-                result[i][0] = !currentFaction.equals(neighbor.mFactionUUID);
+                retArr[i][0] = !currentFaction.equals(neighbor.mFactionUUID);
             }
 
             // East (x+1)
             if (x + 1 < size) {
                 SiegeCampAttackInfo neighbor = list.get(i + 1);
-                result[i][1] = !currentFaction.equals(neighbor.mFactionUUID);
+                retArr[i][1] = !currentFaction.equals(neighbor.mFactionUUID);
             }
 
             // South (z+1)
             if (z + 1 < size) {
                 SiegeCampAttackInfo neighbor = list.get(i + size);
-                result[i][2] = !currentFaction.equals(neighbor.mFactionUUID);
+                retArr[i][2] = !currentFaction.equals(neighbor.mFactionUUID);
             }
 
             // West (x-1)
             if (x - 1 >= 0) {
                 SiegeCampAttackInfo neighbor = list.get(i - 1);
-                result[i][3] = !currentFaction.equals(neighbor.mFactionUUID);
+                retArr[i][3] = !currentFaction.equals(neighbor.mFactionUUID);
             }
         });
 
-        return result;
     }
 
 }
