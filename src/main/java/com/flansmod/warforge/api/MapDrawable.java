@@ -22,6 +22,7 @@ public class MapDrawable implements IDrawable {
     private final String mapData;
     private final SiegeCampAttackInfo chunkState;
     private boolean[] adjesency;
+    private final ResourceLocation attackIcon = new ResourceLocation(WarForgeMod.MODID, "gui/icon_siege_attack.png");
 
     public MapDrawable(String mapData, SiegeCampAttackInfo chunkState, boolean[] adjesency) {
         this.mapData = mapData;
@@ -40,6 +41,8 @@ public class MapDrawable implements IDrawable {
 
     @Override
     public void draw(GuiContext context, int x, int y, int width, int height, WidgetTheme theme) {
+        boolean hovered = context.getMouseX() >= x && context.getMouseX() < x + width &&
+                context.getMouseY() >= y && context.getMouseY() < y + height;
 
         if (!chunkState.canAttack && chunkState.mFactionUUID.equals(Faction.nullUuid))
             GlStateManager.color(0.8f, 0.8f, 0.8f, 1f);
@@ -81,6 +84,19 @@ public class MapDrawable implements IDrawable {
             if (adjesency[2])
                 Gui.drawRect(x + width - THICKNESS, y, x + width, y + height, darkColor);
         }
+        if(chunkState.canAttack && hovered){
+            Minecraft.getMinecraft().getTextureManager().bindTexture(attackIcon);
+            int xOffset = x + (width - 46) / 2;
+            int yOffset = y + (height - 46) / 2;
+            Gui.drawModalRectWithCustomSizedTexture(
+
+                    xOffset, yOffset, // top-left of texture, centered
+                    0, 0,             // UV coords
+                    46, 46,     // draw size
+                    46, 46            // full texture size
+            );
+        }
+
 
         GlStateManager.disableBlend();
         GlStateManager.disableAlpha();
