@@ -82,14 +82,14 @@ public class GuiSiegeCamp extends GuiScreen
 			
 			for(SiegeCampAttackInfo info : mAttackInfo)
 			{
-				switch(info.mOffset)
-				{
-					case NORTH: northButton.enabled = true; break;
-					case EAST: eastButton.enabled = true; break;
-					case SOUTH: southButton.enabled = true; break;
-					case WEST: westButton.enabled = true; break;
-					default: break;
-				}
+//				switch(info.mOffset)
+//				{
+//					case NORTH: northButton.enabled = true; break;
+//					case EAST: eastButton.enabled = true; break;
+//					case SOUTH: southButton.enabled = true; break;
+//					case WEST: westButton.enabled = true; break;
+//					default: break;
+//				}
 			}
 	//	}
 	}
@@ -141,7 +141,7 @@ public class GuiSiegeCamp extends GuiScreen
 			GlStateManager.color(f, f1, f2, 1.0F);
 			
 			// Draw an outline in faction colour
-			drawTexturedModalRect(j + 54 + info.mOffset.getXOffset() * 22, k + 36 + info.mOffset.getZOffset() * 22, 141, 0, 22, 22);
+			//drawTexturedModalRect(j + 54 + info.mOffset.getXOffset() * 22, k + 36 + info.mOffset.getZOffset() * 22, 141, 0, 22, 22);
 			
 		}
 		
