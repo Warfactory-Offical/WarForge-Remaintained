@@ -1,12 +1,13 @@
 package com.flansmod.warforge.common.network;
 
-import java.util.UUID;
+import net.minecraft.util.math.Vec3i;
 
-import net.minecraft.util.EnumFacing;
+import java.util.UUID;
 
 public class SiegeCampAttackInfo 
 {
-	public EnumFacing mDirection;
+	public boolean canAttack;
+	public Vec3i mOffset; //more flexible than DirectionFacing, Y value is ignored
 	public UUID mFactionUUID;
 	public String mFactionName;
 	public int mFactionColour;

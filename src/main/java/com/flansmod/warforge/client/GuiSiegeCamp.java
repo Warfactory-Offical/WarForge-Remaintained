@@ -5,7 +5,6 @@ import java.util.List;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
-import com.flansmod.warforge.common.network.PacketPlaceFlag;
 import com.flansmod.warforge.common.network.PacketStartSiege;
 import com.flansmod.warforge.common.network.SiegeCampAttackInfo;
 
@@ -19,6 +18,7 @@ import net.minecraft.util.ResourceLocation;
 /*
 	Controls gui to start raid, not on screen siege progression
  */
+@Deprecated
 public class GuiSiegeCamp extends GuiScreen
 {
 	private static final ResourceLocation texture = new ResourceLocation(WarForgeMod.MODID, "gui/siegemenu.png");
@@ -82,7 +82,7 @@ public class GuiSiegeCamp extends GuiScreen
 			
 			for(SiegeCampAttackInfo info : mAttackInfo)
 			{
-				switch(info.mDirection)
+				switch(info.mOffset)
 				{
 					case NORTH: northButton.enabled = true; break;
 					case EAST: eastButton.enabled = true; break;
@@ -141,7 +141,7 @@ public class GuiSiegeCamp extends GuiScreen
 			GlStateManager.color(f, f1, f2, 1.0F);
 			
 			// Draw an outline in faction colour
-			drawTexturedModalRect(j + 54 + info.mDirection.getXOffset() * 22, k + 36 + info.mDirection.getZOffset() * 22, 141, 0, 22, 22);
+			drawTexturedModalRect(j + 54 + info.mOffset.getXOffset() * 22, k + 36 + info.mOffset.getZOffset() * 22, 141, 0, 22, 22);
 			
 		}
 		

@@ -26,6 +26,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
@@ -879,6 +880,29 @@ public class FactionStorage {
 
         return numValidTargets;
     }
+
+    //
+   public int getClaimRadiusAround(UUID excludedFaction, DimBlockPos originPos, int radius, LinkedHashMap<DimChunkPos, Boolean> posMap){
+        DimChunkPos centerChunk = originPos.toChunkPos();
+        int numValidTargets = 0;
+        int centerX = centerChunk.x;
+       int centerZ = centerChunk.z;
+       for (int x = centerX - radius; x <= centerX + radius; x++) {
+           for (int z = centerZ - radius; z <= centerZ + radius; z++) {
+               boolean  canSiege = true;
+               DimChunkPos targetChunkPos = new DimChunkPos(centerChunk.mDim, x, z);
+               if (!IsClaimed(excludedFaction, targetChunkPos)) canSiege = false; // also screens for dimension
+               UUID chunkClaim = getClaim(targetChunkPos);
+               int targetY = getFaction(chunkClaim).getSpecificPosForClaim(targetChunkPos).getY();
+               if (originPos.getY() < targetY - WarForgeConfig.VERTICAL_SIEGE_DIST || originPos.getY() > targetY + WarForgeConfig.VERTICAL_SIEGE_DIST)
+                   canSiege = false;
+               posMap.put(targetChunkPos, canSiege);
+               ++numValidTargets;
+
+           }
+       }
+       return numValidTargets;
+   }
 
 //	public boolean requestPlaceFlag(EntityPlayerMP player, DimBlockPos pos) {
 //		Faction faction = getFactionOfPlayer(player.getUniqueID());

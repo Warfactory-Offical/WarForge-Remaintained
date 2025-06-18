@@ -2,10 +2,8 @@ package com.flansmod.warforge.common.blocks;
 
 import com.flansmod.warforge.common.Content;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockHorizontal;
 import net.minecraft.block.material.EnumPushReaction;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.item.ItemStack;
@@ -44,7 +42,7 @@ public abstract class MultiBlockColumn extends Block implements IMultiBlockInit 
         setUpMultiblock(world, pos, state);
     }
 
-    public void setUpMultiblock(World world, BlockPos pos, IBlockState state){
+    public void setUpMultiblock(World world, BlockPos pos, IBlockState state) {
         world.setBlockState(pos.up(), Content.statue.getDefaultState().withProperty(MODEL, BlockDummy.modelEnum.KNIGHT), 3);
         world.notifyBlockUpdate(pos.up(), state, state, 3);
 
