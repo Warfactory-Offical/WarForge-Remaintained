@@ -159,17 +159,16 @@ public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvi
 
         int RADIUS = 2;
         int BORDER_SIZE = 2 * RADIUS + 1; // odd-sized grid including center
-        LinkedHashMap<DimChunkPos, Boolean> validTargets = new LinkedHashMap<>(BORDER_SIZE * BORDER_SIZE, 0.75f, true);
 
         UUID factionUUID = FACTIONS.getFactionOfPlayer(player.getUniqueID()).uuid;
         DimBlockPos siegePos = new DimBlockPos(world.provider.getDimension(), pos);
-        FACTIONS.getClaimRadiusAround(factionUUID, siegePos, RADIUS, validTargets);
+        var validTargets = FACTIONS.getClaimRadiusAround(factionUUID, siegePos, RADIUS);
 
         int centerIndexX = BORDER_SIZE / 2;
         int centerIndexZ = BORDER_SIZE / 2;
 
         int index = 0;
-        for (DimChunkPos chunk : validTargets.keySet()) {
+        for (DimChunkPos chunk : new ArrayList<>(validTargets.keySet())) {
             int row = index / BORDER_SIZE;
             int col = index % BORDER_SIZE;
 

@@ -29,8 +29,7 @@ public class PacketSiegeCampInfo extends PacketBase {
 
         data.writeByte(mPossibleAttacks.size());
 
-        for (int i = 0; i < mPossibleAttacks.size(); i++) {
-            SiegeCampAttackInfo info = mPossibleAttacks.get(i);
+        for (SiegeCampAttackInfo info : mPossibleAttacks) {
             data.writeBoolean(info.canAttack);
             writeUUID(data, info.mFactionUUID);
             writeUTF(data, info.mFactionName);
