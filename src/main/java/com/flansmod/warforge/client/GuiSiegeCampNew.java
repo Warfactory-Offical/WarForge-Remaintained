@@ -1,12 +1,10 @@
 package com.flansmod.warforge.client;
 
 import com.cleanroommc.modularui.api.IPanelHandler;
-import com.cleanroommc.modularui.api.drawable.IDrawable;
 import com.cleanroommc.modularui.api.drawable.IKey;
 import com.cleanroommc.modularui.drawable.GuiTextures;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.ModularScreen;
-import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cleanroommc.modularui.widgets.ButtonWidget;
 import com.flansmod.warforge.api.ChunkDynamicTextureThread;
 import com.flansmod.warforge.api.MapDrawable;
@@ -23,7 +21,6 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import org.yaml.snakeyaml.events.Event;
 
 import java.util.*;
 import java.util.stream.IntStream;
@@ -141,17 +138,19 @@ public class GuiSiegeCampNew {
         int offset = 6;
         int VERT_OFFSET = 13;
         int WIDTH = (16 * 4) * 5 + (2 * offset);
-        int HEIGHT = (16 * 4) * 5 + VERT_OFFSET + (int)(2.5 * offset);
+        int HEIGHT = (16 * 4) * 5 + VERT_OFFSET + (int) (2.5 * offset);
         ModularPanel panel = ModularPanel.defaultPanel("siege_main")
                 .width(WIDTH)
                 .height(HEIGHT);
 
-        ModularPanel popupPanel = new ModularPanel("siege_popup")
-                .size(WIDTH, HEIGHT/3)
-                .bottom(HEIGHT)
-                ;
+       IPanelHandler extraPanel =  IPanelHandler.simple(panel, (pan, player1) -> {
+            ModularPanel popupPanel = new ModularPanel("siege_popup")
+                    .size(WIDTH, HEIGHT / 3)
+                    .bottom(HEIGHT);
+           return popupPanel;
+        }, true);
         panel.child(new ButtonWidget<>()
-                        .background(GuiTextures.BUTTON_CLEAN)
+                .background(GuiTextures.BUTTON_CLEAN)
                 .overlay(GuiTextures.CLOSE)
                 .onMousePressed(mouseButton -> {
                             panel.closeIfOpen(true);
@@ -160,10 +159,10 @@ public class GuiSiegeCampNew {
                 )
                 .width(12)
                 .height(12)
-                .pos(WIDTH - offset*3, (offset/2)+1)
+                .pos(WIDTH - offset * 3, (offset / 2) + 1)
         );
         panel.child(IKey.str("Select chunk to siege").asWidget()
-                .pos(offset, offset )
+                .pos(offset, offset)
         );
 
         int id = 0;
@@ -176,6 +175,7 @@ public class GuiSiegeCampNew {
                         .overlay(new MapDrawable("chunk" + id, possibleAttacks.get(id), adjesencyArray[id]))
                         .onMousePressed(mouseButton -> {
                             player.sendMessage(new TextComponentString(possibleAttacks.get(finalId).mOffset.toString()));
+                           extraPanel.openPanel();
                             return true;
                         })
                         .size(16 * 4)
