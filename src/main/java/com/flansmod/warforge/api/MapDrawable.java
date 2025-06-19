@@ -7,23 +7,44 @@ import com.cleanroommc.modularui.theme.WidgetTheme;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.SiegeCampAttackInfo;
 import com.flansmod.warforge.server.Faction;
+import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemBlock;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import org.lwjgl.opengl.GL11;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MapDrawable implements IDrawable, Interactable {
 
+    public final static int CB_THICKNESS = 2; //Controls border thickness
+    public final static int HL_THICKNESS = 1; //Controls border thickness on highlighted chunks
+    public static final  int HL_COLOR = 0xFFC6C6C6;
+    public final static int OFFSET = 2;
+    public final static int SIZE = 12;
+    public static final boolean DEBUG = false;
 
     private final String mapData;
     private final SiegeCampAttackInfo chunkState;
     private final ResourceLocation attackIcon = new ResourceLocation(WarForgeMod.MODID, "gui/icon_siege_attack.png");
-    private boolean[] adjesency;
+    private final boolean[] adjesency;
 
     public MapDrawable(String mapData, SiegeCampAttackInfo chunkState, boolean[] adjesency) {
         this.mapData = mapData;
@@ -47,8 +68,8 @@ public class MapDrawable implements IDrawable, Interactable {
         boolean hovered = context.getMouseX() >= x && context.getMouseX() < x + width &&
                 context.getMouseY() >= y && context.getMouseY() < y + height;
 
-        if (!chunkState.canAttack && chunkState.mFactionUUID.equals(Faction.nullUuid))
-            GlStateManager.color(0.8f, 0.8f, 0.8f, 1f);
+        if (!hovered || chunkState.mFactionUUID.equals(Faction.nullUuid))
+            GlStateManager.color(0.9f, 0.9f, 0.9f, 1f);
         else
             GlStateManager.color(1f, 1f, 1f, 1f);
 
@@ -58,14 +79,15 @@ public class MapDrawable implements IDrawable, Interactable {
         GlStateManager.enableAlpha();
         Minecraft.getMinecraft().getTextureManager().bindTexture(new ResourceLocation(WarForgeMod.MODID, mapData));
         Gui.drawModalRectWithCustomSizedTexture(x, y, 0, 0, width, height, 16 * 4, 16 * 4);
-        FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
-        String numberText = extractNumbers(mapData);
-        fontRenderer.drawString(numberText, x + 10, y + 10, 0xFFFFFF); // index
+        if(DEBUG) {
+            FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
+            String numberText = extractNumbers(mapData);
+            fontRenderer.drawString(numberText, x + 10, y + 10, 0xFFFFFF); // index
+        }
 
 
         GlStateManager.color(1f, 1f, 1f, 1f);
         if (!chunkState.mFactionUUID.equals(Faction.nullUuid)) {
-            int THICKNESS = 2;
             int baseNoAlpha = chunkState.mFactionColour & 0x00FFFFFF;
             int base = baseNoAlpha | 0xFF000000;
             int lightColor = brighten(base);
@@ -75,29 +97,90 @@ public class MapDrawable implements IDrawable, Interactable {
 
             // Top (light)
             if (adjesency[3])
-                Gui.drawRect(x, y, x + width + 1, y + THICKNESS, lightColor);
+                Gui.drawRect(x, y, x + width + 1, y + CB_THICKNESS, lightColor);
             // Left (light)
             if (adjesency[0])
-                Gui.drawRect(x, y + THICKNESS - 2, x + THICKNESS, y + height, lightColor);
+                Gui.drawRect(x, y + CB_THICKNESS - 2, x + CB_THICKNESS, y + height, lightColor);
 
             // Bottom (dark)
             if (adjesency[1])
-                Gui.drawRect(x, y + height - THICKNESS, x + width, y + height, darkColor);
+                Gui.drawRect(x, y + height - CB_THICKNESS, x + width, y + height, darkColor);
             // Right (dark)
             if (adjesency[2])
-                Gui.drawRect(x + width - THICKNESS, y, x + width, y + height, darkColor);
+                Gui.drawRect(x + width - CB_THICKNESS, y, x + width, y + height, darkColor);
         }
-        if (chunkState.canAttack && hovered) {
-            Minecraft.getMinecraft().getTextureManager().bindTexture(attackIcon);
-            int xOffset = x + (width - 46) / 2;
-            int yOffset = y + (height - 46) / 2;
-            Gui.drawModalRectWithCustomSizedTexture(
+        if (hovered) {
+            if(chunkState.canAttack) {
+                Minecraft.getMinecraft().getTextureManager().bindTexture(attackIcon);
+                int xOffset = x + (width - 46) / 2;
+                int yOffset = y + (height - 46) / 2;
+                Gui.drawModalRectWithCustomSizedTexture(
 
-                    xOffset, yOffset, // top-left of texture, centered
-                    0, 0,             // UV coords
-                    46, 46,     // draw size
-                    46, 46            // full texture size
-            );
+                        xOffset, yOffset, // top-left of texture, centered
+                        0, 0,             // UV coords
+                        46, 46,     // draw size
+                        46, 46            // full texture size
+                );
+            } else {
+                    Gui.drawRect(x, y, x + width + 1, y + HL_THICKNESS, HL_COLOR);
+                    Gui.drawRect(x, y + HL_THICKNESS - 2, x + HL_THICKNESS, y + height, HL_COLOR);
+                    Gui.drawRect(x, y + height - HL_THICKNESS, x + width, y + height, HL_COLOR);
+                    Gui.drawRect(x + width - HL_THICKNESS, y, x + width, y + height, HL_COLOR);
+            }
+        }
+
+        if(chunkState.mWarforgeVein != null){
+            ResourceLocation resLoc = chunkState.mWarforgeVein.component_ids[0];
+            Item item = ForgeRegistries.ITEMS.getValue(resLoc);
+
+            if (item != null) {
+                ItemStack stack = new ItemStack(item);
+
+                TextureAtlasSprite sprite = null;
+
+                if (item instanceof ItemBlock) {
+                    Block block = ((ItemBlock) item).getBlock();
+                    IBlockState state = block.getDefaultState();
+                    IBakedModel model = Minecraft.getMinecraft().getBlockRendererDispatcher().getModelForState(state);
+
+                    List<BakedQuad> quads = model.getQuads(state, EnumFacing.UP, 0);
+                    if (quads.isEmpty()) {
+                        quads = model.getQuads(state, null, 0); // fallback
+                    }
+
+                    if (!quads.isEmpty()) {
+                        sprite = quads.get(0).getSprite();
+                    }
+                } else {
+                    IBakedModel model = Minecraft.getMinecraft().getRenderItem().getItemModelWithOverrides(stack, null, null);
+                    List<BakedQuad> quads = model.getQuads(null, null, 0);
+
+                    if (!quads.isEmpty()) {
+                        sprite = quads.get(0).getSprite();
+                    } else {
+                        sprite = model.getParticleTexture();
+                    }
+                }
+
+                if (sprite != null) {
+                    Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+                    GlStateManager.color(1f, 1f, 1f, 1f);
+                    Tessellator tess = Tessellator.getInstance();
+                    BufferBuilder buf = tess.getBuffer();
+
+                    float u0 = sprite.getMinU();
+                    float v0 = sprite.getMinV();
+                    float u1 = sprite.getMaxU();
+                    float v1 = sprite.getMaxV();
+
+                    buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+                    buf.pos(x+OFFSET    , y+OFFSET    , 0).tex(u0, v0).endVertex();
+                    buf.pos(x+OFFSET    , y+ SIZE +OFFSET , 0).tex(u0, v1).endVertex();
+                    buf.pos(x+ SIZE +OFFSET , y+ SIZE +OFFSET , 0).tex(u1, v1).endVertex();
+                    buf.pos(x+ SIZE +OFFSET , y+OFFSET    , 0).tex(u1, v0).endVertex();
+                    tess.draw();
+                }
+            }
         }
 
 

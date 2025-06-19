@@ -1,5 +1,9 @@
 package com.flansmod.warforge.common.blocks;
 
+import akka.japi.Pair;
+import com.flansmod.warforge.api.Quality;
+import com.flansmod.warforge.api.Vein;
+import com.flansmod.warforge.api.VeinKey;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.DimChunkPos;
 import com.flansmod.warforge.common.WarForgeMod;
@@ -27,6 +31,7 @@ import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 
 import java.util.*;
 
@@ -208,6 +213,11 @@ public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvi
             info.mFactionUUID = claimedBy == null ? Faction.nullUuid : claimedBy.uuid;
             info.mFactionName = claimedBy == null ? "" : claimedBy.name;
             info.mFactionColour = claimedBy == null ? 0 : claimedBy.colour;
+            Pair<Vein, Quality> veinInfo = VeinKey.getVein(chunk, FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0].getSeed());
+            if (veinInfo != null) {
+                info.mWarforgeVein = veinInfo.first();
+                info.mOreQuality =  veinInfo.second();
+            }
 
             list.add(info);
             index++;

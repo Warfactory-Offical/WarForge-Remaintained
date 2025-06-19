@@ -1,6 +1,9 @@
 package com.flansmod.warforge.common.network;
 
 import com.cleanroommc.modularui.factory.ClientGUI;
+import com.flansmod.warforge.api.Quality;
+import com.flansmod.warforge.api.Vein;
+import com.flansmod.warforge.client.ClientProxy;
 import com.flansmod.warforge.client.GuiSiegeCampNew;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
@@ -36,6 +39,8 @@ public class PacketSiegeCampInfo extends PacketBase {
             data.writeByte(info.mOffset.getX());
             data.writeByte(info.mOffset.getZ());
             data.writeInt(info.mFactionColour);
+            data.writeInt(info.mWarforgeVein != null ? info.mWarforgeVein.getID() : -1);
+            data.writeByte((byte) info.mOreQuality.ordinal());
         }
     }
 
@@ -59,6 +64,9 @@ public class PacketSiegeCampInfo extends PacketBase {
             int dz = data.readByte();
             info.mOffset = new Vec3i(dx, 0, dz);
             info.mFactionColour = data.readInt();
+            int possibleVein = data.readInt();
+            info.mWarforgeVein = possibleVein < 0 ? null : ClientProxy.VEIN_ENTRIES.get(possibleVein);
+            info.mOreQuality = Quality.values()[data.readByte()];
 
             mPossibleAttacks.add(info);
         }
