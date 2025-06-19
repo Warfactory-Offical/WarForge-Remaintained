@@ -26,6 +26,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
@@ -745,7 +746,7 @@ public class FactionStorage {
         return false;
     }
 
-    public void requestStartSiege(EntityPlayer factionOfficer, DimBlockPos siegeCampPos, EnumFacing direction) {
+    public void requestStartSiege(EntityPlayer factionOfficer, DimBlockPos siegeCampPos, Vec3i direction) {
         Faction attacking = getFactionOfPlayer(factionOfficer.getUniqueID());
 
         // for some reason, server tick is in number of ticks and last siege timestamp is in ms, while siege cooldown is in mins (according to description), though through calculations looks like hours? it should be in ms
@@ -768,7 +769,7 @@ public class FactionStorage {
         // TODO: Verify there aren't existing alliances
 
         TileEntitySiegeCamp siegeTE = (TileEntitySiegeCamp) proxy.GetTile(siegeCampPos);
-        DimChunkPos defendingChunk = siegeCampPos.toChunkPos().Offset(direction, 1);
+        DimChunkPos defendingChunk = siegeCampPos.toChunkPos().Offset(direction);
         UUID defendingFactionID = mClaims.get(defendingChunk);
         Faction defending = getFaction(defendingFactionID);
 

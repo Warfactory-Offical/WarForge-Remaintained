@@ -1,159 +1,262 @@
 package com.flansmod.warforge.client;
 
-import java.util.List;
-
+import com.cleanroommc.modularui.api.drawable.IKey;
+import com.cleanroommc.modularui.drawable.GuiTextures;
+import com.cleanroommc.modularui.drawable.IngredientDrawable;
+import com.cleanroommc.modularui.screen.ModularPanel;
+import com.cleanroommc.modularui.screen.ModularScreen;
+import com.cleanroommc.modularui.widgets.ButtonWidget;
+import com.flansmod.warforge.api.ChunkDynamicTextureThread;
+import com.flansmod.warforge.api.MapDrawable;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
-import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
 import com.flansmod.warforge.common.network.PacketStartSiege;
 import com.flansmod.warforge.common.network.SiegeCampAttackInfo;
-
+import net.minecraft.block.material.MapColor;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.client.resources.I18n;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
-/*
-	Controls gui to start raid, not on screen siege progression
- */
-@Deprecated
-public class GuiSiegeCamp extends GuiScreen
-{
-	private static final ResourceLocation texture = new ResourceLocation(WarForgeMod.MODID, "gui/siegemenu.png");
-	private int xSize, ySize;
-	private TileEntitySiegeCamp mSiegeCamp;
-	private List<SiegeCampAttackInfo> mAttackInfo;
-	
-	private static final int BUTTON_NORTH = 0;
-	private static final int BUTTON_EAST = 1;
-	private static final int BUTTON_SOUTH = 2;
-	private static final int BUTTON_WEST = 3;
-	// private static final int BUTTON_SET_FLAG = 4;
-	
-	private GuiButton northButton, eastButton, southButton, westButton;
-        
-	public GuiSiegeCamp(DimBlockPos siegeCampPos, List<SiegeCampAttackInfo> possibleAttacks)
-	{
-		mSiegeCamp = (TileEntitySiegeCamp)Minecraft.getMinecraft().world.getTileEntity(siegeCampPos.toRegularPos());
-		if(mSiegeCamp == null)
-			Minecraft.getMinecraft().displayGuiScreen(null);
-		mAttackInfo = possibleAttacks;
-		
-    	xSize = 141;
-    	ySize = 180;
-	}
+import java.util.*;
+import java.util.stream.IntStream;
 
-	@Override
-	public void initGui()
-	{
-		super.initGui();
-				
-		int j = width / 2 - xSize / 2;
-		int k = height / 2 - ySize / 2;
-//		if(ClientProxy.sSiegeInfo.containsKey(mSiegeCamp.getClaimPos()))
-//		{
-//			GuiButton setFlagButton = new GuiButton(4, j + 16, k + 86, 104, 20, "Place Flag Here");
-//			buttonList.add(setFlagButton);
-//		}
-		//else
-		//{
-			// North Button
-			northButton = new GuiButton(BUTTON_NORTH, j + 16, k + 86, 104, 20, "Attack North");
-			buttonList.add(northButton);
-			
-			// East Button
-			eastButton = new GuiButton(BUTTON_EAST, j + 16, k + 108, 104, 20, "Attack East");
-			buttonList.add(eastButton);
-			
-			// South Button
-			southButton = new GuiButton(BUTTON_SOUTH, j + 16, k + 130, 104, 20, "Attack South");
-			buttonList.add(southButton);
-			
-			// West Button
-			westButton = new GuiButton(BUTTON_WEST, j + 16, k + 152, 104, 20, "Attack West");
-			buttonList.add(westButton);
-			
-			northButton.enabled = false;
-			eastButton.enabled = false;
-			southButton.enabled = false;
-			westButton.enabled = false;
-			
-			for(SiegeCampAttackInfo info : mAttackInfo)
-			{
-//				switch(info.mOffset)
-//				{
-//					case NORTH: northButton.enabled = true; break;
-//					case EAST: eastButton.enabled = true; break;
-//					case SOUTH: southButton.enabled = true; break;
-//					case WEST: westButton.enabled = true; break;
-//					default: break;
-//				}
-			}
-	//	}
-	}
-	
-	@Override
-	protected void actionPerformed(GuiButton button)
-	{
-//		if(button.id == 4)
-//		{
-//			PacketPlaceFlag packet = new PacketPlaceFlag();
-//			packet.pos = mSiegeCamp.getClaimPos();
-//			WarForgeMod.INSTANCE.NETWORK.sendToServer(packet);
-//			mc.displayGuiScreen(null);
-//		}
-//		else
-//		{
-			PacketStartSiege siegePacket = new PacketStartSiege();
-				
-			siegePacket.mSiegeCampPos = mSiegeCamp.getClaimPos();
-			switch(button.id)
-			{
-				case BUTTON_NORTH: siegePacket.mDirection = EnumFacing.NORTH; break;
-				case BUTTON_EAST: siegePacket.mDirection = EnumFacing.EAST; break;
-				case BUTTON_SOUTH: siegePacket.mDirection = EnumFacing.SOUTH; break;
-				case BUTTON_WEST: siegePacket.mDirection = EnumFacing.WEST; break;
-			}	
-			
-			WarForgeMod.INSTANCE.NETWORK.sendToServer(siegePacket);
-			mc.displayGuiScreen(null);
-		//}
-	}
+public class GuiSiegeCampNew {
 
-	
-	@Override
-	public void drawScreen(int mouseX, int mouseY, float partialTicks)
-	{
-		// Draw background
-		GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-		mc.renderEngine.bindTexture(texture);
-		int j = (width - xSize) / 2;
-		int k = (height - ySize) / 2;
-		drawTexturedModalRect(j, k, 0, 0, xSize, ySize);
-		
-		for(SiegeCampAttackInfo info : mAttackInfo)
-		{
-			float f = (float)(info.mFactionColour >> 16 & 255) / 255.0F;
-            float f1 = (float)(info.mFactionColour >> 8 & 255) / 255.0F;
-            float f2 = (float)(info.mFactionColour & 255) / 255.0F;
-			GlStateManager.color(f, f1, f2, 1.0F);
-			
-			// Draw an outline in faction colour
-			//drawTexturedModalRect(j + 54 + info.mOffset.getXOffset() * 22, k + 36 + info.mOffset.getZOffset() * 22, 141, 0, 22, 22);
-			
-		}
-		
-		// Then draw overlay
-		super.drawScreen(mouseX, mouseY, partialTicks);
-		
-		//fontRenderer.drawStringWithShadow("Enter Name:",  j + 6, k + 6, 0xffffff);
-	}
-	
-	@Override
-	public boolean doesGuiPauseGame()
-	{
-		return false;
-	}
+    @SideOnly(Side.CLIENT)
+    public static ModularScreen makeGUI(DimBlockPos siegeCampPos, List<SiegeCampAttackInfo> possibleAttacks) {
+
+        EntityPlayer player = Minecraft.getMinecraft().player;
+        WorldClient world = (WorldClient) player.world;
+        possibleAttacks.sort(Comparator
+                .comparingInt((SiegeCampAttackInfo s) -> s.mOffset.getZ())
+                .thenComparingInt(s -> s.mOffset.getX()));
+
+        ChunkPos centerChunk = siegeCampPos.toChunkPos();
+
+
+        int radius = 2;  // 2 chunks in each direction → 5x5 total area
+        int centerX = centerChunk.x;
+        int centerZ = centerChunk.z;
+        List<Thread> threads = new ArrayList<>();
+
+        boolean[][] adjesencyArray = new boolean[possibleAttacks.size()][4];
+        threads.add(new Thread(() ->
+                computeAdjacency(possibleAttacks, radius, adjesencyArray))
+        );
+        threads.get(0).start();
+        Map<ChunkPos, Chunk> chunks = new LinkedHashMap<>();
+        for (int x = centerX - radius; x <= centerX + radius; x++) {
+            for (int z = centerZ - radius; z <= centerZ + radius; z++) {
+                Chunk chunk = world.getChunkProvider().getLoadedChunk(x, z);
+                if (chunk != null) chunks.put(chunk.getPos(), chunk);
+            }
+        }
+        int[] minMax = chunks.values().parallelStream()
+                .map(chunk -> {
+                    int localMin = Integer.MAX_VALUE;
+                    int localMax = Integer.MIN_VALUE;
+                    for (int chunkX = 0; chunkX < 16; chunkX++) {
+                        for (int chunkZ = 0; chunkZ < 16; chunkZ++) {
+                            int y = chunk.getHeightValue(chunkX, chunkZ) - 1;
+                            if (y < localMin) localMin = y;
+                            if (y > localMax) localMax = y;
+                        }
+                    }
+                    return new int[]{localMin, localMax};
+                }).reduce(new int[]{Integer.MAX_VALUE, Integer.MIN_VALUE}, (a, b) ->
+                        new int[]{Math.min(a[0], b[0]), Math.max(a[1], b[1])
+                        });
+
+        int globalMin = minMax[0];
+        int globalMax = minMax[1];
+        int chunkID = 0;
+
+        for (Chunk chunk : chunks.values()) {
+            ChunkPos pos = chunk.getPos();
+            int chunkX = pos.x;
+            int chunkZ = pos.z;
+
+            // 17×17 padded color + height
+            //FIXME: fucked up the border I think, not major but can cause tiling artifacts
+            int[] rawChunk17 = new int[17 * 17];
+            int[] heightMap17 = new int[17 * 17];
+
+            for (int dz = -1; dz <= 15; dz++) {
+                for (int dx = -1; dx <= 15; dx++) {
+                    int worldX = (chunkX << 4) + dx;
+                    int worldZ = (chunkZ << 4) + dz;
+                    int neighborCX = worldX >> 4;
+                    int neighborCZ = worldZ >> 4;
+                    int localX = worldX & 15;
+                    int localZ = worldZ & 15;
+
+                    Chunk neighbor = chunks.get(new ChunkPos(neighborCX, neighborCZ));
+                    int index = (dx + 1) + (dz + 1) * 17;
+
+                    if (neighbor != null) {
+                        int y = neighbor.getHeightValue(localX, localZ);
+                        heightMap17[index] = y;
+                        IBlockState state = neighbor.getBlockState(localX, y - 1, localZ);
+                        MapColor mapColor = state.getMapColor(world, new BlockPos(worldX, y - 1, worldZ));
+                        rawChunk17[index] = 0xFF000000 | mapColor.colorValue;
+                    } else {
+                        int fallbackX = Math.min(Math.max(localX, 0), 15);
+                        int fallbackZ = Math.min(Math.max(localZ, 0), 15);
+                        int y = chunk.getHeightValue(fallbackX, fallbackZ);
+                        heightMap17[index] = y;
+                        IBlockState state = chunk.getBlockState(fallbackX, y - 1, fallbackZ);
+                        MapColor mapColor = state.getMapColor(world, new BlockPos((chunkX << 4) + fallbackX, y - 1, (chunkZ << 4) + fallbackZ));
+                        rawChunk17[index] = 0xFF000000 | mapColor.colorValue;
+                    }
+                }
+            }
+
+            ChunkDynamicTextureThread thread = new ChunkDynamicTextureThread(
+                    4,
+                    "chunk" + chunkID,
+                    rawChunk17,
+                    heightMap17,
+                    globalMax,
+                    globalMin
+            );
+
+            threads.add(thread);
+            thread.start();
+            chunkID++;
+        }
+
+        while (threads.stream().anyMatch(Thread::isAlive) || !ChunkDynamicTextureThread.queue.isEmpty()) {
+            ChunkDynamicTextureThread.RegisterTextureAction textureAction = ChunkDynamicTextureThread.queue.poll();
+            if (textureAction != null)
+                textureAction.register();
+        }
+        int offset = 6;
+        int VERT_OFFSET = 13;
+        int WIDTH = (16 * 4) * 5 + (2 * offset);
+        int HEIGHT = (16 * 4) * 5 + VERT_OFFSET + (int) (2.5 * offset);
+        ModularPanel panel = ModularPanel.defaultPanel("siege_main")
+                .width(WIDTH)
+                .height(HEIGHT)
+                .topRel(0.40f);
+
+
+        panel.child(new ButtonWidget<>()
+                .background(GuiTextures.BUTTON_CLEAN)
+                .overlay(GuiTextures.CLOSE)
+                .onMousePressed(mouseButton -> {
+                            panel.closeIfOpen(true);
+                            return true;
+                        }
+                )
+                .width(12)
+                .height(12)
+                .pos(WIDTH - offset * 3, (offset / 2) + 1)
+        );
+        panel.child(IKey.str("Select chunk to siege").asWidget()
+                .pos(offset, offset)
+        );
+
+        int id = 0;
+
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 5; j++) {
+
+                int finalId = id;
+                SiegeCampAttackInfo chunkInfo = possibleAttacks.get(finalId);
+                panel.child(new ButtonWidget<>()
+                        .overlay(new MapDrawable("chunk" + id, chunkInfo, adjesencyArray[id]))
+                        .onMousePressed(mouseButton -> {
+                            if (!chunkInfo.canAttack) return false;
+                            player.sendMessage(new TextComponentString(chunkInfo.mOffset.toString()));
+                            PacketStartSiege siegePacket = new PacketStartSiege();
+
+                            siegePacket.mSiegeCampPos = siegeCampPos;
+                            siegePacket.mOffset = chunkInfo.mOffset;
+
+                            WarForgeMod.NETWORK.sendToServer(siegePacket);
+                            panel.closeIfOpen(true);
+                            return true;
+                        })
+                        .tooltip(richTooltip ->
+                        {
+                            if (chunkInfo.canAttack) {
+                                richTooltip.addLine(IKey.str("Territory of " + chunkInfo.mFactionName).color(chunkInfo.mFactionColour));
+                            } else {
+                                richTooltip.addLine(IKey.str("Wilderness").style(IKey.GREEN));
+                            }
+                            if (chunkInfo.mWarforgeVein != null) {
+
+                                richTooltip.addLine(new IngredientDrawable(
+                                        Arrays.stream(chunkInfo.mWarforgeVein.component_ids)
+                                                .map(ForgeRegistries.ITEMS::getValue)
+                                                .filter(Objects::nonNull)
+                                                .map(ItemStack::new)
+                                                .toArray(ItemStack[]::new)
+                                ).asIcon().size(25));
+                                richTooltip.addLine(IKey.str("Ore In the chunk: " + I18n.format(chunkInfo.mWarforgeVein.translation_key)));
+                                richTooltip.addLine(IKey.str("Quality: " + I18n.format(chunkInfo.mOreQuality.getTranslationKey())));
+                            } else {
+                                richTooltip.addLine(IKey.str("No ores in this chunk"));
+                            }
+                            if (chunkInfo.canAttack)
+                                richTooltip.addLine(IKey.str("Click to attack now!").style(IKey.BOLD, IKey.RED));
+                        })
+                        .size(16 * 4)
+                        .pos((i * (16 * 4) + offset), (j * (16 * 4) + offset) + VERT_OFFSET));
+                id++;
+            }
+        }
+
+        return new ModularScreen(panel);
+    }
+
+    public static void computeAdjacency(List<SiegeCampAttackInfo> list, int radius, boolean[][] retArr) {
+        int size = 2 * radius + 1;
+        int total = size * size;
+
+        IntStream.range(0, total).parallel().forEach(i -> {
+            SiegeCampAttackInfo current = list.get(i);
+            UUID currentFaction = current.mFactionUUID;
+
+            int x = i % size;
+            int z = i / size;
+
+            // North (z-1)
+            if (z - 1 >= 0) {
+                SiegeCampAttackInfo neighbor = list.get(i - size);
+                retArr[i][0] = !currentFaction.equals(neighbor.mFactionUUID);
+            }
+
+            // East (x+1)
+            if (x + 1 < size) {
+                SiegeCampAttackInfo neighbor = list.get(i + 1);
+                retArr[i][1] = !currentFaction.equals(neighbor.mFactionUUID);
+            }
+
+            // South (z+1)
+            if (z + 1 < size) {
+                SiegeCampAttackInfo neighbor = list.get(i + size);
+                retArr[i][2] = !currentFaction.equals(neighbor.mFactionUUID);
+            }
+
+            // West (x-1)
+            if (x - 1 >= 0) {
+                SiegeCampAttackInfo neighbor = list.get(i - 1);
+                retArr[i][3] = !currentFaction.equals(neighbor.mFactionUUID);
+            }
+        });
+
+    }
+
 }
+
