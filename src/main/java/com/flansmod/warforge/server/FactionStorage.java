@@ -774,7 +774,7 @@ public class FactionStorage {
         }
 
         TileEntitySiegeCamp siegeTE = (TileEntitySiegeCamp) proxy.GetTile(siegeCampPos);
-        if (!attacking.equals(siegeTE.getFaction())) {
+        if (!attacking.uuid.equals(siegeTE.getFaction())) {
             factionOfficer.sendMessage(new TextComponentString("Your faction doesn't own this block!"));
             return;
         }

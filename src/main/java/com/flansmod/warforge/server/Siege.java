@@ -28,6 +28,7 @@ public class Siege {
     public UUID defendingFaction;
     public ArrayList<DimBlockPos> attackingCamp;
     public DimBlockPos defendingClaim;
+	//TODO: New Kill requirement math: players in team * type of claim (2 - basic, 3 - reinforced)
 
     /**
      * The base progress comes from passive sources and must be recalculated whenever checking progress.
@@ -168,23 +169,6 @@ public class Siege {
 			totalSwing += WarForgeConfig.SIEGE_SWING_PER_DAY_ELAPSED_NO_DEFENDER_LOGINS;
 		if(!attackers.loggedInToday)
 			totalSwing -= WarForgeConfig.SIEGE_SWING_PER_DAY_ELAPSED_NO_ATTACKER_LOGINS;
-		
-		
-//		for(HashMap.Entry<UUID, PlayerData> kvp : defenders.members.entrySet())
-//		{
-//			if(kvp.getValue().flagPosition.equals(defendingClaim))
-//			{
-//				totalSwing -= WarForgeConfig.SIEGE_SWING_PER_DEFENDER_FLAG;
-//			}
-//		}
-//
-//		for(HashMap.Entry<UUID, PlayerData> kvp : attackers.members.entrySet())
-//		{
-//			if(attackingCamp.contains(kvp.getValue().flagPosition))
-//			{
-//				totalSwing += WarForgeConfig.SIEGE_SWING_PER_ATTACKER_FLAG;
-//			}
-//		}
 		
 		mAttackProgress += totalSwing;
 		
