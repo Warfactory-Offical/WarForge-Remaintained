@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.Arrays;
 
 import akka.japi.Pair;
+import com.flansmod.warforge.api.Quality;
 import com.flansmod.warforge.api.Vein;
 import com.flansmod.warforge.api.VeinKey;
 import com.flansmod.warforge.common.InventoryHelper;
@@ -18,6 +19,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
+import static com.flansmod.warforge.api.Quality.*;
 import static com.flansmod.warforge.common.CommonProxy.YIELD_QUALITY_MULTIPLIER;
 import static com.flansmod.warforge.common.WarForgeMod.VEIN_MAP;
 
@@ -43,14 +45,14 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 		if (!VEIN_MAP.containsKey(world.provider.getDimension())) { return; }  // if dim doesn't have any veins
 
 		// get vein data
-		Pair<Vein, VeinKey.Quality> vein_info = VeinKey.getVein(world.provider.getDimension(), chunk.x, chunk.z, world.getSeed());
+		Pair<Vein, Quality> vein_info = VeinKey.getVein(world.provider.getDimension(), chunk.x, chunk.z, world.getSeed());
 		if (vein_info == null) {
 			// extra precaution in case something goes wrong
 			WarForgeMod.LOGGER.atError().log("Unexpected null vein info. Terminating yield processing.");
 			return;
 		}
 		Vein chunk_vein = vein_info.first();
-		VeinKey.Quality vein_quality = vein_info.second();
+		Quality vein_quality = vein_info.second();
 
 		if (chunk_vein.isNullVein()) { return; }  // ignore null vein
 
@@ -65,8 +67,8 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 			float curr_yield = chunk_vein.component_yields[i];
 
 			// modify yield based on quality
-			if (vein_quality == VeinKey.Quality.POOR) { curr_yield /= YIELD_QUALITY_MULTIPLIER; }
-			else if (vein_quality == VeinKey.Quality.RICH) { curr_yield *= YIELD_QUALITY_MULTIPLIER; }
+			if (vein_quality == POOR) { curr_yield /= YIELD_QUALITY_MULTIPLIER; }
+			else if (vein_quality == RICH) { curr_yield *= YIELD_QUALITY_MULTIPLIER; }
 
 			// calculate the number of times to yield this component
 			for (int j = 0; j < numYields; ++j) {

@@ -1,12 +1,9 @@
 package com.flansmod.warforge.api;
 
 import com.cleanroommc.modularui.api.drawable.IDrawable;
-import com.cleanroommc.modularui.api.widget.IGuiAction;
-import com.cleanroommc.modularui.api.widget.IWidget;
 import com.cleanroommc.modularui.api.widget.Interactable;
 import com.cleanroommc.modularui.screen.viewport.GuiContext;
 import com.cleanroommc.modularui.theme.WidgetTheme;
-import com.cleanroommc.modularui.widgets.ButtonWidget;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.SiegeCampAttackInfo;
 import com.flansmod.warforge.server.Faction;
@@ -25,28 +22,14 @@ public class MapDrawable implements IDrawable, Interactable {
 
     private final String mapData;
     private final SiegeCampAttackInfo chunkState;
-    private boolean[] adjesency;
-    private Runnable onClick;
     private final ResourceLocation attackIcon = new ResourceLocation(WarForgeMod.MODID, "gui/icon_siege_attack.png");
+    private boolean[] adjesency;
 
     public MapDrawable(String mapData, SiegeCampAttackInfo chunkState, boolean[] adjesency) {
         this.mapData = mapData;
         this.chunkState = chunkState;
         this.adjesency = adjesency;
     }
-
-    @Override
-    public Result onMouseTapped(int mouseButton) {
-        onClick.run();
-        Interactable.playButtonClickSound();
-        return Result.ACCEPT;
-    }
-
-    public void setOnClick(Runnable onClick) {
-        this.onClick = onClick;
-    }
-
-
 
     public static String extractNumbers(String input) {
         StringBuilder builder = new StringBuilder();
@@ -59,6 +42,8 @@ public class MapDrawable implements IDrawable, Interactable {
 
     @Override
     public void draw(GuiContext context, int x, int y, int width, int height, WidgetTheme theme) {
+        GlStateManager.pushAttrib();
+        GlStateManager.pushMatrix();
         boolean hovered = context.getMouseX() >= x && context.getMouseX() < x + width &&
                 context.getMouseY() >= y && context.getMouseY() < y + height;
 
@@ -86,23 +71,23 @@ public class MapDrawable implements IDrawable, Interactable {
             int lightColor = brighten(base);
             int darkColor = darken(base);
 
-            Gui.drawRect(x, y, x + width+1, y + height+1, baseNoAlpha | 0x20_000000);
+            Gui.drawRect(x, y, x + width + 1, y + height + 1, baseNoAlpha | 0x20_000000);
 
             // Top (light)
             if (adjesency[3])
-                Gui.drawRect(x, y, x + width+1, y + THICKNESS, lightColor);
+                Gui.drawRect(x, y, x + width + 1, y + THICKNESS, lightColor);
             // Left (light)
             if (adjesency[0])
-                Gui.drawRect(x, y + THICKNESS-2, x + THICKNESS, y + height, lightColor);
+                Gui.drawRect(x, y + THICKNESS - 2, x + THICKNESS, y + height, lightColor);
 
             // Bottom (dark)
             if (adjesency[1])
-                Gui.drawRect(x , y + height - THICKNESS, x + width, y + height, darkColor);
+                Gui.drawRect(x, y + height - THICKNESS, x + width, y + height, darkColor);
             // Right (dark)
             if (adjesency[2])
                 Gui.drawRect(x + width - THICKNESS, y, x + width, y + height, darkColor);
         }
-        if(chunkState.canAttack && hovered){
+        if (chunkState.canAttack && hovered) {
             Minecraft.getMinecraft().getTextureManager().bindTexture(attackIcon);
             int xOffset = x + (width - 46) / 2;
             int yOffset = y + (height - 46) / 2;
@@ -119,6 +104,8 @@ public class MapDrawable implements IDrawable, Interactable {
         GlStateManager.disableBlend();
         GlStateManager.disableAlpha();
         GlStateManager.enableLighting();
+        GlStateManager.popMatrix();
+        GlStateManager.popAttrib();
     }
 
     private int brighten(int color) {

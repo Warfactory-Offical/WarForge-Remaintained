@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import akka.japi.Pair;
+import com.flansmod.warforge.api.Quality;
 import com.flansmod.warforge.api.Vein;
 import com.flansmod.warforge.api.VeinKey;
 import com.flansmod.warforge.common.*;
@@ -211,7 +212,7 @@ public class ClientTickHandler
 				if (player.isSneaking()) {
 					DimChunkPos currPos = new DimChunkPos(player.dimension, player.getPosition());
 					boolean hasPos = CHUNK_VEIN_CACHE.contains(currPos);
-					Pair<Vein, VeinKey.Quality> veinInfo = CHUNK_VEIN_CACHE.get(currPos);
+					Pair<Vein, Quality> veinInfo = CHUNK_VEIN_CACHE.get(currPos);
 
 					// probe the server for the data for this chunk
 					if (!hasPos && permitChunkReprobeMs.getLong(currPos) <= System.currentTimeMillis()) {
@@ -277,7 +278,7 @@ public class ClientTickHandler
 		return closestInfo;
 	}
 
-	private void renderVeinData(Minecraft mc, Pair<Vein, VeinKey.Quality> veinInfo, boolean hasCached, RenderGameOverlayEvent event) {
+	private void renderVeinData(Minecraft mc, Pair<Vein, Quality> veinInfo, boolean hasCached, RenderGameOverlayEvent event) {
 		GlStateManager.enableAlpha();
 		GlStateManager.enableBlend();
 
@@ -346,12 +347,12 @@ public class ClientTickHandler
 		}
 	}
 
-	private ArrayList<String> createVeinInfoStrings(Pair<Vein, VeinKey.Quality> veinInfo, boolean hasCached) {
+	private ArrayList<String> createVeinInfoStrings(Pair<Vein, Quality> veinInfo, boolean hasCached) {
 		ArrayList<String> result = new ArrayList<>(1);
 		if (veinInfo != null) {
 			// translate and format the vein name by supplying the localized quality name as an argument
 			Vein currVein = veinInfo.first();
-			VeinKey.Quality currQual = veinInfo.second();
+			Quality currQual = veinInfo.second();
 			result.add(I18n.format(currVein.translation_key, I18n.format(currQual.getTranslationKey())));
 
 			for (int i = 0; i < currVein.component_ids.length; ++i) {

@@ -1,6 +1,7 @@
 package com.flansmod.warforge.common.network;
 
 import akka.japi.Pair;
+import com.flansmod.warforge.api.Quality;
 import com.flansmod.warforge.api.Vein;
 import com.flansmod.warforge.api.VeinKey;
 import com.flansmod.warforge.api.WarforgeCache;
@@ -73,7 +74,7 @@ public class PacketChunkPosVeinID extends PacketBase {
         }
 
         // if the player is within a reasonable sqr radius (1) of the queried chunk, process and send data
-        Pair<Vein, VeinKey.Quality> veinInfo = VeinKey.getVein(veinLocation, FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0].getSeed());
+        Pair<Vein, Quality> veinInfo = VeinKey.getVein(veinLocation, FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0].getSeed());
         if (veinInfo != null) {
             resultID = veinInfo.first().getID();  // the client should have a copy of the vein to refer the ID w/
             resultQualOrd = (byte) veinInfo.second().ordinal();  // we need to tell them the quality

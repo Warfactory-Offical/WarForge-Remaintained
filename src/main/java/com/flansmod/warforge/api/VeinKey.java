@@ -189,26 +189,6 @@ public class VeinKey implements Comparable<VeinKey> {
         return new int[]{hash, quality};
     }
 
-    public enum Quality {
-        RICH,
-        FAIR,
-        POOR;
-
-        static Quality getQuality(int qualityIndex) {
-            switch (qualityIndex) {
-                case 1:
-                    return FAIR;
-                case 2:
-                    return RICH;
-                default:
-                    return POOR;
-            }
-        }
-
-        public String getTranslationKey() {
-            return "warforge.info.vein." + this.toString().toLowerCase();
-        }
-    }
 
     public static Pair<Vein, Quality> getVein(int dim, int chunkX, int chunkZ, long seed) {
         int[] chunk_hash = generateChunkHash(chunkX, chunkZ, seed);

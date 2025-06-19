@@ -2,9 +2,11 @@ package com.flansmod.warforge.client;
 
 import com.cleanroommc.modularui.api.IPanelHandler;
 import com.cleanroommc.modularui.api.drawable.IKey;
+import com.cleanroommc.modularui.api.widget.IWidget;
 import com.cleanroommc.modularui.drawable.GuiTextures;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.ModularScreen;
+import com.cleanroommc.modularui.utils.Alignment;
 import com.cleanroommc.modularui.widgets.ButtonWidget;
 import com.flansmod.warforge.api.ChunkDynamicTextureThread;
 import com.flansmod.warforge.api.MapDrawable;
@@ -141,13 +143,32 @@ public class GuiSiegeCampNew {
         int HEIGHT = (16 * 4) * 5 + VERT_OFFSET + (int) (2.5 * offset);
         ModularPanel panel = ModularPanel.defaultPanel("siege_main")
                 .width(WIDTH)
-                .height(HEIGHT);
+                .height(HEIGHT)
+                .topRel(0.40f);
+        ;
 
-       IPanelHandler extraPanel =  IPanelHandler.simple(panel, (pan, player1) -> {
-            ModularPanel popupPanel = new ModularPanel("siege_popup")
-                    .size(WIDTH, HEIGHT / 3)
-                    .bottom(HEIGHT);
-           return popupPanel;
+
+        IPanelHandler extraPanel = IPanelHandler.simple(panel, (masterPanel, playerRef) -> {
+            IWidget siege = new ButtonWidget<>()
+                    .onMousePressed((mouse) -> {
+                        panel.closeIfOpen(true);
+                        return true;
+                    })
+                    .overlay(IKey.str("Begin Siege"))
+                    .width(50)
+                    .align(Alignment.Center)
+                    ;
+            ModularPanel popupPanel = new ModularPanel("siege_popup") {
+                @Override
+                public boolean isDraggable() {
+                    return false;
+                }
+            }
+                    .size(WIDTH, HEIGHT / 4)
+                    .alignX(Alignment.Center)
+                    .bottomRel(0.1f);
+
+            return popupPanel.child(siege);
         }, true);
         panel.child(new ButtonWidget<>()
                 .background(GuiTextures.BUTTON_CLEAN)
@@ -174,8 +195,12 @@ public class GuiSiegeCampNew {
                 panel.child(new ButtonWidget<>()
                         .overlay(new MapDrawable("chunk" + id, possibleAttacks.get(id), adjesencyArray[id]))
                         .onMousePressed(mouseButton -> {
+                            if (!possibleAttacks.get(finalId).canAttack) return false;
+                            if (extraPanel.isPanelOpen()) {
+                                extraPanel.deleteCachedPanel();
+                            }
                             player.sendMessage(new TextComponentString(possibleAttacks.get(finalId).mOffset.toString()));
-                           extraPanel.openPanel();
+                            extraPanel.openPanel();
                             return true;
                         })
                         .size(16 * 4)

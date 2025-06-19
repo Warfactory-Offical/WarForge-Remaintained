@@ -1,6 +1,7 @@
 package com.flansmod.warforge.client;
 
 import akka.japi.Pair;
+import com.flansmod.warforge.api.Quality;
 import com.flansmod.warforge.api.Vein;
 import com.flansmod.warforge.api.VeinKey;
 import com.flansmod.warforge.api.WarforgeCache;
@@ -12,7 +13,7 @@ import static com.flansmod.warforge.client.ClientProxy.VEIN_ENTRIES;
 
 @SideOnly(Side.CLIENT)
 public class ChunkVeinCache {
-    protected WarforgeCache<DimChunkPos, Pair<Vein, VeinKey.Quality>> cache;
+    protected WarforgeCache<DimChunkPos, Pair<Vein, Quality>> cache;
 
     @SideOnly(Side.CLIENT)
     public ChunkVeinCache() {
@@ -30,10 +31,10 @@ public class ChunkVeinCache {
             return;
         }
 
-        cache.put(chunkPos, new Pair<>(VEIN_ENTRIES.get(veinID), VeinKey.Quality.values()[qualOrd]));
+        cache.put(chunkPos, new Pair<>(VEIN_ENTRIES.get(veinID), Quality.values()[qualOrd]));
     }
 
-    public Pair<Vein, VeinKey.Quality> get(DimChunkPos chunkPos) {
+    public Pair<Vein, Quality> get(DimChunkPos chunkPos) {
         return cache.get(chunkPos);
     }
 
