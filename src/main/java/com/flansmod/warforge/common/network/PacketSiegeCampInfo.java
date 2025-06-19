@@ -2,9 +2,8 @@ package com.flansmod.warforge.common.network;
 
 import com.cleanroommc.modularui.factory.ClientGUI;
 import com.flansmod.warforge.api.Quality;
-import com.flansmod.warforge.api.Vein;
 import com.flansmod.warforge.client.ClientProxy;
-import com.flansmod.warforge.client.GuiSiegeCampNew;
+import com.flansmod.warforge.client.GuiSiegeCamp;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import io.netty.buffer.ByteBuf;
@@ -87,7 +86,7 @@ public class PacketSiegeCampInfo extends PacketBase {
     private void ShowClientGUI() {
         //Minecraft.getMinecraft().displayGuiScreen(new GuiSiegeCamp(mSiegeCampPos, mPossibleAttacks));
 
-        ClientGUI.open(GuiSiegeCampNew.makeGUI(
+        ClientGUI.open(GuiSiegeCamp.makeGUI(
                 mSiegeCampPos, mPossibleAttacks
         ));
     }

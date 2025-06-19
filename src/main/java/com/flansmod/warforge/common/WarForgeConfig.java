@@ -35,23 +35,6 @@ public class WarForgeConfig
 	// Yields
 	public static final String CATEGORY_YIELDS = "Yields";
 	public static float YIELD_DAY_LENGTH = 1.0f; // In real-world hours
-	public static float NUM_IRON_PER_DAY_PER_ORE = 0.05f;
-	public static boolean IRON_YIELD_AS_ORE = true; // Otherwise, give ingots
-	public static float NUM_GOLD_PER_DAY_PER_ORE = 0.05f;
-	public static boolean GOLD_YIELD_AS_ORE = true; // Otherwise, give ingots
-	public static float NUM_DIAMOND_PER_DAY_PER_ORE = 0.05f;
-	public static boolean DIAMOND_YIELD_AS_ORE = false; // Otherwise, give diamonds
-	public static float NUM_CLAY_PER_DAY_PER_ORE = 0.05f;
-	public static boolean CLAY_YIELD_AS_BLOCKS = false; // Otherwise, clay balls
-	public static float NUM_QUARTZ_PER_DAY_PER_ORE = 0.05f;
-	public static boolean QUARTZ_YIELD_AS_BLOCKS = false; // Otherwise, quartz pieces
-	public static float NUM_OAK_PER_DAY_PER_LOG = 0.05f;
-	public static boolean ANCIENT_OAK_YIELD_AS_LOGS = false; // Otherwise, planks
-	public static float NUM_REDSTONE_PER_DAY_PER_ORE = 0.1f;
-	public static boolean REDSTONE_YIELD_AS_BLOCKS = false; // Otherwise, dust
-	public static float NUM_SLIME_PER_DAY_PER_ORE = 0.1f;
-	public static float NUM_SHULKER_PER_DAY_PER_ORE = 0.01f;
-
 	// Yield - veins:
 	// maps each dimension id to a map of vein keys to veins for quick access
 
@@ -212,8 +195,8 @@ public class WarForgeConfig
         CITADEL_FOE.SyncConfig("CitadelFoe", "Citadels of other Factions");
         CLAIM_FRIEND.SyncConfig("ClaimFriend", "Claims of their Faction");
         CLAIM_FOE.SyncConfig("ClaimFoe", "Claims of other Factions");
-        //SIEGECAMP_SIEGER.syncConfig("Sieger", "Sieges they started");
-        //SIEGECAMP_OTHER.syncConfig("SiegeOther", "Other sieges, defending or neutral");
+        SIEGECAMP_SIEGER.SyncConfig("Sieger", "Sieges they started");
+        SIEGECAMP_OTHER.SyncConfig("SiegeOther", "Other sieges, defending or neutral");
 
         // Claim Settings
         CLAIM_DIM_WHITELIST = configFile.get(CATEGORY_CLAIMS, "Claim Dimension Whitelist", CLAIM_DIM_WHITELIST, "In which dimensions should player be able to claim chunks").getIntList();
@@ -263,21 +246,6 @@ public class WarForgeConfig
 		VAULT_BLOCK_IDS = configFile.getStringList("Valuable Blocks", Configuration.CATEGORY_GENERAL, VAULT_BLOCK_IDS, "The block IDs that count towards the value of your citadel's vault");
 
 		// Yield parameters
-		NUM_IRON_PER_DAY_PER_ORE = configFile.getFloat("#Iron Per Day Per Ore", CATEGORY_YIELDS, NUM_IRON_PER_DAY_PER_ORE, 0.001f, 1000f, "For each dense iron ore block in a claim, how many resources do players get per yield timer");
-		NUM_GOLD_PER_DAY_PER_ORE = configFile.getFloat("#Gold Per Day Per Ore", CATEGORY_YIELDS, NUM_GOLD_PER_DAY_PER_ORE, 0.001f, 1000f, "For each dense gold ore block in a claim, how many resources do players get per yield timer");
-		NUM_DIAMOND_PER_DAY_PER_ORE = configFile.getFloat("#Diamond Per Day Per Ore", CATEGORY_YIELDS, NUM_DIAMOND_PER_DAY_PER_ORE, 0.001f, 1000f, "For each dense diamond ore block in a claim, how many resources do players get per yield timer");
-		NUM_QUARTZ_PER_DAY_PER_ORE = configFile.getFloat("#Quartz Per Day Per Ore", CATEGORY_YIELDS, NUM_QUARTZ_PER_DAY_PER_ORE, 0.001f, 1000f, "For each dense quartz ore block in a claim, how many resources do players get per yield timer");
-		NUM_CLAY_PER_DAY_PER_ORE = configFile.getFloat("#Clay Per Day Per Dense Clay", CATEGORY_YIELDS, NUM_CLAY_PER_DAY_PER_ORE, 0.001f, 1000f, "For each dense clay block in a claim, how many resources do players get per yield timer");
-		NUM_OAK_PER_DAY_PER_LOG = configFile.getFloat("#Log Per Day Per Ancient Oak", CATEGORY_YIELDS, NUM_OAK_PER_DAY_PER_LOG, 0.001f, 1000f, "For each ancient oak block in a claim, how many resources do players get per yield timer");
-		NUM_REDSTONE_PER_DAY_PER_ORE = configFile.getFloat("#Redstone Per Day Per Ore", CATEGORY_YIELDS, NUM_REDSTONE_PER_DAY_PER_ORE, 0.001f, 1000f, "For each dense redstone ore block in a claim, how many resources do players get per yield timer");
-		NUM_SLIME_PER_DAY_PER_ORE = configFile.getFloat("#Slime Per Day Per Block", CATEGORY_YIELDS, NUM_SLIME_PER_DAY_PER_ORE, 0.001f, 1000f, "For each dense slime block in a claim, how many resources do players get per yield timer");
-		IRON_YIELD_AS_ORE = configFile.getBoolean("Iron Yield As Ore", CATEGORY_YIELDS, IRON_YIELD_AS_ORE, "If true, dense iron ore gives ore blocks. If false, it gives ingots");
-		GOLD_YIELD_AS_ORE = configFile.getBoolean("Gold Yield As Ore", CATEGORY_YIELDS, GOLD_YIELD_AS_ORE, "If true, dense gold ore gives ore blocks. If false, it gives ingots");
-		DIAMOND_YIELD_AS_ORE = configFile.getBoolean("Diamond Yield As Ore", CATEGORY_YIELDS, DIAMOND_YIELD_AS_ORE, "If true, dense diamond ore gives ore blocks. If false, it gives diamonds");
-		CLAY_YIELD_AS_BLOCKS = configFile.getBoolean("Clay Yield As Blocks", CATEGORY_YIELDS, CLAY_YIELD_AS_BLOCKS, "If true, dense clay gives clay blocks. If false, it gives clay balls");
-		QUARTZ_YIELD_AS_BLOCKS = configFile.getBoolean("Quartz Yield As Blocks", CATEGORY_YIELDS, QUARTZ_YIELD_AS_BLOCKS, "If true, dense quartz ore gives quartz blocks. If false, it gives quartz items");
-		ANCIENT_OAK_YIELD_AS_LOGS = configFile.getBoolean("Ancient Oak Yield As Logs", CATEGORY_YIELDS, ANCIENT_OAK_YIELD_AS_LOGS, "If true, ancient oak gives logs. If false, it gives planks");
-		REDSTONE_YIELD_AS_BLOCKS = configFile.getBoolean("Redstone Yield As Blocks", CATEGORY_YIELDS, REDSTONE_YIELD_AS_BLOCKS, "If true, redstone ore gives redstone blocks. If false, it gives redstone dust");
 		YIELD_DAY_LENGTH = configFile.getFloat("Yield Day Length", CATEGORY_YIELDS, YIELD_DAY_LENGTH, 0.0001f, 100000f, "The length of time between yields, in real-world hours.");
 
 		YIELD_QUALITY_MULTIPLIER = configFile.getFloat("Yield Quality Multiplier", CATEGORY_YIELDS, YIELD_QUALITY_MULTIPLIER, 1, 10000, "A number to be used to vary yield amounts for every vein's components, dividing by this for poor quality veins and multiplying for high quality. Set to 1 to effectively have no difference.");

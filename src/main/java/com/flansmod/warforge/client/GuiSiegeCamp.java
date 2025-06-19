@@ -30,7 +30,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.*;
 import java.util.stream.IntStream;
 
-public class GuiSiegeCampNew {
+public class GuiSiegeCamp {
 
     @SideOnly(Side.CLIENT)
     public static ModularScreen makeGUI(DimBlockPos siegeCampPos, List<SiegeCampAttackInfo> possibleAttacks) {
@@ -176,7 +176,7 @@ public class GuiSiegeCampNew {
                 panel.child(new ButtonWidget<>()
                         .overlay(new MapDrawable("chunk" + id, chunkInfo, adjesencyArray[id]))
                         .onMousePressed(mouseButton -> {
-                            if (!chunkInfo.canAttack) return false;
+                            if ((chunkInfo.mOffset.getX() == 0 && chunkInfo.mOffset.getZ() ==0 ) && !chunkInfo.canAttack) return false;
                             player.sendMessage(new TextComponentString(chunkInfo.mOffset.toString()));
                             PacketStartSiege siegePacket = new PacketStartSiege();
 
@@ -189,7 +189,7 @@ public class GuiSiegeCampNew {
                         })
                         .tooltip(richTooltip ->
                         {
-                            if (chunkInfo.canAttack) {
+                            if (!chunkInfo.mFactionName.isEmpty()) {
                                 richTooltip.addLine(IKey.str("Territory of " + chunkInfo.mFactionName).color(chunkInfo.mFactionColour));
                             } else {
                                 richTooltip.addLine(IKey.str("Wilderness").style(IKey.GREEN));

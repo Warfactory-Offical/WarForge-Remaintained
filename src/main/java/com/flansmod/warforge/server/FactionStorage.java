@@ -30,7 +30,6 @@ import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
-import scala.tools.nsc.doc.base.comment.Link;
 
 import java.awt.*;
 import java.util.*;
@@ -761,6 +760,7 @@ public class FactionStorage {
             return;
         }
 
+
         if (!attacking.isPlayerRoleInFaction(factionOfficer.getUniqueID(), Faction.Role.OFFICER)) {
             factionOfficer.sendMessage(new TextComponentString("You are not an officer of this faction"));
             return;
@@ -768,7 +768,16 @@ public class FactionStorage {
 
         // TODO: Verify there aren't existing alliances
 
+        if (direction.getZ() == 0 && direction.getX() == 0) {
+            factionOfficer.sendMessage(new TextComponentString("You can't siege the siege block!"));
+            return;
+        }
+
         TileEntitySiegeCamp siegeTE = (TileEntitySiegeCamp) proxy.GetTile(siegeCampPos);
+        if (!attacking.equals(siegeTE.getFaction())) {
+            factionOfficer.sendMessage(new TextComponentString("Your faction doesn't own this block!"));
+            return;
+        }
         DimChunkPos defendingChunk = siegeCampPos.toChunkPos().Offset(direction);
         UUID defendingFactionID = mClaims.get(defendingChunk);
         Faction defending = getFaction(defendingFactionID);
@@ -884,7 +893,7 @@ public class FactionStorage {
 
     //
     public LinkedHashMap<DimChunkPos, Boolean> getClaimRadiusAround(UUID excludedFaction, DimBlockPos originPos, int radius) {
-        LinkedHashMap<DimChunkPos, Boolean> posMap = new LinkedHashMap<>((int) Math.pow(radius*2, 2)+1, 0.75f, true);
+        LinkedHashMap<DimChunkPos, Boolean> posMap = new LinkedHashMap<>((int) Math.pow(radius * 2, 2) + 1, 0.75f, true);
         DimChunkPos centerChunk = originPos.toChunkPos();
         int centerX = centerChunk.x;
         int centerZ = centerChunk.z;
