@@ -1,26 +1,28 @@
 package com.flansmod.warforge.client;
 
-import com.cleanroommc.modularui.api.IPanelHandler;
 import com.cleanroommc.modularui.api.drawable.IKey;
-import com.cleanroommc.modularui.api.widget.IWidget;
 import com.cleanroommc.modularui.drawable.GuiTextures;
+import com.cleanroommc.modularui.drawable.IngredientDrawable;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.ModularScreen;
-import com.cleanroommc.modularui.utils.Alignment;
 import com.cleanroommc.modularui.widgets.ButtonWidget;
 import com.flansmod.warforge.api.ChunkDynamicTextureThread;
 import com.flansmod.warforge.api.MapDrawable;
+import com.flansmod.warforge.api.Quality;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.network.SiegeCampAttackInfo;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -148,28 +150,6 @@ public class GuiSiegeCampNew {
         ;
 
 
-        IPanelHandler extraPanel = IPanelHandler.simple(panel, (masterPanel, playerRef) -> {
-            IWidget siege = new ButtonWidget<>()
-                    .onMousePressed((mouse) -> {
-                        panel.closeIfOpen(true);
-                        return true;
-                    })
-                    .overlay(IKey.str("Begin Siege"))
-                    .width(50)
-                    .align(Alignment.Center)
-                    ;
-            ModularPanel popupPanel = new ModularPanel("siege_popup") {
-                @Override
-                public boolean isDraggable() {
-                    return false;
-                }
-            }
-                    .size(WIDTH, HEIGHT / 4)
-                    .alignX(Alignment.Center)
-                    .bottomRel(0.1f);
-
-            return popupPanel.child(siege);
-        }, true);
         panel.child(new ButtonWidget<>()
                 .background(GuiTextures.BUTTON_CLEAN)
                 .overlay(GuiTextures.CLOSE)
@@ -192,16 +172,38 @@ public class GuiSiegeCampNew {
             for (int j = 0; j < 5; j++) {
 
                 int finalId = id;
+                SiegeCampAttackInfo chunkInfo = possibleAttacks.get(finalId);
                 panel.child(new ButtonWidget<>()
-                        .overlay(new MapDrawable("chunk" + id, possibleAttacks.get(id), adjesencyArray[id]))
+                        .overlay(new MapDrawable("chunk" + id, chunkInfo, adjesencyArray[id]))
                         .onMousePressed(mouseButton -> {
-                            if (!possibleAttacks.get(finalId).canAttack) return false;
-                            if (extraPanel.isPanelOpen()) {
-                                extraPanel.deleteCachedPanel();
-                            }
-                            player.sendMessage(new TextComponentString(possibleAttacks.get(finalId).mOffset.toString()));
-                            extraPanel.openPanel();
+                            if (!chunkInfo.canAttack) return false;
+                            player.sendMessage(new TextComponentString(chunkInfo.mOffset.toString()));
+                            panel.closeIfOpen(true);
                             return true;
+                        })
+                        .tooltip(richTooltip ->
+                        {
+                            if (chunkInfo.canAttack) {
+                                richTooltip.addLine(IKey.str("Territory of " + chunkInfo.mFactionName).color(chunkInfo.mFactionColour));
+                            } else {
+                                richTooltip.addLine(IKey.str("Wilderness").style(IKey.GREEN));
+                            }
+                            if (chunkInfo.mWarforgeVein != null) {
+
+                                richTooltip.addLine(new IngredientDrawable(
+                                        Arrays.stream(chunkInfo.mWarforgeVein.component_ids)
+                                                .map(ForgeRegistries.ITEMS::getValue)
+                                                .filter(Objects::nonNull)
+                                                .map(ItemStack::new)
+                                                .toArray(ItemStack[]::new)
+                                ).asIcon().size(25));
+                                richTooltip.addLine(IKey.str("Ore In the chunk: " + I18n.format(chunkInfo.mWarforgeVein.translation_key) ));
+                                richTooltip.addLine(IKey.str("Quality: " + I18n.format(chunkInfo.mOreQuality.getTranslationKey())));
+                            } else {
+                                richTooltip.addLine(IKey.str("No ores in this chunk"));
+                            }
+                            if(chunkInfo.canAttack)
+                                richTooltip.addLine(IKey.str("Click to attack now!").style(IKey.BOLD, IKey.RED));
                         })
                         .size(16 * 4)
                         .pos((i * (16 * 4) + offset), (j * (16 * 4) + offset) + VERT_OFFSET));
