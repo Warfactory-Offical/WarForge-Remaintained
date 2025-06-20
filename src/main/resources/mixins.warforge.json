@@ -9,8 +9,5 @@
 		"SurvivalHelperMixin"
 	],
 	"server": [],
-	"client": [
-
-		"vanilla.RenderMixin"
-	]
+	"client": []
 }
