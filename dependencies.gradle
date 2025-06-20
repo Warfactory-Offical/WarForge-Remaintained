@@ -39,6 +39,8 @@
  */
 dependencies {
     shadowImplementation ("org.yaml:snakeyaml:2.4")
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
 
     implementation rfg.deobf("curse.maven:effortlessbuilding-302113:2847346")
 
