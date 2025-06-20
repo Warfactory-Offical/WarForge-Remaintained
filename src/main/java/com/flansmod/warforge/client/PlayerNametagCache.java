@@ -29,17 +29,22 @@ public class PlayerNametagCache {
     }
 
     public @Nullable NamePlateData requestIfAbsent(String player){
-        if(!cache.contains(player)){
-            PacketRequestNamePlate packet = new PacketRequestNamePlate();
-            packet.name = player;
+        NamePlateData data = cache.get(player);
+        if (data == null) {
             WarForgeMod.LOGGER.info("Requesting faction nametag for " + player);
+            var packet = new PacketRequestNamePlate();
+            packet.name = player;
             WarForgeMod.NETWORK.sendToServer(packet);
-            cache.put(player, null);
-
+            cache.put(player, AWAITING_DATA);
             return null;
         }
-        return cache.get(player);
+        if (data == AWAITING_DATA) {
+            return null; // already requested, still waiting
+        }
+        return data; // valid result
     }
+    private static final NamePlateData AWAITING_DATA = new NamePlateData("<awaiting>", 0xFFFFFF);
+
     @RequiredArgsConstructor
    public static class NamePlateData {
        final public String name;
