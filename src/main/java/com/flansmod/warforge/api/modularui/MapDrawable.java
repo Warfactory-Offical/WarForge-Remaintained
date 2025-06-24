@@ -201,7 +201,7 @@ public class MapDrawable implements IDrawable, Interactable {
     }
 
     private static void setGLColor(){
-        GlStateManager.color(1f,1f,1f);
+        GlStateManager.color(1f,1f,1f, 1f);
     }
 
 }
