@@ -8,12 +8,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 public class FullColorNameplate {
 
-    public static void drawNameplate(FontRenderer fontRendererIn, String str, float x, float y, float z, int verticalShift, float viewerYaw, float viewerPitch, boolean isThirdPersonFrontal, boolean isSneaking, int color) {
-
-        int red = Math.min(255, (int) (((color >>> 16) & 0xFF)* 0.25f));
-        int green = Math.min(255, (int) (((color >>> 8) & 0xFF) * 0.25f));
-        int blue = Math.min(255, (int) ((color & 0xFF) * 0.25));
-        int darker = (255<<24)| (red << 16) | (green << 8) | blue;
+    public static void drawNameplate(FontRenderer fontRendererIn, String str, float x, float y, float z, int verticalShift, float viewerYaw, float viewerPitch, boolean isThirdPersonFrontal, boolean isSneaking, int color, int darker) {
         GlStateManager.pushMatrix();
         GlStateManager.translate(x, y, z);
         GlStateManager.glNormal3f(0.0F, 1.0F, 0.0F);
@@ -25,7 +20,6 @@ public class FullColorNameplate {
 
         if (!isSneaking) {
             GlStateManager.disableDepth();
-
         }
 
         GlStateManager.enableBlend();

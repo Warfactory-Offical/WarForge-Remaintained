@@ -1,5 +1,6 @@
 package com.flansmod.warforge.client;
 
+import com.flansmod.warforge.api.Color4i;
 import com.flansmod.warforge.api.WarforgeCache;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketRequestNamePlate;
@@ -21,8 +22,7 @@ public class PlayerNametagCache {
         cache.clear();
     }
     public void add(String name, String faction, int color){
-
-        cache.put(name, faction.isEmpty() ? null : new NamePlateData(faction,color));
+        cache.put(name, faction.isEmpty() ? null : new NamePlateData(faction,color, Color4i.fromRGB(color).withBrightness(0.25f).toRGB()));
     }
     public void remove(String name){
         cache.remove(name);
@@ -43,12 +43,13 @@ public class PlayerNametagCache {
         }
         return data; // valid result
     }
-    private static final NamePlateData AWAITING_DATA = new NamePlateData("<awaiting>", 0xFFFFFF);
+    private static final NamePlateData AWAITING_DATA = new NamePlateData("<awaiting>", 0xFFFFFF, 0xFFFFFF);
 
     @RequiredArgsConstructor
    public static class NamePlateData {
        final public String name;
        final public int color;
+       final public int darkerColor;
 
    }
 
