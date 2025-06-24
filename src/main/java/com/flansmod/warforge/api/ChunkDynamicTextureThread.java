@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.Vec3d;
 
 import java.awt.image.BufferedImage;
 import java.util.Queue;
@@ -55,46 +56,41 @@ public class ChunkDynamicTextureThread extends Thread {
     public static void applyShadingWithHeight(int[] rawChunk, int[] heightMap, int width, int height) {
         int[] shaded = new int[rawChunk.length];
 
+        // Light from northwest (toward +X and +Z)
+        Vec3d lightDir = new Vec3d(-1, 1, -1).normalize();
+
         for (int z = 0; z < height; z++) {
             for (int x = 0; x < width; x++) {
                 int idx = x + z * width;
+
                 int baseColor = rawChunk[idx];
-                int baseHeight = heightMap[idx];
 
-                int idxEast = (x < width - 1) ? idx + 1 : idx;
-                int idxSouth = (z < height - 1) ? idx + width : idx;
+                // Sample neighboring heights for central difference
+                int hL = heightMap[(x > 0 ? x - 1 : x) + z * width];                  // West
+                int hR = heightMap[(x < width - 1 ? x + 1 : x) + z * width];         // East
+                int hU = heightMap[x + (z > 0 ? z - 1 : z) * width];                 // North
+                int hD = heightMap[x + (z < height - 1 ? z + 1 : z) * width];        // South
 
-                int eastHeight = heightMap[idxEast];
-                int southHeight = heightMap[idxSouth];
+                // Compute normal vector
+                double dx = hR - hL;
+                double dz = hD - hU;
+                Vec3d normal = new Vec3d(-dx, 2.0, -dz).normalize(); // 2.0 exaggerates vertical steepness
 
-                int heightDiffEast = baseHeight - eastHeight;
-                int heightDiffSouth = baseHeight - southHeight;
+                // Lambertian reflectance
+                float shade = (float) normal.dotProduct(lightDir);
+                shade = Math.max(0.0f, Math.min(1.0f, shade));
 
-                float shadeFactor = 1.0f - ((heightDiffEast + heightDiffSouth) / 2f) * 0.2f;
-                shadeFactor = Math.max(0.7f, Math.min(1.0f, shadeFactor));
+                float brightness = 0.6f + shade * 0.4f;
 
-                shaded[idx] = applyBrightness(baseColor, shadeFactor);
+                shaded[idx] = new Color4i(baseColor)
+                        .withGammaBrightness(brightness,false)
+                        .toRGB();
             }
         }
+
         System.arraycopy(shaded, 0, rawChunk, 0, rawChunk.length);
     }
 
-
-
-    // Helper: multiply RGB by brightness factor, keep alpha unchanged
-    private static int applyBrightness(int color, float factor) {
-        int alpha = (color >> 24) & 0xFF;
-        int r = (int) (((color >> 16) & 0xFF) * factor);
-        int g = (int) (((color >> 8) & 0xFF) * factor);
-        int b = (int) ((color & 0xFF) * factor);
-
-        // Clamp RGB
-        r = Math.min(255, Math.max(0, r));
-        g = Math.min(255, Math.max(0, g));
-        b = Math.min(255, Math.max(0, b));
-
-        return (alpha << 24) | (r << 16) | (g << 8) | b;
-    }
 
     @Override
     public void run() {
@@ -123,36 +119,15 @@ public class ChunkDynamicTextureThread extends Thread {
 
 
     public void applyHeightMap(int[] colorBuffer, int[] heightMap) {
+            for (int i = 0; i < colorBuffer.length; i++) {
+                float normalized = (float) Math.log(heightMap[i] - minHeight + 1) / (float) Math.log(maxHeight - minHeight + 1);
+                float brightness = 0.6f + normalized * 0.4f;
 
-        for (int i = 0; i < colorBuffer.length; i++) {
-            int rgb = colorBuffer[i];
-
-            // Normalize height: 0.0 to 1.0
-            float normalized = (float) Math.log(heightMap[i] - minHeight + 1) / (float) Math.log(maxHeight - minHeight + 1);
-
-            // Extract original RGB
-            int alpha = (rgb >>> 24) & 0xFF;
-            int red = (rgb >>> 16) & 0xFF;
-            int green = (rgb >>> 8) & 0xFF;
-            int blue = (rgb) & 0xFF;
-
-            // Apply brightness multiplier
-            float brightness = 0.6f + normalized * 0.4f; // keep brightness in [0.6, 1.0]
-
-            red = (int) (red * brightness);
-            green = (int) (green * brightness);
-            blue = (int) (blue * brightness);
-
-            // Clamp to [0,255]
-            red = Math.min(255, red);
-            green = Math.min(255, green);
-            blue = Math.min(255, blue);
-
-            colorBuffer[i] = (alpha << 24) | (red << 16) | (green << 8) | blue;
+                Color4i color = Color4i.fromRGB(colorBuffer[i])
+                        .withHSVBrightness(brightness);
+                colorBuffer[i] = color.toRGB();
+            }
         }
-
-
-    }
 
     @RequiredArgsConstructor
     public static class RegisterTextureAction {

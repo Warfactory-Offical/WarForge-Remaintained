@@ -12,16 +12,20 @@ import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketStartSiege;
 import com.flansmod.warforge.common.network.SiegeCampAttackInfo;
+import net.minecraft.block.Block;
 import net.minecraft.block.material.MapColor;
+import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.world.biome.BiomeColorHelper;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.relauncher.Side;
@@ -115,8 +119,22 @@ public class GuiSiegeCamp {
                         int y = chunk.getHeightValue(fallbackX, fallbackZ);
                         heightMap17[index] = y;
                         IBlockState state = chunk.getBlockState(fallbackX, y - 1, fallbackZ);
-                        MapColor mapColor = state.getMapColor(world, new BlockPos((chunkX << 4) + fallbackX, y - 1, (chunkZ << 4) + fallbackZ));
-                        rawChunk17[index] = 0xFF000000 | mapColor.colorValue;
+                        Material material = state.getMaterial();
+                        Block block = state.getBlock();
+                        BlockPos colorPos = new BlockPos((chunkX << 4) + fallbackX, y - 1, (chunkZ << 4) + fallbackZ);
+                        int mapColor;
+
+                        if (block == Blocks.GRASS || block == Blocks.TALLGRASS || block == Blocks.DOUBLE_PLANT || material == Material.LEAVES) {
+                            mapColor = BiomeColorHelper.getFoliageColorAtPos(world, colorPos);
+                        } else if (material == Material.WATER) {
+                            mapColor = BiomeColorHelper.getWaterColorAtPos(world, colorPos);
+                        } else if (block == Blocks.GRASS_PATH || block == Blocks.DIRT || block == Blocks.MYCELIUM) {
+                            mapColor = BiomeColorHelper.getGrassColorAtPos(world, colorPos);
+                        } else {
+                            mapColor = state.getMapColor(world, colorPos).colorValue;
+                        }
+
+                        rawChunk17[index] = 0xFF000000 | mapColor;
                     }
                 }
             }
@@ -176,7 +194,8 @@ public class GuiSiegeCamp {
                 panel.child(new ButtonWidget<>()
                         .overlay(new MapDrawable("chunk" + id, chunkInfo, adjesencyArray[id]))
                         .onMousePressed(mouseButton -> {
-                            if ((chunkInfo.mOffset.getX() == 0 && chunkInfo.mOffset.getZ() ==0 ) && !chunkInfo.canAttack) return false;
+                            if ((chunkInfo.mOffset.getX() == 0 && chunkInfo.mOffset.getZ() == 0) && !chunkInfo.canAttack)
+                                return false;
                             player.sendMessage(new TextComponentString(chunkInfo.mOffset.toString()));
                             PacketStartSiege siegePacket = new PacketStartSiege();
 
