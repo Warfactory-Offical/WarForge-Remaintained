@@ -12,7 +12,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 
 public class PacketRequestFactionInfo extends PacketBase 
 {
-	public UUID mFactionIDRequest = Faction.NULL;
+	public UUID mFactionIDRequest = Faction.nullUuid;
 	public String mFactionNameRequest = "";
 	
 	@Override
@@ -33,13 +33,13 @@ public class PacketRequestFactionInfo extends PacketBase
 	public void handleServerSide(EntityPlayerMP playerEntity) 
 	{
 		Faction faction = null;
-		if(!mFactionIDRequest.equals(Faction.NULL))
+		if(!mFactionIDRequest.equals(Faction.nullUuid))
 		{
-			faction = WarForgeMod.FACTIONS.GetFaction(mFactionIDRequest);
+			faction = WarForgeMod.FACTIONS.getFaction(mFactionIDRequest);
 		}
 		else if(!mFactionNameRequest.isEmpty())
 		{
-			faction = WarForgeMod.FACTIONS.GetFaction(mFactionNameRequest);
+			faction = WarForgeMod.FACTIONS.getFaction(mFactionNameRequest);
 		}
 		else
 		{
@@ -49,7 +49,7 @@ public class PacketRequestFactionInfo extends PacketBase
 		if(faction != null)
 		{
 			PacketFactionInfo packet = new PacketFactionInfo();
-			packet.mInfo = faction.CreateInfo();
+			packet.info = faction.createInfo();
 			WarForgeMod.INSTANCE.NETWORK.sendTo(packet, playerEntity);
 		}
 		else

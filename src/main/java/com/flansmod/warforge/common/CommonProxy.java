@@ -1,9 +1,12 @@
 package com.flansmod.warforge.common;
 
+import com.flansmod.warforge.api.Vein;
+import com.flansmod.warforge.api.VeinKey;
 import com.flansmod.warforge.common.blocks.TileEntityBasicClaim;
 import com.flansmod.warforge.common.blocks.TileEntityCitadel;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.tileentity.TileEntity;
@@ -16,6 +19,8 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.network.IGuiHandler;
 import net.minecraftforge.fml.relauncher.Side;
 
+import java.util.TreeMap;
+
 public class CommonProxy implements IGuiHandler
 {
 	public static final int GUI_TYPE_CITADEL = 0;
@@ -26,8 +31,12 @@ public class CommonProxy implements IGuiHandler
 	public static final int GUI_TYPE_LEADERBOARD = 5;
 	public static final int GUI_TYPE_RECOLOUR_FACTION = 6;
 	public static final int GUI_TYPE_SHOP = 7;
+
+	// determines the bonus multiplier or reduction multiplier (reciprocal) for veins of
+	// increasing or decreasing quality, respectively
+	public static float YIELD_QUALITY_MULTIPLIER = 2;
 	
-	public void PreInit(FMLPreInitializationEvent event)
+	public void preInit(FMLPreInitializationEvent event)
 	{
 		
 	}
@@ -60,7 +69,7 @@ public class CommonProxy implements IGuiHandler
 	public TileEntity GetTile(DimBlockPos pos)
 	{
 		if(FMLCommonHandler.instance().getSide() == Side.SERVER)
-			return WarForgeMod.MC_SERVER.getWorld(pos.mDim).getTileEntity(pos.ToRegularPos());
+			return WarForgeMod.MC_SERVER.getWorld(pos.dim).getTileEntity(pos.toRegularPos());
 		
 		WarForgeMod.LOGGER.error("GetTile failed");
 		return null;

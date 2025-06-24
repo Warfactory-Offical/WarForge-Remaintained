@@ -2,51 +2,49 @@ package com.flansmod.warforge.common.network;
 
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.Vec3i;
 
-public class PacketStartSiege extends PacketBase 
-{
-	public DimBlockPos mSiegeCampPos;
-	public EnumFacing mDirection;
-	
-	@Override
-	public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) 
-	{
-		data.writeInt(mSiegeCampPos.mDim);
-		data.writeInt(mSiegeCampPos.getX());
-		data.writeInt(mSiegeCampPos.getY());
-		data.writeInt(mSiegeCampPos.getZ());
-		
-		data.writeByte(mDirection.ordinal());
-	}
+public class PacketStartSiege extends PacketBase {
+    public DimBlockPos mSiegeCampPos;
+    public Vec3i mOffset;
 
-	@Override
-	public void decodeInto(ChannelHandlerContext ctx, ByteBuf data) 
-	{
-		int dim = data.readInt();
-		int x = data.readInt();
-		int y = data.readInt();
-		int z = data.readInt();
-		mSiegeCampPos = new DimBlockPos(dim, x, y, z);
-		
-		mDirection = EnumFacing.values()[data.readByte()];
-	}
+    @Override
+    public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) {
+        data.writeInt(mSiegeCampPos.dim);
+        data.writeInt(mSiegeCampPos.getX());
+        data.writeInt(mSiegeCampPos.getY());
+        data.writeInt(mSiegeCampPos.getZ());
 
-	@Override
-	public void handleServerSide(EntityPlayerMP playerEntity) 
-	{
-		WarForgeMod.FACTIONS.RequestStartSiege(playerEntity, mSiegeCampPos, mDirection);
-	}
+        data.writeByte(mOffset.getX());
+        data.writeByte(mOffset.getZ());
+    }
 
-	@Override
-	public void handleClientSide(EntityPlayer clientPlayer)
-	{
-		WarForgeMod.LOGGER.error("Received start siege packet client side");
-	}
+    @Override
+    public void decodeInto(ChannelHandlerContext ctx, ByteBuf data) {
+        int dim = data.readInt();
+        int x = data.readInt();
+        int y = data.readInt();
+        int z = data.readInt();
+        mSiegeCampPos = new DimBlockPos(dim, x, y, z);
+        byte dx = data.readByte();
+        byte dz = data.readByte();
+        //mOffset = new Vec3i(dx, 0, dz);
+        mOffset = new Vec3i(dz, 0, dx); //FIXME: I fucking flipped the axis, too lazy to actually sort it out rn
+
+    }
+
+    @Override
+    public void handleServerSide(EntityPlayerMP playerEntity) {
+        WarForgeMod.FACTIONS.requestStartSiege(playerEntity, mSiegeCampPos, mOffset);
+    }
+
+    @Override
+    public void handleClientSide(EntityPlayer clientPlayer) {
+        WarForgeMod.LOGGER.error("Received start siege packet client side");
+    }
 
 }

@@ -25,7 +25,7 @@ public class PacketDisbandFaction extends PacketBase
 	@Override
 	public void handleServerSide(EntityPlayerMP playerEntity) 
 	{
-		WarForgeMod.FACTIONS.RequestDisbandFaction(playerEntity, Faction.NULL);
+		WarForgeMod.FACTIONS.requestDisbandFaction(playerEntity, Faction.nullUuid);
 	}
 
 	@Override

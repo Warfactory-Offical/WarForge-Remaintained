@@ -1,13 +1,10 @@
 package com.flansmod.warforge.client;
 
-import com.flansmod.warforge.common.CommonProxy;
 import com.flansmod.warforge.common.ContainerBasicClaim;
-import com.flansmod.warforge.common.ContainerCitadel;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketMoveCitadel;
 import com.flansmod.warforge.common.network.PacketPlaceFlag;
 import com.flansmod.warforge.common.network.PacketRemoveClaim;
-import com.flansmod.warforge.server.Faction;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
@@ -51,10 +48,10 @@ public class GuiBasicClaim extends GuiContainer
 		
 		GuiButton placeFlagButton = new GuiButton(BUTTON_PLACE_FLAG, width / 2 - 20, height / 2 - 70, 100, 20, "Place Flag");
 		buttonList.add(placeFlagButton);
-		if(claimContainer.claim.GetPlayerFlags().contains(Minecraft.getMinecraft().getSession().getUsername()))
-		{
-			placeFlagButton.enabled = false;
-		}
+//		if(claimContainer.claim.getPlayerFlags().contains(Minecraft.getMinecraft().getSession().getUsername()))
+//		{
+//			placeFlagButton.enabled = false;
+//		}
 	}
 	
 	@Override
@@ -64,13 +61,15 @@ public class GuiBasicClaim extends GuiContainer
 		{
 			case BUTTON_INFO:
 			{
-				ClientProxy.RequestFactionInfo(claimContainer.claim.GetFaction());
+				ClientProxy.requestFactionInfo(claimContainer.claim.getFaction());
 				break;
 			}
 			case BUTTON_REMOVE_CLAIM:
 			{
 				PacketRemoveClaim packet = new PacketRemoveClaim();
-				packet.pos = claimContainer.claim.GetPos();
+
+				packet.pos = claimContainer.claim.getClaimPos();
+
 				WarForgeMod.NETWORK.sendToServer(packet);
 				
 				Minecraft.getMinecraft().displayGuiScreen(null);
@@ -79,7 +78,7 @@ public class GuiBasicClaim extends GuiContainer
 			case BUTTON_PLACE_FLAG:
 			{
 				PacketPlaceFlag packet = new PacketPlaceFlag();
-				packet.pos = claimContainer.claim.GetPos();
+				packet.pos = claimContainer.claim.getClaimPos();
 				WarForgeMod.NETWORK.sendToServer(packet);
 				
 				Minecraft.getMinecraft().displayGuiScreen(null);
@@ -88,7 +87,7 @@ public class GuiBasicClaim extends GuiContainer
 			case BUTTON_MOVE_CITADEL:
 			{
 				PacketMoveCitadel packet = new PacketMoveCitadel();
-				packet.pos = claimContainer.claim.GetPos();
+				packet.pos = claimContainer.claim.getClaimPos();
 				WarForgeMod.NETWORK.sendToServer(packet);
 				
 				Minecraft.getMinecraft().displayGuiScreen(null);
@@ -114,7 +113,7 @@ public class GuiBasicClaim extends GuiContainer
 	{
 		super.drawGuiContainerForegroundLayer(x, y);
 		
-		fontRenderer.drawString(claimContainer.claim.GetDisplayName(), 6, 6, 0x404040);
+		fontRenderer.drawString(claimContainer.claim.getClaimDisplayName(), 6, 6, 0x404040);
 
 		fontRenderer.drawString("Yields", 6, 20, 0x404040);
 		fontRenderer.drawString("Inventory", 8, (ySize - 96) + 2, 0x404040);

@@ -10,26 +10,26 @@ import net.minecraft.tileentity.TileEntity;
 
 public interface IClaim 
 {
-	public DimBlockPos GetPos();
-	public TileEntity GetAsTileEntity();
+	public DimBlockPos getClaimPos();
+	public TileEntity getAsTileEntity();
 	
-	public boolean CanBeSieged();
-	public int GetAttackStrength();
-	public int GetDefenceStrength();
-	public int GetSupportStrength();
-	public List<String> GetPlayerFlags();
+	public boolean canBeSieged();
+	public int getAttackStrength();
+	public int getDefenceStrength();
+	public int getSupportStrength();
+	//public List<String> getPlayerFlags();
 	
-	public void OnServerSetFaction(Faction faction);
-	public void OnServerSetPlayerFlag(String playerName);
-	public void OnServerRemovePlayerFlag(String playerName);
+	public void onServerSetFaction(Faction faction);
+//	public void onServerSetPlayerFlag(String playerName);
+//	public void onServerRemovePlayerFlag(String playerName);
 	
 	// Server side uuid - means nothing to a client
-	public UUID GetFaction();
-	public void UpdateColour(int colour);
+	public UUID getFaction();
+	public void updateColour(int colour);
 	
 	// Client side data - can't use UUID to identify anything on client
-	public int GetColour();
-	public String GetDisplayName();
+	public int getColour();
+	public String getClaimDisplayName();
 	
 	
 }

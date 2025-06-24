@@ -17,12 +17,12 @@ public class TileEntityAdminClaim extends TileEntityClaim
 {
 	// IClaim
 	@Override 
-	public boolean CanBeSieged() { return false; }
+	public boolean canBeSieged() { return false; }
 	// ------------
 	@Override
-	public int GetAttackStrength() { return 0; }
+	public int getAttackStrength() { return 0; }
 	@Override
-	public int GetDefenceStrength() { return 0; }
+	public int getDefenceStrength() { return 0; }
 	@Override
-	public int GetSupportStrength() { return 0; }	
+	public int getSupportStrength() { return 0; }
 }

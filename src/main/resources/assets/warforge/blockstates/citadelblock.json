@@ -1,5 +1,8 @@
 {
     "variants": {
-        "normal": { "model": "warforge:citadelblock" }
+        "facing=north": { "model": "warforge:citadelblock" },
+        "facing=south": { "model": "warforge:citadelblock", "y": 180 },
+        "facing=west": { "model": "warforge:citadelblock", "y": 270 },
+        "facing=east": { "model": "warforge:citadelblock", "y": 90 }
     }
 }

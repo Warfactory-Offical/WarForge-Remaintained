@@ -64,4 +64,9 @@ public abstract class PacketBase
 		long least = data.readLong();
 		return new UUID(most, least);
 	}
+
+	public boolean canUseCompression() {
+		return false;
+	}
+
 }
