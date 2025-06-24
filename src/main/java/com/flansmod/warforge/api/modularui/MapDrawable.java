@@ -1,35 +1,24 @@
-package com.flansmod.warforge.api;
+package com.flansmod.warforge.api.modularui;
 
 import com.cleanroommc.modularui.api.drawable.IDrawable;
 import com.cleanroommc.modularui.api.widget.Interactable;
 import com.cleanroommc.modularui.screen.viewport.GuiContext;
 import com.cleanroommc.modularui.theme.WidgetTheme;
+import com.flansmod.warforge.api.Color4i;
 import com.flansmod.warforge.common.WarForgeMod;
-import com.flansmod.warforge.common.network.SiegeCampAttackInfo;
 import com.flansmod.warforge.common.network.SiegeCampAttackInfoRender;
 import com.flansmod.warforge.server.Faction;
-import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemBlock;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import org.lwjgl.opengl.GL11;
 
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,9 +26,10 @@ public class MapDrawable implements IDrawable, Interactable {
 
     public final static int CB_THICKNESS = 2; //Controls border thickness
     public final static int HL_THICKNESS = 1; //Controls border thickness on highlighted chunks
-    public static final  int HL_COLOR = 0xFFC6C6C6;
-    public static final int GRID_COLOR = new Color4i(0.15f, 26, 26,26).toARGB();
+    public static final int HL_COLOR = 0xFFC6C6C6;
+    public static final int GRID_COLOR = new Color4i(0.15f, 26, 26, 26).toARGB();
     public static final int GRID_THICKNESS = HL_THICKNESS;
+    public  float[] rgb;
     public final static int OFFSET = 2;
     public final static int SIZE = 12;
     public static final boolean DEBUG = false;
@@ -47,12 +37,17 @@ public class MapDrawable implements IDrawable, Interactable {
     private final String mapData;
     private final SiegeCampAttackInfoRender chunkState;
     private final ResourceLocation attackIcon = new ResourceLocation(WarForgeMod.MODID, "gui/icon_siege_attack.png");
+    private final ResourceLocation selfIcon = new ResourceLocation(WarForgeMod.MODID, "gui/icon_siege_self.png");
+    private final ResourceLocation selfIconBase = new ResourceLocation(WarForgeMod.MODID, "gui/icon_siege_self_base.png");
     private final boolean[] adjesency;
+    private final boolean campChunk;
 
     public MapDrawable(String mapData, SiegeCampAttackInfoRender chunkState, boolean[] adjesency) {
         this.mapData = mapData;
         this.chunkState = chunkState;
         this.adjesency = adjesency;
+        this.campChunk = chunkState.mOffset.getZ() == 0 && chunkState.mOffset.getX() == 0;
+        rgb = Color4i.fromRGB(chunkState.mFactionColour).asFloatRGB();
     }
 
     public static String extractNumbers(String input) {
@@ -74,7 +69,7 @@ public class MapDrawable implements IDrawable, Interactable {
         if (!hovered || chunkState.mFactionUUID.equals(Faction.nullUuid))
             GlStateManager.color(0.9f, 0.9f, 0.9f, 1f);
         else
-            GlStateManager.color(1f, 1f, 1f, 1f);
+            setGLColor();
 
         GlStateManager.enableBlend();
         GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
@@ -82,12 +77,11 @@ public class MapDrawable implements IDrawable, Interactable {
         GlStateManager.enableAlpha();
         Minecraft.getMinecraft().getTextureManager().bindTexture(new ResourceLocation(WarForgeMod.MODID, mapData));
         Gui.drawModalRectWithCustomSizedTexture(x, y, 0, 0, width, height, 16 * 4, 16 * 4);
-        if(DEBUG) {
+        if (DEBUG) {
             FontRenderer fontRenderer = Minecraft.getMinecraft().fontRenderer;
             String numberText = extractNumbers(mapData);
             fontRenderer.drawString(numberText, x + 10, y + 10, 0xFFFFFF); // index
         }
-
 
         GlStateManager.color(1f, 1f, 1f, 1f);
         if (!chunkState.mFactionUUID.equals(Faction.nullUuid)) {
@@ -112,13 +106,14 @@ public class MapDrawable implements IDrawable, Interactable {
             if (adjesency[2])
                 Gui.drawRect(x + width - CB_THICKNESS, y, x + width, y + height, darkColor);
         } else {
-                Gui.drawRect(x, y, x + width + 1, y + GRID_THICKNESS, GRID_COLOR);
-                Gui.drawRect(x, y + GRID_THICKNESS - 2, x + GRID_THICKNESS, y + height, GRID_COLOR);
-                Gui.drawRect(x, y + height - GRID_THICKNESS, x + width, y + height, GRID_COLOR);
-                Gui.drawRect(x + width - GRID_THICKNESS, y, x + width, y + height, GRID_COLOR);
+            Gui.drawRect(x, y, x + width + 1, y + GRID_THICKNESS, GRID_COLOR);
+            Gui.drawRect(x, y + GRID_THICKNESS - 2, x + GRID_THICKNESS, y + height, GRID_COLOR);
+            Gui.drawRect(x, y + height - GRID_THICKNESS, x + width, y + height, GRID_COLOR);
+            Gui.drawRect(x + width - GRID_THICKNESS, y, x + width, y + height, GRID_COLOR);
         }
         if (hovered) {
-            if(chunkState.canAttack) {
+            if (chunkState.canAttack && !campChunk) {
+                setGLColor(rgb);
                 Minecraft.getMinecraft().getTextureManager().bindTexture(attackIcon);
                 int xOffset = x + (width - 46) / 2;
                 int yOffset = y + (height - 46) / 2;
@@ -130,11 +125,34 @@ public class MapDrawable implements IDrawable, Interactable {
                         46, 46            // full texture size
                 );
             } else {
-                    Gui.drawRect(x, y, x + width + 1, y + HL_THICKNESS, HL_COLOR);
-                    Gui.drawRect(x, y + HL_THICKNESS - 2, x + HL_THICKNESS, y + height, HL_COLOR);
-                    Gui.drawRect(x, y + height - HL_THICKNESS, x + width, y + height, HL_COLOR);
-                    Gui.drawRect(x + width - HL_THICKNESS, y, x + width, y + height, HL_COLOR);
+                Gui.drawRect(x, y, x + width + 1, y + HL_THICKNESS, HL_COLOR);
+                Gui.drawRect(x, y + HL_THICKNESS - 2, x + HL_THICKNESS, y + height, HL_COLOR);
+                Gui.drawRect(x, y + height - HL_THICKNESS, x + width, y + height, HL_COLOR);
+                Gui.drawRect(x + width - HL_THICKNESS, y, x + width, y + height, HL_COLOR);
             }
+        }
+        if (campChunk) {
+            Minecraft.getMinecraft().getTextureManager().bindTexture(selfIcon);
+            setGLColor(rgb);
+            int xOffset = x + (width - 48) / 2;
+            int yOffset = y + (height - 48) / 2;
+            Gui.drawModalRectWithCustomSizedTexture(
+
+                    xOffset, yOffset,
+                    0, 0,             // UV coords
+                    48, 48, // draw size
+                    48, 48            // full texture size
+            );
+
+            setGLColor();
+            Minecraft.getMinecraft().getTextureManager().bindTexture(selfIconBase);
+            Gui.drawModalRectWithCustomSizedTexture(
+
+                    xOffset, yOffset,
+                    0, 0,             // UV coords
+                    48, 48, // draw size
+                    48, 48            // full texture size
+            );
         }
 
         if (chunkState.veinSprite != null) {
@@ -149,10 +167,10 @@ public class MapDrawable implements IDrawable, Interactable {
             float v1 = chunkState.veinSprite.getMaxV();
 
             buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-            buf.pos(x+OFFSET    , y+OFFSET    , 0).tex(u0, v0).endVertex();
-            buf.pos(x+OFFSET    , y+ SIZE +OFFSET , 0).tex(u0, v1).endVertex();
-            buf.pos(x+ SIZE +OFFSET , y+ SIZE +OFFSET , 0).tex(u1, v1).endVertex();
-            buf.pos(x+ SIZE +OFFSET , y+OFFSET    , 0).tex(u1, v0).endVertex();
+            buf.pos(x + OFFSET, y + OFFSET, 0).tex(u0, v0).endVertex();
+            buf.pos(x + OFFSET, y + SIZE + OFFSET, 0).tex(u0, v1).endVertex();
+            buf.pos(x + SIZE + OFFSET, y + SIZE + OFFSET, 0).tex(u1, v1).endVertex();
+            buf.pos(x + SIZE + OFFSET, y + OFFSET, 0).tex(u1, v0).endVertex();
             tess.draw();
         }
 
@@ -177,6 +195,15 @@ public class MapDrawable implements IDrawable, Interactable {
         int b = Math.max((color & 0xFF) - 16, 0);
         return 0xFF000000 | (r << 16) | (g << 8) | b;
     }
+    
+    private static void setGLColor(float[] rgb){
+        GlStateManager.color(rgb[0], rgb[1], rgb[2]);
+    }
+
+    private static void setGLColor(){
+        GlStateManager.color(1f,1f,1f);
+    }
+
 }
 
 

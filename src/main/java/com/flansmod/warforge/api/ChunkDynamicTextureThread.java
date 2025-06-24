@@ -82,7 +82,7 @@ public class ChunkDynamicTextureThread extends Thread {
                 float shade = (float) normal.dotProduct(lightDir);
                 shade = Math.max(0.0f, Math.min(1.0f, shade));
 
-                float brightness = 0.6f + (float)Math.pow(shade,exaggeration) * 0.4f;
+                float brightness = 0.5f + (float)Math.pow(shade,exaggeration) * 0.5f;
 
                 shaded[idx] = new Color4i(baseColor)
                         .withGammaBrightness(brightness,false)

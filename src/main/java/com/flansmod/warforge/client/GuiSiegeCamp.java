@@ -8,7 +8,7 @@ import com.cleanroommc.modularui.screen.ModularScreen;
 import com.cleanroommc.modularui.widgets.ButtonWidget;
 import com.flansmod.warforge.api.ChunkDynamicTextureThread;
 import com.flansmod.warforge.api.Color4i;
-import com.flansmod.warforge.api.MapDrawable;
+import com.flansmod.warforge.api.modularui.MapDrawable;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketStartSiege;
@@ -20,17 +20,10 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.WorldClient;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.TextComponentString;
@@ -40,7 +33,6 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.IntStream;
 
@@ -219,7 +211,7 @@ public class GuiSiegeCamp {
                         .tooltip(richTooltip ->
                         {
                             if (!chunkInfo.mFactionName.isEmpty()) {
-                                richTooltip.addLine(IKey.str("Territory of " + chunkInfo.mFactionName).color(chunkInfo.mFactionColour));
+                                richTooltip.addLine(IKey.str("Territory of " + chunkInfo.mFactionName).color(Color4i.fromRGB(chunkInfo.mFactionColour).toARGB()));
                             } else {
                                 richTooltip.addLine(IKey.str("Wilderness").style(IKey.GREEN));
                             }
@@ -248,7 +240,6 @@ public class GuiSiegeCamp {
 
         return new ModularScreen(panel);
     }
-
 
 
     public static void computeAdjacency(List<SiegeCampAttackInfo> list, int radius, boolean[][] retArr) {

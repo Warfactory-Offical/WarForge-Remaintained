@@ -49,6 +49,13 @@ public class Color4i {
         );
     }
 
+    public float[] asFloatRGB() {
+        float r = ((float) red) / 255;
+        float g = ((float) green) / 255;
+        float b = ((float) blue) / 255;
+        return new float[]{r,g,b};
+    }
+
     private static float toLinear(float c) {
         return (float) Math.pow(c, 2.2);
     }
