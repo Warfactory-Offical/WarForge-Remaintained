@@ -7,6 +7,7 @@ import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.ModularScreen;
 import com.cleanroommc.modularui.widgets.ButtonWidget;
 import com.flansmod.warforge.api.ChunkDynamicTextureThread;
+import com.flansmod.warforge.api.Color4i;
 import com.flansmod.warforge.api.MapDrawable;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
@@ -122,19 +123,19 @@ public class GuiSiegeCamp {
                         Material material = state.getMaterial();
                         Block block = state.getBlock();
                         BlockPos colorPos = new BlockPos((chunkX << 4) + fallbackX, y - 1, (chunkZ << 4) + fallbackZ);
-                        int mapColor;
 
+                        Color4i mapColor;
                         if (block == Blocks.GRASS || block == Blocks.TALLGRASS || block == Blocks.DOUBLE_PLANT || material == Material.LEAVES) {
-                            mapColor = BiomeColorHelper.getFoliageColorAtPos(world, colorPos);
+                            mapColor = Color4i.fromRGB(BiomeColorHelper.getFoliageColorAtPos(world, colorPos));
                         } else if (material == Material.WATER) {
-                            mapColor = BiomeColorHelper.getWaterColorAtPos(world, colorPos);
+                            mapColor = Color4i.fromRGB(BiomeColorHelper.getWaterColorAtPos(world, colorPos));
                         } else if (block == Blocks.GRASS_PATH || block == Blocks.DIRT || block == Blocks.MYCELIUM) {
-                            mapColor = BiomeColorHelper.getGrassColorAtPos(world, colorPos);
+                            mapColor = Color4i.fromRGB(BiomeColorHelper.getGrassColorAtPos(world, colorPos));
                         } else {
-                            mapColor = state.getMapColor(world, colorPos).colorValue;
+                            mapColor = Color4i.fromRGB(state.getMapColor(world, colorPos).colorValue);
                         }
 
-                        rawChunk17[index] = 0xFF000000 | mapColor;
+                        rawChunk17[index] =  mapColor.toRGB();
                     }
                 }
             }

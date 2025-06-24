@@ -74,13 +74,15 @@ public class ChunkDynamicTextureThread extends Thread {
                 // Compute normal vector
                 double dx = hR - hL;
                 double dz = hD - hU;
-                Vec3d normal = new Vec3d(-dx, 2.0, -dz).normalize(); // 2.0 exaggerates vertical steepness
+                float  exaggeration = 1.5f;
+
+                Vec3d normal = new Vec3d(-dx, exaggeration , -dz).normalize(); // 2.0 exaggerates vertical steepness
 
                 // Lambertian reflectance
                 float shade = (float) normal.dotProduct(lightDir);
                 shade = Math.max(0.0f, Math.min(1.0f, shade));
 
-                float brightness = 0.6f + shade * 0.4f;
+                float brightness = 0.6f + (float)Math.pow(shade,exaggeration) * 0.4f;
 
                 shaded[idx] = new Color4i(baseColor)
                         .withGammaBrightness(brightness,false)
