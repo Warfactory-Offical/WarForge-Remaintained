@@ -26,6 +26,13 @@ public class Color4i {
         this.blue = blue;
     }
 
+    public Color4i(float alphaPercent, int red, int green, int blue) {
+        this.alpha = Math.round(255*alphaPercent);
+        this.red = red;
+        this.green = green;
+        this.blue = blue;
+    }
+
     public Color4i(int color) {
         alpha = (color >>> 24) & 0xFF;
         red = (color >>> 16) & 0xFF;
@@ -56,7 +63,7 @@ public class Color4i {
     }
 
     public int toARGB() {
-        return (alpha << 24) | (red << 16) | (128 << 8) | blue;
+        return (alpha << 24) | (red << 16) | (green << 8) | blue;
     }
 
     public int toRGB() {

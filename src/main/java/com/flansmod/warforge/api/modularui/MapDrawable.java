@@ -6,6 +6,7 @@ import com.cleanroommc.modularui.screen.viewport.GuiContext;
 import com.cleanroommc.modularui.theme.WidgetTheme;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.SiegeCampAttackInfo;
+import com.flansmod.warforge.common.network.SiegeCampAttackInfoRender;
 import com.flansmod.warforge.server.Faction;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -37,16 +38,18 @@ public class MapDrawable implements IDrawable, Interactable {
     public final static int CB_THICKNESS = 2; //Controls border thickness
     public final static int HL_THICKNESS = 1; //Controls border thickness on highlighted chunks
     public static final  int HL_COLOR = 0xFFC6C6C6;
+    public static final int GRID_COLOR = new Color4i(0.15f, 26, 26,26).toARGB();
+    public static final int GRID_THICKNESS = HL_THICKNESS;
     public final static int OFFSET = 2;
     public final static int SIZE = 12;
     public static final boolean DEBUG = false;
 
     private final String mapData;
-    private final SiegeCampAttackInfo chunkState;
+    private final SiegeCampAttackInfoRender chunkState;
     private final ResourceLocation attackIcon = new ResourceLocation(WarForgeMod.MODID, "gui/icon_siege_attack.png");
     private final boolean[] adjesency;
 
-    public MapDrawable(String mapData, SiegeCampAttackInfo chunkState, boolean[] adjesency) {
+    public MapDrawable(String mapData, SiegeCampAttackInfoRender chunkState, boolean[] adjesency) {
         this.mapData = mapData;
         this.chunkState = chunkState;
         this.adjesency = adjesency;
@@ -108,6 +111,11 @@ public class MapDrawable implements IDrawable, Interactable {
             // Right (dark)
             if (adjesency[2])
                 Gui.drawRect(x + width - CB_THICKNESS, y, x + width, y + height, darkColor);
+        } else {
+                Gui.drawRect(x, y, x + width + 1, y + GRID_THICKNESS, GRID_COLOR);
+                Gui.drawRect(x, y + GRID_THICKNESS - 2, x + GRID_THICKNESS, y + height, GRID_COLOR);
+                Gui.drawRect(x, y + height - GRID_THICKNESS, x + width, y + height, GRID_COLOR);
+                Gui.drawRect(x + width - GRID_THICKNESS, y, x + width, y + height, GRID_COLOR);
         }
         if (hovered) {
             if(chunkState.canAttack) {
@@ -129,58 +137,23 @@ public class MapDrawable implements IDrawable, Interactable {
             }
         }
 
-        if(chunkState.mWarforgeVein != null){
-            ResourceLocation resLoc = chunkState.mWarforgeVein.component_ids[0];
-            Item item = ForgeRegistries.ITEMS.getValue(resLoc);
+        if (chunkState.veinSprite != null) {
+            Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+            GlStateManager.color(1f, 1f, 1f, 1f);
+            Tessellator tess = Tessellator.getInstance();
+            BufferBuilder buf = tess.getBuffer();
 
-            if (item != null) {
-                ItemStack stack = new ItemStack(item);
+            float u0 = chunkState.veinSprite.getMinU();
+            float v0 = chunkState.veinSprite.getMinV();
+            float u1 = chunkState.veinSprite.getMaxU();
+            float v1 = chunkState.veinSprite.getMaxV();
 
-                TextureAtlasSprite sprite = null;
-
-                if (item instanceof ItemBlock) {
-                    Block block = ((ItemBlock) item).getBlock();
-                    IBlockState state = block.getDefaultState();
-                    IBakedModel model = Minecraft.getMinecraft().getBlockRendererDispatcher().getModelForState(state);
-
-                    List<BakedQuad> quads = model.getQuads(state, EnumFacing.UP, 0);
-                    if (quads.isEmpty()) {
-                        quads = model.getQuads(state, null, 0); // fallback
-                    }
-
-                    if (!quads.isEmpty()) {
-                        sprite = quads.get(0).getSprite();
-                    }
-                } else {
-                    IBakedModel model = Minecraft.getMinecraft().getRenderItem().getItemModelWithOverrides(stack, null, null);
-                    List<BakedQuad> quads = model.getQuads(null, null, 0);
-
-                    if (!quads.isEmpty()) {
-                        sprite = quads.get(0).getSprite();
-                    } else {
-                        sprite = model.getParticleTexture();
-                    }
-                }
-
-                if (sprite != null) {
-                    Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-                    GlStateManager.color(1f, 1f, 1f, 1f);
-                    Tessellator tess = Tessellator.getInstance();
-                    BufferBuilder buf = tess.getBuffer();
-
-                    float u0 = sprite.getMinU();
-                    float v0 = sprite.getMinV();
-                    float u1 = sprite.getMaxU();
-                    float v1 = sprite.getMaxV();
-
-                    buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-                    buf.pos(x+OFFSET    , y+OFFSET    , 0).tex(u0, v0).endVertex();
-                    buf.pos(x+OFFSET    , y+ SIZE +OFFSET , 0).tex(u0, v1).endVertex();
-                    buf.pos(x+ SIZE +OFFSET , y+ SIZE +OFFSET , 0).tex(u1, v1).endVertex();
-                    buf.pos(x+ SIZE +OFFSET , y+OFFSET    , 0).tex(u1, v0).endVertex();
-                    tess.draw();
-                }
-            }
+            buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+            buf.pos(x+OFFSET    , y+OFFSET    , 0).tex(u0, v0).endVertex();
+            buf.pos(x+OFFSET    , y+ SIZE +OFFSET , 0).tex(u0, v1).endVertex();
+            buf.pos(x+ SIZE +OFFSET , y+ SIZE +OFFSET , 0).tex(u1, v1).endVertex();
+            buf.pos(x+ SIZE +OFFSET , y+OFFSET    , 0).tex(u1, v0).endVertex();
+            tess.draw();
         }
 
 

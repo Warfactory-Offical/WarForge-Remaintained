@@ -19,4 +19,17 @@ public class SiegeCampAttackInfo
 	public int mFactionColour;
 	public Vein mWarforgeVein;
 	public Quality mOreQuality;
+   //Bruh
+    public SiegeCampAttackInfo(SiegeCampAttackInfo info) {
+        this(
+                info.canAttack,
+                info.mOffset,
+                info.mFactionUUID,
+                info.mFactionName,
+                info.mFactionColour,
+                info.mWarforgeVein,
+                info.mOreQuality
+        );
+    }
 }
+
