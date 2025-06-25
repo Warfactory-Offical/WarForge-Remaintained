@@ -3,7 +3,7 @@ package com.flansmod.warforge.client;
 import com.flansmod.warforge.api.Vein;
 import com.flansmod.warforge.common.CommonProxy;
 import com.flansmod.warforge.common.Content;
-import com.flansmod.warforge.common.DimBlockPos;
+import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.*;
 import com.flansmod.warforge.common.effect.AnimatedEffectHandler;

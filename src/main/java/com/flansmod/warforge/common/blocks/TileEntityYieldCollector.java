@@ -7,7 +7,7 @@ import akka.japi.Pair;
 import com.flansmod.warforge.api.Quality;
 import com.flansmod.warforge.api.Vein;
 import com.flansmod.warforge.api.VeinKey;
-import com.flansmod.warforge.common.InventoryHelper;
+import com.flansmod.warforge.common.util.InventoryHelper;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.server.Faction;
 

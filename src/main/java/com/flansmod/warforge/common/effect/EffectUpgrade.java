@@ -1,7 +1,7 @@
 package com.flansmod.warforge.common.effect;
 
 import com.flansmod.warforge.client.particle.ParticleStarCircle;
-import com.flansmod.warforge.common.DimBlockPos;
+import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketEffect;
 import lombok.RequiredArgsConstructor;

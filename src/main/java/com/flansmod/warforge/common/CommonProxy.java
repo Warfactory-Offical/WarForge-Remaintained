@@ -1,12 +1,10 @@
 package com.flansmod.warforge.common;
 
-import com.flansmod.warforge.api.Vein;
-import com.flansmod.warforge.api.VeinKey;
 import com.flansmod.warforge.common.blocks.TileEntityBasicClaim;
 import com.flansmod.warforge.common.blocks.TileEntityCitadel;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import com.flansmod.warforge.common.util.DimBlockPos;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.tileentity.TileEntity;
@@ -18,8 +16,6 @@ import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.network.IGuiHandler;
 import net.minecraftforge.fml.relauncher.Side;
-
-import java.util.TreeMap;
 
 public class CommonProxy implements IGuiHandler
 {

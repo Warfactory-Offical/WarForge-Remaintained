@@ -1,17 +1,6 @@
 package com.flansmod.warforge.common.blocks;
 
-import java.util.UUID;
-
-import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeConfig;
-import com.flansmod.warforge.common.WarForgeMod;
-import com.flansmod.warforge.server.Faction;
-
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class TileEntityBasicClaim extends TileEntityYieldCollector implements IClaim
 {

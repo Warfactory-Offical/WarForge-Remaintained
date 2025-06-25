@@ -4,7 +4,7 @@ import com.cleanroommc.modularui.factory.ClientGUI;
 import com.flansmod.warforge.api.Quality;
 import com.flansmod.warforge.client.ClientProxy;
 import com.flansmod.warforge.client.GuiSiegeCamp;
-import com.flansmod.warforge.common.DimBlockPos;
+import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

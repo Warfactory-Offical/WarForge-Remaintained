@@ -10,6 +10,9 @@ import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
 import com.flansmod.warforge.common.effect.EffectRegistry;
 import com.flansmod.warforge.common.network.*;
 import com.flansmod.warforge.common.potions.PotionsModule;
+import com.flansmod.warforge.common.util.DimBlockPos;
+import com.flansmod.warforge.common.util.DimChunkPos;
+import com.flansmod.warforge.common.util.TimeHelper;
 import com.flansmod.warforge.server.*;
 import com.flansmod.warforge.server.Faction.Role;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -34,7 +37,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -102,6 +104,7 @@ public class WarForgeMod implements ILateMixinLoader {
     // Timers
     public static long serverTick = 0L;
     public static long currTickTimestamp = 0L;
+    public static TimeHelper timeHelper = new TimeHelper();
 
     public static boolean containsInt(final int[] base, int compare) {
         return Arrays.stream(base).anyMatch(i -> i == compare);
@@ -271,75 +274,36 @@ public class WarForgeMod implements ILateMixinLoader {
 
     }
 
-    public long getSiegeDayLengthMS() {
-        return (long) (
-                WarForgeConfig.SIEGE_DAY_LENGTH // In hours
-                        * 60f // In minutes
-                        * 60f // In seconds
-                        * 1000f); // In milliseconds
-    }
-
-    public long getYieldDayLengthMs() {
-        return (long) (
-                WarForgeConfig.YIELD_DAY_LENGTH // In hours
-                        * 60f // In minutes
-                        * 60f // In seconds
-                        * 1000f); // In milliseconds
-    }
-
-    public long getCooldownIntoTicks(float cooldown) {
-        // From Minutes
-        return (long) (
-                cooldown
-                        * 60L // Minutes -> Seconds
-                        * 20L // Seconds -> Ticks
-        );
-    }
-
     public long getCooldownRemainingSeconds(float cooldown, long startOfCooldown) {
-        long ticks = (long) cooldown; // why did you convert it into ticks if its already in ticks
-        long elapsed = startOfCooldown - ticks;
 
-        return (serverTick - elapsed) * 20;
+        return timeHelper.getCooldownRemainingSeconds(cooldown, startOfCooldown);
     }
 
     public int getCooldownRemainingMinutes(float cooldown, long startOfCooldown) {
-        long ticks = (long) cooldown;
-        long elapsed = startOfCooldown - ticks;
 
-        return (int) (
-                (serverTick - elapsed) * 20 / 60
-        );
+        return timeHelper.getCooldownRemainingMinutes(cooldown, startOfCooldown);
     }
 
     public int getCooldownRemainingHours(float cooldown, long startOfCooldown) {
-        long ticks = (long) cooldown;
-        long elapsed = startOfCooldown - ticks;
 
-        return (int) (
-                (serverTick - elapsed) * 20 / 60 / 60
-        );
+        return timeHelper.getCooldownRemainingHours(cooldown, startOfCooldown);
     }
 
     public long getTimeToNextSiegeAdvanceMs() {
-        long elapsedMS = System.currentTimeMillis() - timestampOfFirstDay;
-        long todayElapsedMS = elapsedMS % getSiegeDayLengthMS();
 
-        return getSiegeDayLengthMS() - todayElapsedMS;
+        return timeHelper.getTimeToNextSiegeAdvanceMs();
     }
 
     public long getTimeToNextYieldMs() {
-        long elapsedMS = System.currentTimeMillis() - timestampOfFirstDay;
-        long todayElapsedMS = elapsedMS % getYieldDayLengthMs();
 
-        return getYieldDayLengthMs() - todayElapsedMS;
+        return timeHelper.getTimeToNextYieldMs();
     }
 
     public void updateServer() {
         boolean shouldUpdate = false;
         previousUpdateTimestamp = currTickTimestamp;
         currTickTimestamp = System.currentTimeMillis();
-        long dayLength = getSiegeDayLengthMS();
+        long dayLength = timeHelper.getSiegeDayLengthMS();
 
         FACTIONS.updateConqueredChunks(currTickTimestamp);
 
@@ -347,11 +311,10 @@ public class WarForgeMod implements ILateMixinLoader {
 
         ++serverTick;
 
-        if(WarForgeConfig.SIEGE_ENABLE_NEW_TIMER) {
+        if (WarForgeConfig.SIEGE_ENABLE_NEW_TIMER) {
             FACTIONS.updateSiegeTimers();
 
-        }
-        else {
+        } else {
 
             if (dayNumber > numberOfSiegeDaysTicked) {
                 // Time to tick a new day
@@ -365,7 +328,7 @@ public class WarForgeMod implements ILateMixinLoader {
         }
 
 
-        dayLength = getYieldDayLengthMs();
+        dayLength = timeHelper.getYieldDayLengthMs();
         dayNumber = (currTickTimestamp - timestampOfFirstDay) / dayLength;
 
         if (dayNumber > numberOfYieldDaysTicked) {
@@ -383,9 +346,9 @@ public class WarForgeMod implements ILateMixinLoader {
         if (shouldUpdate) {
             PacketTimeUpdates packet = new PacketTimeUpdates();
 
-            if(!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER)
-                packet.msTimeOfNextSiegeDay = System.currentTimeMillis() + getTimeToNextSiegeAdvanceMs();
-            packet.msTimeOfNextYieldDay = System.currentTimeMillis() + getTimeToNextYieldMs();
+            if (!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER)
+                packet.msTimeOfNextSiegeDay = System.currentTimeMillis() + timeHelper.getTimeToNextSiegeAdvanceMs();
+            packet.msTimeOfNextYieldDay = System.currentTimeMillis() + timeHelper.getTimeToNextYieldMs();
 
             NETWORK.sendToAll(packet);
 
@@ -444,8 +407,9 @@ public class WarForgeMod implements ILateMixinLoader {
     @SubscribeEvent
     public void blockRemoved(BlockEvent.BreakEvent event) {
         IBlockState state = event.getState();
-        if (isClaim(state.getBlock(), Content.siegeCampBlock) )  {
-            if(event.getWorld().getTileEntity(event.getPos()) instanceof  TileEntityClaim te && te.getFaction().equals(Faction.nullUuid)) return;
+        if (isClaim(state.getBlock(), Content.siegeCampBlock)) {
+            if (event.getWorld().getTileEntity(event.getPos()) instanceof TileEntityClaim te && te.getFaction().equals(Faction.nullUuid))
+                return;
             event.setCanceled(true);
             return;
         }
@@ -640,8 +604,8 @@ public class WarForgeMod implements ILateMixinLoader {
 
             PacketTimeUpdates packet = new PacketTimeUpdates();
 
-            packet.msTimeOfNextSiegeDay = System.currentTimeMillis() + getTimeToNextSiegeAdvanceMs();
-            packet.msTimeOfNextYieldDay = System.currentTimeMillis() + getTimeToNextYieldMs();
+            packet.msTimeOfNextSiegeDay = System.currentTimeMillis() + timeHelper.getTimeToNextSiegeAdvanceMs();
+            packet.msTimeOfNextYieldDay = System.currentTimeMillis() + timeHelper.getTimeToNextYieldMs();
 
             NETWORK.sendTo(packet, (EntityPlayerMP) event.player);
 
