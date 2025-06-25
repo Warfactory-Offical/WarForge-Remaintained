@@ -1,4 +1,4 @@
-package com.flansmod.warforge.common;
+package com.flansmod.warforge.common.util;
 
 public class ModuloHelper
 {

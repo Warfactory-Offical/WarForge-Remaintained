@@ -3,8 +3,8 @@ package com.flansmod.warforge.common.blocks;
 import java.util.Objects;
 import java.util.UUID;
 
-import com.flansmod.warforge.common.DimBlockPos;
-import com.flansmod.warforge.common.DimChunkPos;
+import com.flansmod.warforge.common.util.DimBlockPos;
+import com.flansmod.warforge.common.util.DimChunkPos;
 import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketSiegeCampProgressUpdate;

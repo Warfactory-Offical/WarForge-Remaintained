@@ -1,6 +1,6 @@
 package com.flansmod.warforge.common.network;
 
-import com.flansmod.warforge.common.DimBlockPos;
+import com.flansmod.warforge.common.util.DimBlockPos;
 
 public class SiegeCampProgressInfo
 {

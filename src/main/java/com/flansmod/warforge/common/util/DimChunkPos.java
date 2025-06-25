@@ -1,4 +1,4 @@
-package com.flansmod.warforge.common;
+package com.flansmod.warforge.common.util;
 
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;

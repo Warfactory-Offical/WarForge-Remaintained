@@ -7,12 +7,13 @@ import java.util.List;
 import akka.japi.Pair;
 import com.flansmod.warforge.api.Quality;
 import com.flansmod.warforge.api.Vein;
-import com.flansmod.warforge.api.VeinKey;
 import com.flansmod.warforge.common.*;
 import com.flansmod.warforge.common.blocks.IClaim;
 import com.flansmod.warforge.common.network.PacketChunkPosVeinID;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
 
+import com.flansmod.warforge.common.util.DimBlockPos;
+import com.flansmod.warforge.common.util.DimChunkPos;
 import com.flansmod.warforge.server.Faction;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import net.minecraft.block.Block;
