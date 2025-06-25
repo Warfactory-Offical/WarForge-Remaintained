@@ -17,7 +17,6 @@ import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
-import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.model.ModelBanner;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
@@ -252,24 +251,36 @@ public class ClientTickHandler {
     }
 
     private void renderTimers(Minecraft mc) {
+        int screenWidth = ScreeSpaceUtil.RESOLUTIONX;
+        int screenHeight = ScreeSpaceUtil.RESOLUTIONY;
 
-        long msRemaining;
+        int padding = 4;
+        int textHeight = mc.fontRenderer.FONT_HEIGHT + padding;
+
+        ScreeSpaceUtil.ScreenPos pos = WarForgeConfig.POS_TIMERS;
+        int baseY = pos.getY() + padding;
+
         // Siege progress
-
-
         if (!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER) {
-            msRemaining = nextSiegeDayMs - System.currentTimeMillis();
-            mc.fontRenderer.drawStringWithShadow("Siege Progress: " + formatTime(msRemaining),
-                    WarForgeConfig.POS_TIMERS.getX() + 4, WarForgeConfig.POS_TIMERS.getY() + 4, 0xffffff);
-            WarForgeConfig.POS_TIMERS.incrementY(4 + ScreeSpaceUtil.TEXTHEIGHT);
+            String siegeText = "Siege Progress: " + formatTime(nextSiegeDayMs - System.currentTimeMillis());
+            int textWidth = mc.fontRenderer.getStringWidth(siegeText);
+            int x = ScreeSpaceUtil.shouldCenterX(pos) ? ScreeSpaceUtil.centerX(screenWidth, textWidth) : pos.getX() + padding;
+            int y = Math.min(baseY, screenHeight - textHeight);
+
+            mc.fontRenderer.drawStringWithShadow(siegeText, x, y, 0xffffff);
+            pos.incrementY(textHeight);
         }
 
         // Next yields
-        msRemaining = nextYieldDayMs - System.currentTimeMillis();
-        mc.fontRenderer.drawStringWithShadow("Next yields: " + formatTime(msRemaining),
-                WarForgeConfig.POS_TIMERS.getX() + 4, WarForgeConfig.POS_TIMERS.getY() + 4, 0xffffff);
-        WarForgeConfig.POS_TIMERS.incrementY(4 + ScreeSpaceUtil.TEXTHEIGHT);
+        String yieldText = "Next yields: " + formatTime(nextYieldDayMs - System.currentTimeMillis());
+        int textWidth = mc.fontRenderer.getStringWidth(yieldText);
+        int x = ScreeSpaceUtil.shouldCenterX(pos) ? ScreeSpaceUtil.centerX(screenWidth, textWidth) : pos.getX() + padding;
+        int y = Math.min(pos.getY() + padding, screenHeight - textHeight);
+
+        mc.fontRenderer.drawStringWithShadow(yieldText, x, y, 0xffffff);
+        pos.incrementY(textHeight+padding);
     }
+
 
     private String formatTime(long msRemaining) {
         long s = msRemaining / 1000;
@@ -277,10 +288,7 @@ public class ClientTickHandler {
         long h = m / 60;
         long d = h / 24;
 
-        return (d > 0 ? (d) + " days, " : "")
-                + String.format("%02d", (h % 24)) + ":"
-                + String.format("%02d", (m % 60)) + ":"
-                + String.format("%02d", (s % 60));
+        return (d > 0 ? (d) + " days, " : "") + String.format("%02d", (h % 24)) + ":" + String.format("%02d", (m % 60)) + ":" + String.format("%02d", (s % 60));
     }
 
     private SiegeCampProgressInfo getClosestSiegeCampInfo(EntityPlayerSP player) {
@@ -289,8 +297,7 @@ public class ClientTickHandler {
 
         for (SiegeCampProgressInfo info : ClientProxy.sSiegeInfo.values()) {
             double distSq = info.defendingPos.distanceSq(player.posX, player.posY, player.posZ);
-            if (info.defendingPos.dim == player.dimension
-                    && distSq < WarForgeConfig.SIEGE_INFO_RADIUS * WarForgeConfig.SIEGE_INFO_RADIUS) {
+            if (info.defendingPos.dim == player.dimension && distSq < WarForgeConfig.SIEGE_INFO_RADIUS * WarForgeConfig.SIEGE_INFO_RADIUS) {
                 if (distSq < bestDistanceSq) {
                     bestDistanceSq = distSq;
                     closestInfo = info;
@@ -341,17 +348,22 @@ public class ClientTickHandler {
         final int nameWidth = mc.fontRenderer.getStringWidth(veinInfoStrings.get(0));
         final float titleLeftShift = (float) (imageSize + nameWidth - imageTextOverlap) / 2;
 
-        // draw the vein info
-        mc.fontRenderer.drawStringWithShadow(veinInfoStrings.get(0), xTextCenter + imageSize - imageTextOverlap - titleLeftShift, yText, 0xFFFFFF);
+        int textLineHeight = mc.fontRenderer.FONT_HEIGHT + 2;
+        int totalHeight = (veinInfoStrings.size() - 1) * textLineHeight + imageSize;
 
+        boolean isBottom = !ScreeSpaceUtil.isTop(pos);
+        float renderStartY = isBottom ? yText - totalHeight : yText;
+
+        // Render main title (first line)
+        mc.fontRenderer.drawStringWithShadow(veinInfoStrings.get(0), xTextCenter + imageSize - imageTextOverlap - titleLeftShift, renderStartY, 0xFFFFFF);
+
+        // Render item icon if available
         if (veinInfo != null && currMemberItemStack != null) {
-            // prepare to render
             GlStateManager.pushMatrix();
             RenderHelper.disableStandardItemLighting();
             GlStateManager.enableDepth();
 
-            // render the item
-            GlStateManager.translate(xTextCenter - titleLeftShift, yText + 4, 0);
+            GlStateManager.translate(xTextCenter - titleLeftShift, renderStartY + 4, 0);
             GlStateManager.scale(imageSize, imageSize, 1);
             GlStateManager.rotate(180, 0, 1, 0);
             GlStateManager.rotate(180, 0, 0, 1);
@@ -359,7 +371,6 @@ public class ClientTickHandler {
             RenderItem renderItem = Minecraft.getMinecraft().getRenderItem();
             renderItem.renderItem(currMemberItemStack, ItemCameraTransforms.TransformType.GUI);
 
-            // disable the things we just used
             GlStateManager.disableDepth();
             RenderHelper.enableStandardItemLighting();
             GlStateManager.disableLighting();
@@ -368,9 +379,12 @@ public class ClientTickHandler {
 
         for (int i = 1; i < veinInfoStrings.size(); ++i) {
             String currFormattedComp = veinInfoStrings.get(i);
-            mc.fontRenderer.drawStringWithShadow(currFormattedComp, xTextCenter - (float) mc.fontRenderer.getStringWidth(currFormattedComp) / 2,pos.getY() + mc.fontRenderer.FONT_HEIGHT + 2, 0xFFFFFF);
-            pos.incrementY( mc.fontRenderer.FONT_HEIGHT + 2);
+            float lineY = renderStartY + (imageSize/2) + (i - 1) * textLineHeight;
+            mc.fontRenderer.drawStringWithShadow(currFormattedComp, xTextCenter - (float) mc.fontRenderer.getStringWidth(currFormattedComp) / 2, lineY, 0xFFFFFF);
         }
+
+        pos.incrementY(totalHeight + 2);
+
     }
 
     @SubscribeEvent
@@ -394,8 +408,7 @@ public class ClientTickHandler {
             for (int i = 0; i < currVein.component_ids.length; ++i) {
                 Item currItem = ForgeRegistries.ITEMS.getValue(currVein.component_ids[i]);
                 if (currItem == null) {
-                    WarForgeMod.LOGGER.atError().log("Couldn't find item with component id " +
-                            currVein.component_ids[i] + " in vein " + currVein.VEIN_ENTRY);
+                    WarForgeMod.LOGGER.atError().log("Couldn't find item with component id " + currVein.component_ids[i] + " in vein " + currVein.VEIN_ENTRY);
                     continue;
                 }
 
@@ -457,8 +470,7 @@ public class ClientTickHandler {
         ScreeSpaceUtil.incrementY(WarForgeConfig.POS_SIEGE, 40);
     }
 
-    private void renderSiegeProgressBar(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText,
-                                        float attackR, float attackG, float attackB, float defendR, float defendG, float defendB, float scroll) {
+    private void renderSiegeProgressBar(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText, float attackR, float attackG, float attackB, float defendR, float defendG, float defendB, float scroll) {
         int xSize = 256;
         float siegeLength = infoToRender.completionPoint + 5;
         float notchDistance = 224 / siegeLength;
@@ -482,10 +494,8 @@ public class ClientTickHandler {
 
         for (int i = -4; i < infoToRender.completionPoint; i++) {
             int x = (int) ((i + 5) * notchDistance + 16);
-            if (i == 0)
-                drawTexturedModalRect(xText + x - 2, yText + 17, 6, 43, 5, 8);
-            else
-                drawTexturedModalRect(xText + x - 2, yText + 17, 1, 43, 4, 8);
+            if (i == 0) drawTexturedModalRect(xText + x - 2, yText + 17, 6, 43, 5, 8);
+            else drawTexturedModalRect(xText + x - 2, yText + 17, 1, 43, 4, 8);
         }
     }
 
@@ -506,7 +516,7 @@ public class ClientTickHandler {
 
         final ScreeSpaceUtil.ScreenPos pos = WarForgeConfig.POS_TOAST_INDICATOR;
         final int xText = ScreeSpaceUtil.getX(pos, stringWidth);
-        final int yText = ScreeSpaceUtil.getY(pos, totalHeight);
+        final int yText = pos.getY();
 
         float fadeOut = 2.0f * newAreaToastTime / WarForgeConfig.SHOW_NEW_AREA_TIMER;
         fadeOut = Math.min(fadeOut, 1.0f);
@@ -580,8 +590,7 @@ public class ClientTickHandler {
 
     private void updateRenderData() {
         World world = Minecraft.getMinecraft().world;
-        if (world == null)
-            return;
+        if (world == null) return;
 
         // Update our list from the old one
         HashMap<DimChunkPos, BorderRenderData> tempData = new HashMap<DimChunkPos, BorderRenderData>();
@@ -609,8 +618,7 @@ public class ClientTickHandler {
 
     private void updateRandomMesh() {
         World world = Minecraft.getMinecraft().world;
-        if (world == null || renderData.isEmpty())
-            return;
+        if (world == null || renderData.isEmpty()) return;
         int index = world.rand.nextInt(renderData.size());
 
         // Then construct the mesh for one random entry
@@ -869,46 +877,34 @@ public class ClientTickHandler {
 
     // Helper for rendering horizontal edges (along X-axis)
     private void renderZEdge(World world, int x, int y, int z, double align, boolean air0, boolean air1, int dir) {
-        if (!air0 && air1)
-            renderZAlignedSquare(x + 1, y, align, dir); // Entering air
-        if (air0 && !air1)
-            renderZAlignedSquare(x, y, align, 2 + dir);     // Exiting air
+        if (!air0 && air1) renderZAlignedSquare(x + 1, y, align, dir); // Entering air
+        if (air0 && !air1) renderZAlignedSquare(x, y, align, 2 + dir);     // Exiting air
     }
 
     // Similarly for X-aligned edges
     private void renderXEdge(World world, int x, int y, int z, double align, boolean air0, boolean air1, int dir) {
-        if (!air0 && air1)
-            renderXAlignedSquare(align, y, z + 1, dir);
-        if (air0 && !air1)
-            renderXAlignedSquare(align, y, z, 2 + dir);
+        if (!air0 && air1) renderXAlignedSquare(align, y, z + 1, dir);
+        if (air0 && !air1) renderXAlignedSquare(align, y, z, 2 + dir);
     }
 
     private void renderXVerticalEdge(World world, int x, int y, int z, double align, boolean air0, boolean air1, int dir) {
-        if (!air0 && air1)
-            renderXAlignedSquare(align, y + 1, z, 3 + dir);
-        if (air0 && !air1)
-            renderXAlignedSquare(align, y, z, 1 + dir);
+        if (!air0 && air1) renderXAlignedSquare(align, y + 1, z, 3 + dir);
+        if (air0 && !air1) renderXAlignedSquare(align, y, z, 1 + dir);
     }
 
     private void renderXVerticalCorner(World world, double x, int y, double z, boolean air0, boolean air1, int dir, double width) {
-        if (!air0 && air1)
-            renderXAlignedRecangle(x, y + 1, z, 3 + dir, width);
-        if (air0 && !air1)
-            renderXAlignedRecangle(x, y, z, 1 + dir, width);
+        if (!air0 && air1) renderXAlignedRecangle(x, y + 1, z, 3 + dir, width);
+        if (air0 && !air1) renderXAlignedRecangle(x, y, z, 1 + dir, width);
     }
 
     private void renderZVerticalCorner(World world, double x, int y, double z, boolean air0, boolean air1, int dir, double width) {
-        if (!air0 && air1)
-            renderZAlignedRecangle(x, y + 1, z, 3 + dir, width);
-        if (air0 && !air1)
-            renderZAlignedRecangle(x, y, z, 1 + dir, width);
+        if (!air0 && air1) renderZAlignedRecangle(x, y + 1, z, 3 + dir, width);
+        if (air0 && !air1) renderZAlignedRecangle(x, y, z, 1 + dir, width);
     }
 
     private void renderZVerticalEdge(World world, int x, int y, int z, double align, boolean air0, boolean air1, int dir) {
-        if (!air0 && air1)
-            renderZAlignedSquare(x, y + 1, align, 3 + dir); // Entering air upward
-        if (air0 && !air1)
-            renderZAlignedSquare(x, y, align, 1 + dir);     // Exiting air downward
+        if (!air0 && air1) renderZAlignedSquare(x, y + 1, align, 3 + dir); // Entering air upward
+        if (air0 && !air1) renderZAlignedSquare(x, y, align, 1 + dir);     // Exiting air downward
     }
 
     @SubscribeEvent
@@ -1070,8 +1066,7 @@ public class ClientTickHandler {
         double topHeight = playerHeight + 128;
 
         double maxHeight = world.getHeight(chunkPos.x * 16 + x, chunkPos.z * 16 + z) + 8;
-        if (maxHeight > playerHeight + 16)
-            maxHeight = playerHeight + 16;
+        if (maxHeight > playerHeight + 16) maxHeight = playerHeight + 16;
 
         double height = topHeight + (maxHeight - topHeight) * groundLevelBlend;
 

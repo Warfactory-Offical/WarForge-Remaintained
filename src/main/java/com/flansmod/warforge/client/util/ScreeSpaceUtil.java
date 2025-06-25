@@ -1,8 +1,6 @@
 package com.flansmod.warforge.client.util;
 
-import lombok.AllArgsConstructor;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.ScaledResolution;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -14,31 +12,38 @@ import java.util.function.IntSupplier;
 public class ScreeSpaceUtil {
 
 
-        static Minecraft minecraft = Minecraft.getMinecraft();
-        public static int RESOLUTIONY ;
-        public static int RESOLUTIONX ;
-        public static int TEXTHEIGHT = minecraft.fontRenderer.FONT_HEIGHT;
+    public static int RESOLUTIONY;
+    public static int RESOLUTIONX;
+    // Positive = offset downward/right
+    // Negative = offset upward/left
+    public static int topLeftOffset, topRightOffset, topOffset;
+    public static int bottomLeftOffset, bottomRightOffset, bottomOffset;
+    static Minecraft minecraft = Minecraft.getMinecraft();
+    public static int TEXTHEIGHT = minecraft.fontRenderer.FONT_HEIGHT;
 
-        // Positive = offset downward/right
-        // Negative = offset upward/left
-        public static int topLeftOffset, topRightOffset, topOffset;
-        public static int bottomLeftOffset, bottomRightOffset, bottomOffset;
+    public static void resetOffsets(RenderGameOverlayEvent event) {
+        RESOLUTIONX = event.getResolution().getScaledWidth();
+        RESOLUTIONY = event.getResolution().getScaledHeight();
+        topOffset = topLeftOffset = topRightOffset = 0;
+        bottomOffset = RESOLUTIONY - 65;
+        bottomLeftOffset = bottomRightOffset = RESOLUTIONY;
+    }
 
-        public static void resetOffsets(RenderGameOverlayEvent event) {
-            RESOLUTIONX = event.getResolution().getScaledWidth();
-            RESOLUTIONY = event.getResolution().getScaledHeight();
-            topOffset = topLeftOffset = topRightOffset = 0;
-            bottomOffset = RESOLUTIONY - 65;
-            bottomLeftOffset = bottomRightOffset = RESOLUTIONY;
-        }
+    public static int centerX(int screenWidth, int elementWidth) {
+        return (screenWidth - elementWidth) / 2;
+    }
 
-        public static int centerX(int screenWidth, int elementWidth) {
-            return (screenWidth - elementWidth) / 2;
-        }
+    public static int centerY(int screenHeight, int elementHeight) {
+        return (screenHeight - elementHeight) / 2;
+    }
 
-        public static int centerY(int screenHeight, int elementHeight) {
-            return (screenHeight - elementHeight) / 2;
-        }
+    public static boolean isTop(ScreenPos pos) {
+        return switch (pos) {
+            case TOP, TOP_LEFT, TOP_RIGHT -> true;
+            default -> false;
+        };
+    }
+
     public static int getX(ScreenPos pos, int elementWidth) {
         int screenWidth = RESOLUTIONX;
         switch (pos) {
@@ -91,64 +96,68 @@ public class ScreeSpaceUtil {
         }
     }
 
+    public static boolean shouldCenterX(ScreenPos pos) {
+        return pos == ScreenPos.TOP || pos == ScreenPos.BOTTOM;
+    }
+
 
     public enum ScreenPos {
-            TOP_LEFT(
-                    () -> 0,
-                    () -> topLeftOffset,
-                    val -> topLeftOffset = val
-            ),
-            BOTTOM_LEFT(
-                    () -> 0,
-                    () -> bottomLeftOffset,
-                    val -> bottomLeftOffset = val
-            ),
-            TOP(
-                    () -> centerX(RESOLUTIONX, 0),
-                    () -> topOffset,
-                    val -> topOffset = val
-            ),
-            BOTTOM(
-                    () -> centerX(RESOLUTIONX, 0),
-                    () -> bottomOffset,
-                    val -> bottomOffset = val
-            ),
-            TOP_RIGHT(
-                    () -> RESOLUTIONX,
-                    () -> topRightOffset,
-                    val -> topRightOffset = val
-            ),
-            BOTTOM_RIGHT(
-                    () -> RESOLUTIONX,
-                    () -> bottomRightOffset,
-                    val -> bottomRightOffset = val
-            );
+        TOP_LEFT(
+                () -> 0,
+                () -> topLeftOffset,
+                val -> topLeftOffset = val
+        ),
+        BOTTOM_LEFT(
+                () -> 0,
+                () -> bottomLeftOffset,
+                val -> bottomLeftOffset = val
+        ),
+        TOP(
+                () -> centerX(RESOLUTIONX, 0),
+                () -> topOffset,
+                val -> topOffset = val
+        ),
+        BOTTOM(
+                () -> centerX(RESOLUTIONX, 0),
+                () -> bottomOffset,
+                val -> bottomOffset = val
+        ),
+        TOP_RIGHT(
+                () -> RESOLUTIONX,
+                () -> topRightOffset,
+                val -> topRightOffset = val
+        ),
+        BOTTOM_RIGHT(
+                () -> RESOLUTIONX,
+                () -> bottomRightOffset,
+                val -> bottomRightOffset = val
+        );
 
-            private final IntSupplier xSupplier;
-            private final IntSupplier ySupplier;
-            private final IntConsumer ySetter;
+        private final IntSupplier xSupplier;
+        private final IntSupplier ySupplier;
+        private final IntConsumer ySetter;
 
-            ScreenPos(IntSupplier xSupplier, IntSupplier ySupplier, IntConsumer ySetter) {
-                this.xSupplier = xSupplier;
-                this.ySupplier = ySupplier;
-                this.ySetter = ySetter;
-            }
+        ScreenPos(IntSupplier xSupplier, IntSupplier ySupplier, IntConsumer ySetter) {
+            this.xSupplier = xSupplier;
+            this.ySupplier = ySupplier;
+            this.ySetter = ySetter;
+        }
 
-            public int getX() {
-                return xSupplier.getAsInt();
-            }
+        public int getX() {
+            return xSupplier.getAsInt();
+        }
 
-            public int getY() {
-                return ySupplier.getAsInt();
-            }
+        public int getY() {
+            return ySupplier.getAsInt();
+        }
 
-            public void setY(int newY) {
-                ySetter.accept(newY);
-            }
+        public void setY(int newY) {
+            ySetter.accept(newY);
+        }
 
-            public void incrementY(int delta) {
-                setY(getY() + delta);
-            }
+        public void incrementY(int delta) {
+            setY(getY() + delta);
         }
     }
+}
 
