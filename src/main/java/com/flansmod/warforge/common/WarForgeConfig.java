@@ -1,6 +1,6 @@
 package com.flansmod.warforge.common;
 
-import com.flansmod.warforge.api.VeinKey;
+import com.flansmod.warforge.client.util.ScreeSpaceUtil;
 import com.flansmod.warforge.common.network.PacketSyncConfig;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
@@ -11,6 +11,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.flansmod.warforge.client.util.ScreeSpaceUtil.*;
 import static com.flansmod.warforge.common.CommonProxy.YIELD_QUALITY_MULTIPLIER;
 
 public class WarForgeConfig {
@@ -98,6 +99,11 @@ public class WarForgeConfig {
     public static boolean ALLOW_SPAWN_BETWEEN_DIMENSIONS = false;
     public static boolean ENABLE_TPA_POTIONS = true;
 
+    public static ScreenPos POS_TIMERS = ScreenPos.TOP_LEFT;
+    public static ScreenPos POS_VEIN_INDICATOR = ScreenPos.BOTTOM;
+    public static ScreenPos POS_TOAST_INDICATOR = ScreenPos.BOTTOM;
+    public static ScreenPos POS_SIEGE =  ScreenPos.TOP;
+
 
     public static long FACTIONS_BOT_CHANNEL_ID = 799595436154683422L;
     // Permissions
@@ -160,17 +166,6 @@ public class WarForgeConfig {
 
         UNCLAIMED.EXPLOSION_DAMAGE = true;
         WarForgeMod.VEIN_MAP.defaultReturnValue(null);
-    }
-
-    public static void initializeVeins() {
-        final String VEIN_ENTRY_EXPLANATION = "All veins should be entered in the follow format: \n" +
-                "<translation_key>, {<valid dim id's>}, {<vein dim weights 0.0000 - 1.0000>}, {<yield_amount>~<component item id>, ...}, {<component weights 0.0000 - 1.0000>}; \n" +
-                "Example: warforge.veins.pure_iron, {-1, 0, 1}, {0.5, 0.4215, 1}, {2~minecraft:iron_ore, 1~minecraft:coal_ore}, {1, 0.2}. \n" +
-                "The above is a vein which yields two iron ore and one coal in all dimensions with 3 respective dimension weights and which always gives iron, but only gives coal 20% of the time. \n" +
-                "If component weights entry is left as {} [empty], then all are assumed to have a value of 1. All other fields are mandatory and must have equal counts.";
-
-        String[] vein_entries = configFile.getStringList("Vein list", CATEGORY_YIELDS, new String[0], VEIN_ENTRY_EXPLANATION);  // if the default value is null then the returned result is null which causes a npe
-        VeinKey.populateVeinMap(WarForgeMod.VEIN_MAP, vein_entries);
     }
 
     public static void syncConfig(File suggestedFile) {
