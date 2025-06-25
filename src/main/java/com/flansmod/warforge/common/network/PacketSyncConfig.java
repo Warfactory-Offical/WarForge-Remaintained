@@ -33,7 +33,7 @@ public class PacketSyncConfig extends  PacketBase {
         try {
             compound = JsonToNBT.getTagFromJson(configNBT);
         } catch (NBTException e) {
-            WarForgeMod.LOGGER.error("Malformed config data NBT ");
+            WarForgeMod.LOGGER.error("Malformed config data NBT");
             return;
         }
         WarForgeConfig.SIEGE_ENABLE_NEW_TIMER = compound.getBoolean("newSiegeTimer");

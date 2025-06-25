@@ -38,6 +38,13 @@ public class UpgradeHandler {
             "item:modid:custom_item:3"
     );
     protected HashMap<StackComparable, Integer>[] LEVELS;
+    protected int[] LIMITS;
+
+    public UpgradeHandler() {
+        LEVELS = new HashMap[0];
+        LIMITS = new int[0];
+    }
+
 
     public int[] getLIMITS() {
         return LIMITS;
@@ -47,7 +54,6 @@ public class UpgradeHandler {
         return LEVELS;
     }
 
-    protected int[] LIMITS;
 
     public void setLevelAndLimits(int level, HashMap<StackComparable, Integer> requrements, int limit) {
         //Only ran once on clientside per join, so whatever
