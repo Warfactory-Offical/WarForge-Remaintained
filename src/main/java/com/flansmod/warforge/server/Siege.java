@@ -28,6 +28,8 @@ public class Siege {
     public UUID defendingFaction;
     public ArrayList<DimBlockPos> attackingCamp;
     public DimBlockPos defendingClaim;
+    public long timeElapsed;
+
     //TODO: New Kill requirement math: players in team * type of claim (2 - basic, 3 - reinforced)
     // This is defined by the chunk we are attacking and what type it is
     public int mBaseDifficulty = 5;
@@ -166,6 +168,11 @@ public class Siege {
         WarForgeMod.INSTANCE.messageAll(new TextComponentString(attackers.name + " started a siege against " + defenders.name), true);
         WarForgeMod.FACTIONS.SendSiegeInfoToNearby(defendingClaim.toChunkPos());
         return true;
+    }
+
+    public void updateSiegeTimer(){
+        sie
+
     }
 
     public void AdvanceDay() {
