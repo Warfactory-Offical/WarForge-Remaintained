@@ -26,13 +26,14 @@ public class PacketCitadelUpgradeRequirement extends PacketBase {
 
 
     @SuppressWarnings("unused") //Used in reflection
-    public PacketCitadelUpgradeRequirement(){}
+    public PacketCitadelUpgradeRequirement() {
+    }
 
     @Override
     public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) {
         data.writeInt(level);
         data.writeInt(limit);
-        for(StackComparable stack : requirements.keySet()){
+        for (StackComparable stack : requirements.keySet()) {
             writeUTF(data, stack.writeToNBT().toString());
             data.writeInt(requirements.get(stack));
         }

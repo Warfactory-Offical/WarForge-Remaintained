@@ -32,6 +32,28 @@ public class TimeHelper {
         );
     }
 
+    public static String formatTime(long ms) {
+        long seconds = ms / 1000;
+        long minutes = seconds / 60;
+        int hours = ((int) minutes) / 60;
+        int days = hours / 24;
+
+        // ensure entire time left is not represented in each format, but rather only leftover amounts for that unit
+
+        seconds -= minutes * 60;
+        minutes -= hours * 60;
+        hours -= days * 24;
+
+        StringBuilder timeBuilder = new StringBuilder();
+        if (days > 0) timeBuilder.append(days).append("d ");
+        if (hours > 0) timeBuilder.append(hours).append("h ");
+        if (minutes > 0) timeBuilder.append(minutes).append("min ");
+        if (seconds > 0) timeBuilder.append(seconds).append("s ");
+        timeBuilder.append(ms % 1000).append("ms");
+
+        return timeBuilder.toString();
+    }
+
     public long getCooldownRemainingSeconds(float cooldown, long startOfCooldown) {
         long ticks = (long) cooldown; // why did you convert it into ticks if its already in ticks
         long elapsed = startOfCooldown - ticks;
