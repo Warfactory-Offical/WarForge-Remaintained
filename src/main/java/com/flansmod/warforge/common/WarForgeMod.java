@@ -34,7 +34,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -102,6 +101,8 @@ public class WarForgeMod implements ILateMixinLoader {
     // Timers
     public static long serverTick = 0L;
     public static long currTickTimestamp = 0L;
+    // Border toggle
+    public static boolean showBorders = true;
 
     public static boolean containsInt(final int[] base, int compare) {
         return Arrays.stream(base).anyMatch(i -> i == compare);

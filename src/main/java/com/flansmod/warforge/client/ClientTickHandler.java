@@ -23,6 +23,7 @@ import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.*;
@@ -32,14 +33,18 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import org.lwjgl.input.Keyboard;
 
 import static com.flansmod.warforge.client.ClientProxy.CHUNK_VEIN_CACHE;
 
@@ -73,7 +78,11 @@ public class ClientTickHandler
 
 	public ClientTickHandler() {
 		tess = Tessellator.getInstance();
+		toggleBordersKey = new KeyBinding("key.warforge.showborders", Keyboard.KEY_B, "key.warforge.cathegory");
+		ClientRegistry.registerKeyBinding(toggleBordersKey);
+
 	}
+	public static KeyBinding toggleBordersKey;
 
 	@SubscribeEvent
 	public void onPlayerLogin(FMLNetworkEvent.ClientConnectedToServerEvent event) {
@@ -344,6 +353,18 @@ public class ClientTickHandler
 			String currFormattedComp = veinInfoStrings.get(i);
 			yText += mc.fontRenderer.FONT_HEIGHT + 2;
 			mc.fontRenderer.drawStringWithShadow(currFormattedComp, xTextCenter - (float) mc.fontRenderer.getStringWidth(currFormattedComp) / 2, yText, 0xFFFFFF);
+		}
+	}
+
+	@SubscribeEvent
+	public void onClientTick(TickEvent.ClientTickEvent event) {
+		if (event.phase == TickEvent.Phase.END && Minecraft.getMinecraft().player != null) {
+			if (toggleBordersKey.isPressed()) {
+				WarForgeMod.showBorders = !WarForgeMod.showBorders;
+				Minecraft.getMinecraft().player.sendMessage(
+						new TextComponentString("Borders Toggled")
+				);
+			}
 		}
 	}
 
@@ -943,6 +964,9 @@ public class ClientTickHandler
 	}
 
 	private void renderChunkBorders(double x, double y, double z) {
+		if (!WarForgeMod.showBorders) {
+			return;
+		}
 		for (HashMap.Entry<DimChunkPos, BorderRenderData> kvp : renderData.entrySet()) {
 			DimChunkPos pos = kvp.getKey();
 			BorderRenderData data = kvp.getValue();

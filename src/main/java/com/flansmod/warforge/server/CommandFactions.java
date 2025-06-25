@@ -30,11 +30,11 @@ public class CommandFactions extends CommandBase {
     private static final List<String> ALIASES;
     private static final String[] tabCompletions = new String[]{
             "invite", "accept", "disband", "expel", "leave", "time", "info", "top", "notoriety", "wealth", "legacy",
-            "promote", "demote", "msg", "setleader",
+            "promote", "demote", "msg", "setleader", "borders",
     };
     private static final String[] tabCompletionsOp = new String[]{
             "invite", "accept", "disband", "expel", "leave", "time", "info", "top", "notoriety", "wealth", "legacy",
-            "promote", "demote", "msg", "setleader",
+            "promote", "demote", "msg", "setleader", "borders",
             "safe", "war", "protection", "resetflagcooldowns",
     };
 
@@ -110,6 +110,7 @@ public class CommandFactions extends CommandBase {
                 sender.sendMessage(new TextComponentString("/f wealth"));
                 sender.sendMessage(new TextComponentString("/f legacy"));
                 sender.sendMessage(new TextComponentString("/f notoriety"));
+                sender.sendMessage(new TextComponentString("/f borders"));
 
                 if (WarForgeMod.isOp(sender)) {
                     sender.sendMessage(new TextComponentString("/f safezone"));
@@ -523,6 +524,15 @@ public class CommandFactions extends CommandBase {
             case "tp":
             case "tprequest": {
                 sender.sendMessage(new TextComponentString("Try brewing a potion of Teleportation / Telereception"));
+                break;
+            }
+
+            case "borders": {
+                if (sender instanceof EntityPlayer) {
+                    WarForgeMod.showBorders = !WarForgeMod.showBorders;
+                    sender.sendMessage(new TextComponentString("Borders Toggled"));
+                } else
+                    sender.sendMessage(new TextComponentString("Only valid for players"));
                 break;
             }
 
