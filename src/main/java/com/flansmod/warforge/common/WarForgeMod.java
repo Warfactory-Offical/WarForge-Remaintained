@@ -348,15 +348,23 @@ public class WarForgeMod implements ILateMixinLoader {
 
         ++serverTick;
 
-        if (dayNumber > numberOfSiegeDaysTicked) {
-            // Time to tick a new day
-            numberOfSiegeDaysTicked = dayNumber;
+        if(WarForgeConfig.SIEGE_ENABLE_NEW_TIMER) {
+            FACTIONS.updateSiegeTimers();
 
-            messageAll(new TextComponentString("Battle takes its toll, all sieges have advanced."), true);
-
-            FACTIONS.advanceSiegeDay();
-            shouldUpdate = true;
         }
+        else {
+
+            if (dayNumber > numberOfSiegeDaysTicked) {
+                // Time to tick a new day
+                numberOfSiegeDaysTicked = dayNumber;
+
+                messageAll(new TextComponentString("Battle takes its toll, all sieges have advanced."), true);
+
+                FACTIONS.advanceSiegeDay();
+                shouldUpdate = true;
+            }
+        }
+
 
         dayLength = getYieldDayLengthMs();
         dayNumber = (currTickTimestamp - timestampOfFirstDay) / dayLength;
@@ -376,7 +384,8 @@ public class WarForgeMod implements ILateMixinLoader {
         if (shouldUpdate) {
             PacketTimeUpdates packet = new PacketTimeUpdates();
 
-            packet.msTimeOfNextSiegeDay = System.currentTimeMillis() + getTimeToNextSiegeAdvanceMs();
+            if(!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER)
+                packet.msTimeOfNextSiegeDay = System.currentTimeMillis() + getTimeToNextSiegeAdvanceMs();
             packet.msTimeOfNextYieldDay = System.currentTimeMillis() + getTimeToNextYieldMs();
 
             NETWORK.sendToAll(packet);
@@ -650,7 +659,7 @@ public class WarForgeMod implements ILateMixinLoader {
 
             // begin queued sync info
             // don't sync if the upgrade info doesn't exist
-            if (UPGRADE_HANDLER != null && UPGRADE_HANDLER.getLEVELS() != null) {
+            if (UPGRADE_HANDLER.getLEVELS() != null) {
 
                 for (int i = 0; i < UPGRADE_HANDLER.getLEVELS().length; i++) {
                     final int level = i;

@@ -246,8 +246,9 @@ public class ClientTickHandler
 	private void renderTimers(Minecraft mc) {
 		int j = 0, k = 0;
 
+		long msRemaining;
 		// Siege progress
-		long msRemaining = nextSiegeDayMs - System.currentTimeMillis();
+		 msRemaining = nextSiegeDayMs - System.currentTimeMillis();
 		mc.fontRenderer.drawStringWithShadow("Siege Progress: " + formatTime(msRemaining),
 				j + 4, k + 4, 0xffffff);
 

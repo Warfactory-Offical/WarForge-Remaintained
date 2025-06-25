@@ -254,6 +254,13 @@ public class FactionStorage {
             }
         }
     }
+    public void updateSiegeTimers(){
+        for (HashMap.Entry<DimChunkPos, Siege> kvp : sieges.entrySet()) {
+            kvp.getValue().AdvanceDay();
+        }
+
+        CheckForCompleteSieges();
+    }
 
     public void advanceYieldDay() {
         for (HashMap.Entry<UUID, Faction> entry : mFactions.entrySet()) {
