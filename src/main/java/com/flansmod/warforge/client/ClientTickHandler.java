@@ -249,9 +249,11 @@ public class ClientTickHandler
 
 		long msRemaining;
 		// Siege progress
-		 msRemaining = nextSiegeDayMs - System.currentTimeMillis();
-		mc.fontRenderer.drawStringWithShadow("Siege Progress: " + formatTime(msRemaining),
-				j + 4, k + 4, 0xffffff);
+		if(!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER) {
+			msRemaining = nextSiegeDayMs - System.currentTimeMillis();
+			mc.fontRenderer.drawStringWithShadow("Siege Progress: " + formatTime(msRemaining),
+					j + 4, k + 4, 0xffffff);
+		}
 
 		// Next yields
 		msRemaining = nextYieldDayMs - System.currentTimeMillis();

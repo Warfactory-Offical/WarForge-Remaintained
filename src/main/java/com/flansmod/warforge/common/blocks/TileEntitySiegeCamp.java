@@ -9,6 +9,7 @@ import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketSiegeCampProgressUpdate;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
+import com.flansmod.warforge.common.util.TimeHelper;
 import com.flansmod.warforge.server.Faction;
 
 import com.flansmod.warforge.server.Siege;
@@ -294,7 +295,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 			// --- DEFENDER HANDLING ---
 
 			if (lastSeenDefenderCount == 0 && defenders.onlinePlayerCount > 0 && defenderOfflineTimerMs > 0) {
-				defenders.messageAll(new TextComponentString("Your faction [" + defenders.name + "] has an offline timer of " + WarForgeMod.formatTime(defenderOfflineTimerMs) + " for the siege camp at " + getClaimPos()));
+				defenders.messageAll(new TextComponentString("Your faction [" + defenders.name + "] has an offline timer of " + TimeHelper.formatTime(defenderOfflineTimerMs) + " for the siege camp at " + getClaimPos()));
 			}
 
 			lastSeenDefenderCount = defenders.onlinePlayerCount;
@@ -307,7 +308,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 			if (haveDefendersQuit) {
 				incrementOfflineTimer(WarForgeMod.currTickTimestamp - previousTimestamp); // if defenders have quit, tick up the offline timer
 				if (defenderOfflineTimerMs >= WarForgeConfig.LIVE_QUIT_TIMER) {
-					getAttacking().messageAll(new TextComponentString("The defenders have fled from their posts for " + WarForgeMod.formatTime(defenderOfflineTimerMs)));
+					getAttacking().messageAll(new TextComponentString("The defenders have fled from their posts for " + TimeHelper.formatTime(defenderOfflineTimerMs)));
 					defenderOfflineTimerMs = -1; // mark as having live quit for any future increments of this timer and reset if already have quit
 					passSiege(); // end siege as attacker success
 					return; // do not update a concluded siege

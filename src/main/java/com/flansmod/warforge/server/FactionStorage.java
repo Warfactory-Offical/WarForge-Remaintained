@@ -13,6 +13,7 @@ import com.flansmod.warforge.common.network.PacketSiegeCampProgressUpdate;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
 import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.util.DimChunkPos;
+import com.flansmod.warforge.common.util.TimeHelper;
 import com.flansmod.warforge.server.Faction.PlayerData;
 import com.flansmod.warforge.server.Faction.Role;
 import com.mojang.authlib.GameProfile;
@@ -260,7 +261,6 @@ public class FactionStorage {
         for (HashMap.Entry<DimChunkPos, Siege> kvp : sieges.entrySet()) {
             kvp.getValue().AdvanceDay();
         }
-
         CheckForCompleteSieges();
     }
 
@@ -805,7 +805,7 @@ public class FactionStorage {
 
         if (conqueredChunks.get(defendingPos.toChunkPos()) != null) {
             factionOfficer.sendMessage(new TextComponentTranslation("warforge.info.chunk_is_conquered",
-                    defending.name, formatTime(conqueredChunks.get(defendingPos.toChunkPos()).getRight())));
+                    defending.name, TimeHelper.formatTime(conqueredChunks.get(defendingPos.toChunkPos()).getRight())));
             return;
         }
 
