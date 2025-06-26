@@ -1,5 +1,6 @@
 package com.flansmod.warforge.client.util;
 
+import com.llamalad7.mixinextras.lib.antlr.runtime.atn.EpsilonTransition;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -42,6 +43,11 @@ public class ScreeSpaceUtil {
             case TOP, TOP_LEFT, TOP_RIGHT -> true;
             default -> false;
         };
+    }
+
+    public static int getXOffset(ScreenPos pos, int offset){
+        if(pos == ScreenPos.BOTTOM_RIGHT || pos == ScreenPos.TOP_RIGHT ) return -offset;
+        else return offset;
     }
 
     public static int getX(ScreenPos pos, int elementWidth) {
@@ -99,6 +105,7 @@ public class ScreeSpaceUtil {
     public static boolean shouldCenterX(ScreenPos pos) {
         return pos == ScreenPos.TOP || pos == ScreenPos.BOTTOM;
     }
+
 
 
     public enum ScreenPos {

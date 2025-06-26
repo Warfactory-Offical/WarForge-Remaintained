@@ -99,7 +99,7 @@ public class WarForgeConfig {
     public static boolean ALLOW_SPAWN_BETWEEN_DIMENSIONS = false;
     public static boolean ENABLE_TPA_POTIONS = true;
 
-    public static ScreenPos POS_TIMERS = ScreenPos.TOP;
+    public static ScreenPos POS_TIMERS = ScreenPos.BOTTOM;
     public static ScreenPos POS_VEIN_INDICATOR = ScreenPos.TOP;
     public static ScreenPos POS_TOAST_INDICATOR = ScreenPos.BOTTOM;
     public static ScreenPos POS_SIEGE =  ScreenPos.TOP;

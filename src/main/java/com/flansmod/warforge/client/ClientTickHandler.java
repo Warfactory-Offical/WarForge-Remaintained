@@ -258,7 +258,7 @@ public class ClientTickHandler {
         int textHeight = mc.fontRenderer.FONT_HEIGHT + padding;
 
         ScreeSpaceUtil.ScreenPos pos = WarForgeConfig.POS_TIMERS;
-        int baseY = pos.getY() + padding;
+        int baseY = ScreeSpaceUtil.isTop(pos) ? pos.getY()  + padding : pos.getY() - padding;
 
         // Siege progress
         if (!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER) {
@@ -274,7 +274,7 @@ public class ClientTickHandler {
         // Next yields
         String yieldText = "Next yields: " + formatTime(nextYieldDayMs - System.currentTimeMillis());
         int textWidth = mc.fontRenderer.getStringWidth(yieldText);
-        int x = ScreeSpaceUtil.shouldCenterX(pos) ? ScreeSpaceUtil.centerX(screenWidth, textWidth) : pos.getX() + padding;
+        int x = ScreeSpaceUtil.shouldCenterX(pos) ? ScreeSpaceUtil.centerX(screenWidth, textWidth) : ScreeSpaceUtil.getX(pos,textWidth) + ScreeSpaceUtil.getXOffset(pos,padding);
         int y = Math.min(pos.getY() + padding, screenHeight - textHeight);
 
         mc.fontRenderer.drawStringWithShadow(yieldText, x, y, 0xffffff);
