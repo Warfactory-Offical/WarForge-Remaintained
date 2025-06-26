@@ -264,7 +264,7 @@ public class ClientTickHandler {
         if (!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER) {
             String siegeText = "Siege Progress: " + formatTime(nextSiegeDayMs - System.currentTimeMillis());
             int textWidth = mc.fontRenderer.getStringWidth(siegeText);
-            int x = ScreeSpaceUtil.shouldCenterX(pos) ? ScreeSpaceUtil.centerX(screenWidth, textWidth) : pos.getX() + padding;
+            int x = ScreeSpaceUtil.shouldCenterX(pos) ? ScreeSpaceUtil.centerX(screenWidth, textWidth) : ScreeSpaceUtil.getX(pos,textWidth) + ScreeSpaceUtil.getXOffset(pos,padding);
             int y = Math.min(baseY, screenHeight - textHeight);
 
             mc.fontRenderer.drawStringWithShadow(siegeText, x, y, 0xffffff);
