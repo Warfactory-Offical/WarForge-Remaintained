@@ -1,6 +1,5 @@
 package com.flansmod.warforge.client.util;
 
-import com.llamalad7.mixinextras.lib.antlr.runtime.atn.EpsilonTransition;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -26,7 +25,7 @@ public class ScreeSpaceUtil {
         RESOLUTIONX = event.getResolution().getScaledWidth();
         RESOLUTIONY = event.getResolution().getScaledHeight();
         topOffset = topLeftOffset = topRightOffset = 0;
-        bottomOffset = RESOLUTIONY - 65;
+        bottomOffset = RESOLUTIONY - 56;
         bottomLeftOffset = bottomRightOffset = RESOLUTIONY;
     }
 
@@ -45,25 +44,22 @@ public class ScreeSpaceUtil {
         };
     }
 
-    public static int getXOffset(ScreenPos pos, int offset){
-        if(pos == ScreenPos.BOTTOM_RIGHT || pos == ScreenPos.TOP_RIGHT ) return -offset;
-        else return offset;
+    public static int getXOffset(ScreenPos pos, int offset) {
+        return switch (pos) {
+            case TOP_RIGHT, BOTTOM_RIGHT -> -offset;
+            case TOP, BOTTOM -> 0;
+            default -> offset;
+        };
     }
+
 
     public static int getX(ScreenPos pos, int elementWidth) {
         int screenWidth = RESOLUTIONX;
-        switch (pos) {
-            case TOP_LEFT:
-            case BOTTOM_LEFT:
-                return 0;
-            case TOP_RIGHT:
-            case BOTTOM_RIGHT:
-                return screenWidth - elementWidth;
-            case TOP:
-            case BOTTOM:
-            default:
-                return centerX(screenWidth, elementWidth);
-        }
+        return switch (pos) {
+            case TOP_LEFT, BOTTOM_LEFT -> 0;
+            case TOP_RIGHT, BOTTOM_RIGHT -> screenWidth - elementWidth;
+            default -> centerX(screenWidth, elementWidth);
+        };
     }
 
     public static int getY(ScreenPos pos, int elementHeight) {
@@ -105,7 +101,6 @@ public class ScreeSpaceUtil {
     public static boolean shouldCenterX(ScreenPos pos) {
         return pos == ScreenPos.TOP || pos == ScreenPos.BOTTOM;
     }
-
 
 
     public enum ScreenPos {
