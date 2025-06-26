@@ -3,6 +3,7 @@ package com.flansmod.warforge.client;
 import akka.japi.Pair;
 import com.flansmod.warforge.api.Quality;
 import com.flansmod.warforge.api.Vein;
+import com.flansmod.warforge.client.util.RenderUtil;
 import com.flansmod.warforge.client.util.ScreeSpaceUtil;
 import com.flansmod.warforge.common.Content;
 import com.flansmod.warforge.common.WarForgeConfig;
@@ -18,7 +19,10 @@ import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.model.ModelBanner;
-import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.GLAllocation;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.I18n;
@@ -52,6 +56,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import static com.flansmod.warforge.client.ClientProxy.CHUNK_VEIN_CACHE;
+import static com.flansmod.warforge.client.util.RenderUtil.*;
 
 public class ClientTickHandler {
     final static double alignment = 0.25d;
@@ -66,6 +71,7 @@ public class ClientTickHandler {
     public static long veinRenderStartTime = -1;  // (curr time - this) / (display time (ms)) to get index
     public static boolean CLAIMS_DIRTY = false;
     public static HashMap<DimChunkPos, Vein> chunkVeinMap = new HashMap<>(16);
+    public static boolean SIEGE_UI_DEBUG = true;
     // -1 indicates the chunk has never been probed
     private static ArrayList<String> cachedVeinStrings = null;
     private final Tessellator tess;
@@ -76,7 +82,7 @@ public class ClientTickHandler {
     private float newAreaToastTime = 0;
     private String areaMessage = "";
     private int areaMessageColour = 0xFF_FF_FF_FF;
-    private HashMap<DimChunkPos, BorderRenderData> renderData = new HashMap<DimChunkPos, BorderRenderData>();
+    private HashMap<DimChunkPos, BorderRenderData> renderData = new HashMap<>();
 
     public ClientTickHandler() {
         tess = Tessellator.getInstance();
@@ -211,7 +217,7 @@ public class ClientTickHandler {
             if (player != null) {
 
                 // Siege camp info
-                SiegeCampProgressInfo infoToRender = getClosestSiegeCampInfo(player);
+                SiegeCampProgressInfo infoToRender = !SIEGE_UI_DEBUG ? getClosestSiegeCampInfo(player) : SiegeCampProgressInfo.getDebugInfo();
 
                 if (infoToRender != null) {
                     renderSiegeOverlay(mc, infoToRender, event);
@@ -317,8 +323,6 @@ public class ClientTickHandler {
 
         ScreeSpaceUtil.ScreenPos pos = WarForgeConfig.POS_VEIN_INDICATOR;
         boolean isBottom = !ScreeSpaceUtil.isTop(pos);
-        int screenWidth = ScreeSpaceUtil.RESOLUTIONX;
-        int screenHeight = ScreeSpaceUtil.RESOLUTIONY;
 
         final int paddingTopBar = 20;
         final int iconSize = 24;
@@ -350,7 +354,9 @@ public class ClientTickHandler {
         int renderWidth = invalidRender ? titleWidth : iconSize + titleWidth - iconSize / 2;
         int renderHeight = (!invalidRender ? iconSize : 0) + (veinInfoStrings.size() - 1) * textLineHeight;
 
-        int yBase = pos.getY() + (isBottom ? -renderHeight : paddingTopBar);
+        int yBase = isBottom
+                ? pos.getY() - renderHeight
+                : pos.getY() + paddingTopBar;
         float xLeft = ScreeSpaceUtil.getX(pos, renderWidth) + ScreeSpaceUtil.getXOffset(pos, 4);
 
         // Draw icon
@@ -464,13 +470,13 @@ public class ClientTickHandler {
 
         mc.renderEngine.bindTexture(siegeprogress);
         GlStateManager.color(1f, 1f, 1f, 1f);
-        drawTexturedModalRect(xText, yText, 0, 0, 256, 30);
+        RenderUtil.drawTexturedModalRect(tess, xText, yText, 0, 0, 256, 30);
 
         renderSiegeProgressBar(mc, infoToRender, xText, yText, attackR, attackG, attackB, defendR, defendG, defendB, scroll);
         renderSiegeNotches(mc, infoToRender, xText, yText);
 
         renderSiegeText(mc, infoToRender, xText, yText);
-        ScreeSpaceUtil.incrementY(WarForgeConfig.POS_SIEGE, 40);
+        ScreeSpaceUtil.incrementY(WarForgeConfig.POS_SIEGE, 10);
     }
 
     private void renderSiegeProgressBar(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText, float attackR, float attackG, float attackB, float defendR, float defendG, float defendB, float scroll) {
@@ -485,10 +491,10 @@ public class ClientTickHandler {
 
         if (isIncreasing) {
             GlStateManager.color(attackR, attackG, attackB, 1.0F);
-            drawTexturedModalRect(xText + 16 + firstPx, yText + 17, 16 + (10 - scroll), 44, lastPx - firstPx, 8);
+            RenderUtil.drawTexturedModalRect(tess, xText + 16 + firstPx, yText + 17, 16 + (10 - scroll), 44, lastPx - firstPx, 8);
         } else {
             GlStateManager.color(defendR, defendG, defendB, 1.0F);
-            drawTexturedModalRect(xText + 16 + firstPx, yText + 17, 16 + scroll, 54, lastPx - firstPx, 8);
+            RenderUtil.drawTexturedModalRect(tess, xText + 16 + firstPx, yText + 17, 16 + scroll, 54, lastPx - firstPx, 8);
         }
     }
 
@@ -497,8 +503,8 @@ public class ClientTickHandler {
 
         for (int i = -4; i < infoToRender.completionPoint; i++) {
             int x = (int) ((i + 5) * notchDistance + 16);
-            if (i == 0) drawTexturedModalRect(xText + x - 2, yText + 17, 6, 43, 5, 8);
-            else drawTexturedModalRect(xText + x - 2, yText + 17, 1, 43, 4, 8);
+            if (i == 0) RenderUtil.drawTexturedModalRect(tess, xText + x - 2, yText + 17, 6, 43, 5, 8);
+            else RenderUtil.drawTexturedModalRect(tess, xText + x - 2, yText + 17, 1, 43, 4, 8);
         }
     }
 
@@ -522,7 +528,7 @@ public class ClientTickHandler {
         final int extraPadding = pos == ScreeSpaceUtil.ScreenPos.TOP ? 24 : 0;
 
         final int yOffsetFromBar = 14;  // offset below/above the hotbar or title bar
-        final int yText = isTop ? pos.getY() + yOffsetFromBar +extraPadding : pos.getY() - totalHeight - yOffsetFromBar;
+        final int yText = isTop ? pos.getY() + yOffsetFromBar + extraPadding : pos.getY() - totalHeight - yOffsetFromBar;
 
         final int xText = ScreeSpaceUtil.getX(pos, stringWidth);
 
@@ -535,65 +541,17 @@ public class ClientTickHandler {
         GlStateManager.color(1f, 1f, 1f, fadeOut);
         GlStateManager.disableTexture2D();
 
-        drawTexturedModalRect(xText - 50, yText, 0, 0, stringWidth + 100, 1);            // top line
-        drawTexturedModalRect(xText - 25, yText + 23, 0, 0, stringWidth + 50, 1);        // bottom line
+        RenderUtil.drawTexturedModalRect(tess, xText - 50, yText, 0, 0, stringWidth + 100, 1);            // top line
+        RenderUtil.drawTexturedModalRect(tess, xText - 25, yText + 23, 0, 0, stringWidth + 50, 1);        // bottom line
 
         GlStateManager.enableTexture2D();
         mc.fontRenderer.drawStringWithShadow(areaMessage, xText, yText + 11, colour);   // vertically centered text
 
         GlStateManager.disableBlend();
         GlStateManager.disableAlpha();
-        ScreeSpaceUtil.incrementY(pos, totalHeight + 4+extraPadding);
+        ScreeSpaceUtil.incrementY(pos, totalHeight + 4 + extraPadding);
     }
 
-    private void drawTexturedModalRect(int x, int y, float u, float v, int w, int h) {
-        float texScale = 1f / 256f;
-
-        tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-
-        tess.getBuffer().pos(x, y + h, -90d).tex(u * texScale, (v + h) * texScale).endVertex();
-        tess.getBuffer().pos(x + w, y + h, -90d).tex((u + w) * texScale, (v + h) * texScale).endVertex();
-        tess.getBuffer().pos(x + w, y, -90d).tex((u + w) * texScale, (v) * texScale).endVertex();
-        tess.getBuffer().pos(x, y, -90d).tex(u * texScale, (v) * texScale).endVertex();
-
-        tess.draw();
-    }
-
-    private void renderZAlignedSquare(int x, int y, double z, int ori) {
-        tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-        tess.getBuffer().pos(x, y, z).tex(((ori) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
-        tess.getBuffer().pos(x + 1, y, z).tex(((ori + 1) / 2) % 2, ((ori) / 2) % 2).endVertex();
-        tess.getBuffer().pos(x + 1, y + 1, z).tex(((ori + 2) / 2) % 2, ((ori + 1) / 2) % 2).endVertex();
-        tess.getBuffer().pos(x, y + 1, z).tex(((ori + 3) / 2) % 2, ((ori + 2) / 2) % 2).endVertex();
-        tess.draw();
-    }
-
-    private void renderZAlignedRecangle(double x, int y, double z, int ori, double width) {
-        tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-        tess.getBuffer().pos(x + 0 - width, y, z).tex(((ori) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
-        tess.getBuffer().pos(x + 1, y, z).tex(((ori + 1) / 2) % 2, ((ori) / 2) % 2).endVertex();
-        tess.getBuffer().pos(x + 1, y + 1, z).tex(((ori + 2) / 2) % 2, ((ori + 1) / 2) % 2).endVertex();
-        tess.getBuffer().pos(x + 0 - width, y + 1, z).tex(((ori + 3) / 2) % 2, ((ori + 2) / 2) % 2).endVertex();
-        tess.draw();
-    }
-
-    private void renderXAlignedSquare(double x, int y, int z, int ori) {
-        tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-        tess.getBuffer().pos(x, y, z).tex(((ori) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
-        tess.getBuffer().pos(x, y, z + 1).tex(((ori + 1) / 2) % 2, ((ori) / 2) % 2).endVertex();
-        tess.getBuffer().pos(x, y + 1, z + 1).tex(((ori + 2) / 2) % 2, ((ori + 1) / 2) % 2).endVertex();
-        tess.getBuffer().pos(x, y + 1, z).tex(((ori + 3) / 2) % 2, ((ori + 2) / 2) % 2).endVertex();
-        tess.draw();
-    }
-
-    private void renderXAlignedRecangle(double x, int y, double z, int ori, double width) {
-        tess.getBuffer().begin(7, DefaultVertexFormats.POSITION_TEX);
-        tess.getBuffer().pos(x, y, z + 0 - width).tex(((ori) / 2) % 2, ((ori + 3) / 2) % 2).endVertex();
-        tess.getBuffer().pos(x, y, z + 1).tex(((ori + 1) / 2) % 2, ((ori) / 2) % 2).endVertex();
-        tess.getBuffer().pos(x, y + 1, z + 1).tex(((ori + 2) / 2) % 2, ((ori + 1) / 2) % 2).endVertex();
-        tess.getBuffer().pos(x, y + 1, z + 0 - width).tex(((ori + 3) / 2) % 2, ((ori + 2) / 2) % 2).endVertex();
-        tess.draw();
-    }
 
     private void updateRenderData() {
         World world = Minecraft.getMinecraft().world;
@@ -753,12 +711,12 @@ public class ClientTickHandler {
                             if (renderNorth) {
                                 boolean air0 = world.isAirBlock(new BlockPos(pos.getXStart() + x, y, pos.getZStart()));
                                 boolean air1 = world.isAirBlock(new BlockPos(pos.getXStart() + x + 1, y, pos.getZStart()));
-                                renderZEdge(world, x, y, pos.getZStart(), smaller_alignment + 0.001d, air0, air1, 0);
+                                renderZEdge(world, tess, x, y, pos.getZStart(), smaller_alignment + 0.001d, air0, air1, 0);
                             }
                             if (renderSouth) {
                                 boolean air0 = world.isAirBlock(new BlockPos(pos.getXStart() + x, y, pos.getZEnd()));
                                 boolean air1 = world.isAirBlock(new BlockPos(pos.getXStart() + x + 1, y, pos.getZEnd()));
-                                renderZEdge(world, x, y, pos.getZEnd(), 16d - smaller_alignment + 0.001d, air0, air1, 0);
+                                renderZEdge(world, tess, x, y, pos.getZEnd(), 16d - smaller_alignment + 0.001d, air0, air1, 0);
                             }
                         }
                         if (y < 255) {
@@ -767,22 +725,22 @@ public class ClientTickHandler {
                                 boolean air1 = world.isAirBlock(new BlockPos(pos.getXStart() + x, y + 1, pos.getZStart()));
                                 //renderZVerticalEdge(world, x, y, pos.getZStart(), smaller_alignment, air0, air1, 0);
                                 if (x == 15 && renderEast) {
-                                    renderZVerticalCorner(world, x - smaller_alignment, y, smaller_alignment, air0, air1, 0, -smaller_alignment);
+                                    renderZVerticalCorner(world, tess, x - smaller_alignment, y, smaller_alignment, air0, air1, 0, -smaller_alignment);
                                 } else if (x == 0 && renderWest) {
-                                    renderZVerticalCorner(world, x, y, smaller_alignment, air0, air1, 0, -smaller_alignment);
+                                    renderZVerticalCorner(world, tess, x, y, smaller_alignment, air0, air1, 0, -smaller_alignment);
                                 } else {
-                                    renderZVerticalEdge(world, x, y, pos.getZStart(), smaller_alignment, air0, air1, 0);
+                                    renderZVerticalEdge(world, tess, x, y, pos.getZStart(), smaller_alignment, air0, air1, 0);
                                 }
                             }
                             if (renderSouth) {
                                 boolean air0 = world.isAirBlock(new BlockPos(pos.getXStart() + x, y, pos.getZEnd()));
                                 boolean air1 = world.isAirBlock(new BlockPos(pos.getXStart() + x, y + 1, pos.getZEnd()));
                                 if (x == 15 && renderEast) {
-                                    renderZVerticalCorner(world, x - smaller_alignment, y, 16 - smaller_alignment, air0, air1, 0, -smaller_alignment);
+                                    renderZVerticalCorner(world, tess, x - smaller_alignment, y, 16 - smaller_alignment, air0, air1, 0, -smaller_alignment);
                                 } else if (x == 0 && renderWest) {
-                                    renderZVerticalCorner(world, x, y, 16 - smaller_alignment, air0, air1, 0, -smaller_alignment);
+                                    renderZVerticalCorner(world, tess, x, y, 16 - smaller_alignment, air0, air1, 0, -smaller_alignment);
                                 } else {
-                                    renderZVerticalEdge(world, x, y, pos.getZEnd(), 16d - smaller_alignment, air0, air1, 0);
+                                    renderZVerticalEdge(world, tess, x, y, pos.getZEnd(), 16d - smaller_alignment, air0, air1, 0);
                                 }
                             }
                         }
@@ -797,12 +755,12 @@ public class ClientTickHandler {
                             if (renderWest) {
                                 boolean air0 = world.isAirBlock(new BlockPos(pos.getXStart(), y, pos.getZStart() + z));
                                 boolean air1 = world.isAirBlock(new BlockPos(pos.getXStart(), y, pos.getZStart() + z + 1));
-                                renderXEdge(world, pos.getXStart(), y, z, smaller_alignment + 0.001d, air0, air1, 0);
+                                renderXEdge(world, tess, pos.getXStart(), y, z, smaller_alignment + 0.001d, air0, air1, 0);
                             }
                             if (renderEast) {
                                 boolean air0 = world.isAirBlock(new BlockPos(pos.getXEnd(), y, pos.getZStart() + z));
                                 boolean air1 = world.isAirBlock(new BlockPos(pos.getXEnd(), y, pos.getZStart() + z + 1));
-                                renderXEdge(world, pos.getXEnd(), y, z, 16d - smaller_alignment + 0.001d, air0, air1, 0);
+                                renderXEdge(world, tess, pos.getXEnd(), y, z, 16d - smaller_alignment + 0.001d, air0, air1, 0);
                             }
                         }
                         if (y < 255) {
@@ -810,22 +768,22 @@ public class ClientTickHandler {
                                 boolean air0 = world.isAirBlock(new BlockPos(pos.getXStart(), y, pos.getZStart() + z));
                                 boolean air1 = world.isAirBlock(new BlockPos(pos.getXStart(), y + 1, pos.getZStart() + z));
                                 if (z == 15 && renderSouth) {
-                                    renderXVerticalCorner(world, smaller_alignment, y, z - smaller_alignment, air0, air1, 0, -smaller_alignment);
+                                    renderXVerticalCorner(world, tess, smaller_alignment, y, z - smaller_alignment, air0, air1, 0, -smaller_alignment);
                                 } else if (z == 0 && renderNorth) {
-                                    renderXVerticalCorner(world, smaller_alignment, y, z, air0, air1, 0, -smaller_alignment);
+                                    renderXVerticalCorner(world, tess, smaller_alignment, y, z, air0, air1, 0, -smaller_alignment);
                                 } else {
-                                    renderXVerticalEdge(world, pos.getXStart(), y, z, smaller_alignment, air0, air1, 0);
+                                    renderXVerticalEdge(world, tess, pos.getXStart(), y, z, smaller_alignment, air0, air1, 0);
                                 }
                             }
                             if (renderEast) {
                                 boolean air0 = world.isAirBlock(new BlockPos(pos.getXEnd(), y, pos.getZStart() + z));
                                 boolean air1 = world.isAirBlock(new BlockPos(pos.getXEnd(), y + 1, pos.getZStart() + z));
                                 if (z == 15 && renderSouth) {
-                                    renderXVerticalCorner(world, 16d - smaller_alignment, y, z - smaller_alignment, air0, air1, 0, -smaller_alignment);
+                                    renderXVerticalCorner(world, tess, 16d - smaller_alignment, y, z - smaller_alignment, air0, air1, 0, -smaller_alignment);
                                 } else if (z == 0 && renderNorth) {
-                                    renderXVerticalCorner(world, 16d - smaller_alignment, y, z, air0, air1, 0, -smaller_alignment);
+                                    renderXVerticalCorner(world, tess, 16d - smaller_alignment, y, z, air0, air1, 0, -smaller_alignment);
                                 } else {
-                                    renderXVerticalEdge(world, pos.getXEnd(), y, z, 16d - smaller_alignment, air0, air1, 0);
+                                    renderXVerticalEdge(world, tess, pos.getXEnd(), y, z, 16d - smaller_alignment, air0, air1, 0);
                                 }
                             }
                         }
@@ -840,8 +798,8 @@ public class ClientTickHandler {
                     for (int y = 0; y < 256; y++) {
                         boolean air0 = world.isAirBlock(new BlockPos(pos.getXEnd(), y, pos.getZStart()));
                         boolean air1 = world.isAirBlock(new BlockPos(pos.getXEnd(), y + 1, pos.getZStart()));
-                        renderZVerticalCorner(world, 15, y, smaller_alignment, air0, air1, 0, smaller_alignment - 1.0);
-                        renderXVerticalCorner(world, 16 - smaller_alignment, y, smaller_alignment - 1, air0, air1, 0, smaller_alignment - 1.0);
+                        renderZVerticalCorner(world, tess, 15, y, smaller_alignment, air0, air1, 0, smaller_alignment - 1.0);
+                        renderXVerticalCorner(world, tess, 16 - smaller_alignment, y, smaller_alignment - 1, air0, air1, 0, smaller_alignment - 1.0);
                     }
                 }
             }
@@ -850,8 +808,8 @@ public class ClientTickHandler {
                     for (int y = 0; y < 256; y++) {
                         boolean air0 = world.isAirBlock(new BlockPos(pos.getXStart(), y, pos.getZStart()));
                         boolean air1 = world.isAirBlock(new BlockPos(pos.getXStart(), y + 1, pos.getZStart()));
-                        renderZVerticalCorner(world, -1 + smaller_alignment, y, smaller_alignment, air0, air1, 0, smaller_alignment - 1.0);
-                        renderXVerticalCorner(world, smaller_alignment, y, smaller_alignment - 1, air0, air1, 0, smaller_alignment - 1.0);
+                        renderZVerticalCorner(world, tess, -1 + smaller_alignment, y, smaller_alignment, air0, air1, 0, smaller_alignment - 1.0);
+                        renderXVerticalCorner(world, tess, smaller_alignment, y, smaller_alignment - 1, air0, air1, 0, smaller_alignment - 1.0);
                     }
                 }
             }
@@ -860,8 +818,8 @@ public class ClientTickHandler {
                     for (int y = 0; y < 256; y++) {
                         boolean air0 = world.isAirBlock(new BlockPos(pos.getXStart(), y, pos.getZEnd()));
                         boolean air1 = world.isAirBlock(new BlockPos(pos.getXStart(), y + 1, pos.getZEnd()));
-                        renderZVerticalCorner(world, -1 + smaller_alignment, y, 16 - smaller_alignment, air0, air1, 0, smaller_alignment - 1.0);
-                        renderXVerticalCorner(world, smaller_alignment, y, 15, air0, air1, 0, smaller_alignment - 1.0);
+                        renderZVerticalCorner(world, tess, -1 + smaller_alignment, y, 16 - smaller_alignment, air0, air1, 0, smaller_alignment - 1.0);
+                        renderXVerticalCorner(world, tess, smaller_alignment, y, 15, air0, air1, 0, smaller_alignment - 1.0);
                     }
                 }
             }
@@ -870,8 +828,8 @@ public class ClientTickHandler {
                     for (int y = 0; y < 256; y++) {
                         boolean air0 = world.isAirBlock(new BlockPos(pos.getXEnd(), y, pos.getZEnd()));
                         boolean air1 = world.isAirBlock(new BlockPos(pos.getXEnd(), y + 1, pos.getZEnd()));
-                        renderZVerticalCorner(world, 15, y, 16 - smaller_alignment, air0, air1, 0, smaller_alignment - 1.0);
-                        renderXVerticalCorner(world, 16 - smaller_alignment, y, 15, air0, air1, 0, smaller_alignment - 1.0);
+                        renderZVerticalCorner(world, tess, 15, y, 16 - smaller_alignment, air0, air1, 0, smaller_alignment - 1.0);
+                        renderXVerticalCorner(world, tess, 16 - smaller_alignment, y, 15, air0, air1, 0, smaller_alignment - 1.0);
                     }
                 }
             }
@@ -882,37 +840,6 @@ public class ClientTickHandler {
         }
     }
 
-    // Helper for rendering horizontal edges (along X-axis)
-    private void renderZEdge(World world, int x, int y, int z, double align, boolean air0, boolean air1, int dir) {
-        if (!air0 && air1) renderZAlignedSquare(x + 1, y, align, dir); // Entering air
-        if (air0 && !air1) renderZAlignedSquare(x, y, align, 2 + dir);     // Exiting air
-    }
-
-    // Similarly for X-aligned edges
-    private void renderXEdge(World world, int x, int y, int z, double align, boolean air0, boolean air1, int dir) {
-        if (!air0 && air1) renderXAlignedSquare(align, y, z + 1, dir);
-        if (air0 && !air1) renderXAlignedSquare(align, y, z, 2 + dir);
-    }
-
-    private void renderXVerticalEdge(World world, int x, int y, int z, double align, boolean air0, boolean air1, int dir) {
-        if (!air0 && air1) renderXAlignedSquare(align, y + 1, z, 3 + dir);
-        if (air0 && !air1) renderXAlignedSquare(align, y, z, 1 + dir);
-    }
-
-    private void renderXVerticalCorner(World world, double x, int y, double z, boolean air0, boolean air1, int dir, double width) {
-        if (!air0 && air1) renderXAlignedRecangle(x, y + 1, z, 3 + dir, width);
-        if (air0 && !air1) renderXAlignedRecangle(x, y, z, 1 + dir, width);
-    }
-
-    private void renderZVerticalCorner(World world, double x, int y, double z, boolean air0, boolean air1, int dir, double width) {
-        if (!air0 && air1) renderZAlignedRecangle(x, y + 1, z, 3 + dir, width);
-        if (air0 && !air1) renderZAlignedRecangle(x, y, z, 1 + dir, width);
-    }
-
-    private void renderZVerticalEdge(World world, int x, int y, int z, double align, boolean air0, boolean air1, int dir) {
-        if (!air0 && air1) renderZAlignedSquare(x, y + 1, align, 3 + dir); // Entering air upward
-        if (air0 && !air1) renderZAlignedSquare(x, y, align, 1 + dir);     // Exiting air downward
-    }
 
     @SubscribeEvent
     public void onRenderLast(RenderWorldLastEvent event) {
@@ -1069,16 +996,6 @@ public class ClientTickHandler {
         return canPlace;
     }
 
-    private void vertexAt(DimChunkPos chunkPos, World world, int x, int z, double groundLevelBlend, double playerHeight) {
-        double topHeight = playerHeight + 128;
-
-        double maxHeight = world.getHeight(chunkPos.x * 16 + x, chunkPos.z * 16 + z) + 8;
-        if (maxHeight > playerHeight + 16) maxHeight = playerHeight + 16;
-
-        double height = topHeight + (maxHeight - topHeight) * groundLevelBlend;
-
-        tess.getBuffer().pos(x, height, z).tex(z / 16f, x / 16f).endVertex();
-    }
 
     private static class BorderRenderData {
         public IClaim claim;
