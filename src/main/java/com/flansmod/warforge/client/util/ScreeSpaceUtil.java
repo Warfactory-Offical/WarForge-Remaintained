@@ -51,6 +51,12 @@ public class ScreeSpaceUtil {
             default -> offset;
         };
     }
+    public static int getYOffset(ScreenPos pos, int offset) {
+        return switch (pos) {
+            case TOP, TOP_RIGHT, TOP_LEFT -> offset;
+            default -> -offset;
+        };
+    }
 
 
     public static int getX(ScreenPos pos, int elementWidth) {
@@ -82,19 +88,12 @@ public class ScreeSpaceUtil {
 
     public static void incrementY(ScreenPos pos, int amount) {
         switch (pos) {
-            case TOP:
-            case TOP_LEFT:
-            case TOP_RIGHT:
-                topOffset += amount;
-                break;
-            case BOTTOM:
-            case BOTTOM_LEFT:
-            case BOTTOM_RIGHT:
-                bottomOffset -= amount;
-                break;
-            default:
-                // No-op or throw
-                break;
+            case TOP -> topOffset += amount;
+            case TOP_LEFT -> topLeftOffset += amount;
+            case TOP_RIGHT -> topRightOffset += amount;
+            case BOTTOM -> bottomOffset -= amount;
+            case BOTTOM_LEFT -> bottomLeftOffset -= amount;
+            case BOTTOM_RIGHT -> bottomRightOffset -= amount;
         }
     }
 
