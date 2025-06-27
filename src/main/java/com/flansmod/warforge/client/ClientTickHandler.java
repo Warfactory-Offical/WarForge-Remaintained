@@ -358,6 +358,7 @@ public class ClientTickHandler {
                 : pos.getY() + paddingTopBar;
         float xLeft = ScreeSpaceUtil.getX(pos, renderWidth) + ScreeSpaceUtil.getXOffset(pos, 4);
 
+
         // Draw icon
         if (currMemberItemStack != null) {
             GlStateManager.pushMatrix();
@@ -479,7 +480,6 @@ public class ClientTickHandler {
         renderSiegeNotches(mc, infoToRender, xText, yText);
 
         renderSiegeText(mc, infoToRender, xText, yText);
-        ScreeSpaceUtil.incrementY(WarForgeConfig.POS_SIEGE, 10);
     }
 
     private void renderSiegeProgressBar(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText, float attackR, float attackG, float attackB, float defendR, float defendG, float defendB, float scroll) {
@@ -502,7 +502,7 @@ public class ClientTickHandler {
     }
 
     private void renderSiegeNotches(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText) {
-        float notchDistance = 224 / (infoToRender.completionPoint + 5);
+        float notchDistance = (float) 224 / (infoToRender.completionPoint + 5);
 
         for (int i = -4; i < infoToRender.completionPoint; i++) {
             int x = (int) ((i + 5) * notchDistance + 16);
@@ -513,7 +513,7 @@ public class ClientTickHandler {
 
     private void renderSiegeText(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText) {
         mc.fontRenderer.drawStringWithShadow(infoToRender.defendingName, xText + 6, yText + 6, infoToRender.defendingColour);
-        mc.fontRenderer.drawStringWithShadow("VS", xText + 128 - mc.fontRenderer.getStringWidth("VS") / 2, yText + 6, 0xffffff);
+        mc.fontRenderer.drawStringWithShadow("VS", xText + 128 - (float) mc.fontRenderer.getStringWidth("VS") / 2, yText + 6, 0xffffff);
         mc.fontRenderer.drawStringWithShadow(infoToRender.attackingName, xText + 256 - 6 - mc.fontRenderer.getStringWidth(infoToRender.attackingName), yText + 6, infoToRender.attackingColour);
 
         String toWin = (infoToRender.progress < infoToRender.completionPoint) ? (infoToRender.completionPoint - infoToRender.progress) + " to win" : "Station siege to win";

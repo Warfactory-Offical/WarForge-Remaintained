@@ -99,9 +99,9 @@ public class WarForgeConfig {
     public static boolean ENABLE_TPA_POTIONS = true;
 
     public static ScreenPos POS_TIMERS = ScreenPos.BOTTOM_RIGHT;
-    public static ScreenPos POS_VEIN_INDICATOR = ScreenPos.TOP_LEFT;
-    public static ScreenPos POS_TOAST_INDICATOR = ScreenPos.TOP;
-    public static ScreenPos POS_SIEGE = ScreenPos.BOTTOM_LEFT;
+    public static ScreenPos POS_VEIN_INDICATOR = ScreenPos.BOTTOM_RIGHT;
+    public static ScreenPos POS_TOAST_INDICATOR = ScreenPos.BOTTOM_RIGHT;
+    public static ScreenPos POS_SIEGE = ScreenPos.BOTTOM_RIGHT;
 
 
     public static long FACTIONS_BOT_CHANNEL_ID = 799595436154683422L;
