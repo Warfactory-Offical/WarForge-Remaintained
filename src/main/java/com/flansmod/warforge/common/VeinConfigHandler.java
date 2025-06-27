@@ -34,7 +34,7 @@ public class VeinConfigHandler {
             "# The number of component weights must match the number of components.",
             "",
             "veins:",
-            "  - name: veins.pure_iron",
+            "  - name: warforge.veins.pure_iron",
             "    dims:",
             "      - id: -1",
             "        weight: 0.5",
