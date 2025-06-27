@@ -10,7 +10,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.flansmod.warforge.client.util.ScreeSpaceUtil.ScreenPos;
+import static com.flansmod.warforge.client.util.ScreenSpaceUtil.ScreenPos;
 import static com.flansmod.warforge.common.CommonProxy.YIELD_QUALITY_MULTIPLIER;
 
 public class WarForgeConfig {
@@ -98,10 +98,10 @@ public class WarForgeConfig {
     public static boolean ALLOW_SPAWN_BETWEEN_DIMENSIONS = false;
     public static boolean ENABLE_TPA_POTIONS = true;
 
-    public static ScreenPos POS_TIMERS = ScreenPos.BOTTOM_RIGHT;
-    public static ScreenPos POS_VEIN_INDICATOR = ScreenPos.BOTTOM_RIGHT;
-    public static ScreenPos POS_TOAST_INDICATOR = ScreenPos.BOTTOM_RIGHT;
-    public static ScreenPos POS_SIEGE = ScreenPos.BOTTOM_RIGHT;
+    public static ScreenPos POS_TIMERS = ScreenPos.BOTTOM_LEFT;
+    public static ScreenPos POS_VEIN_INDICATOR = ScreenPos.BOTTOM_LEFT;
+    public static ScreenPos POS_TOAST_INDICATOR = ScreenPos.BOTTOM_LEFT;
+    public static ScreenPos POS_SIEGE = ScreenPos.BOTTOM_LEFT;
 
 
     public static long FACTIONS_BOT_CHANNEL_ID = 799595436154683422L;
@@ -162,7 +162,6 @@ public class WarForgeConfig {
         CITADEL_FOE.ALLOW_DISMOUNT_ENTITY = false;
         CLAIM_FOE.ALLOW_MOUNT_ENTITY = false;
         CLAIM_FOE.ALLOW_DISMOUNT_ENTITY = false;
-
         UNCLAIMED.EXPLOSION_DAMAGE = true;
         WarForgeMod.VEIN_MAP.defaultReturnValue(null);
     }
@@ -251,6 +250,10 @@ public class WarForgeConfig {
         SHOW_ALLY_BORDERS = configFile.getBoolean("Show Ally Chunk Borders", Configuration.CATEGORY_GENERAL, SHOW_ALLY_BORDERS, "Turns the in-world border rendering on/off for ally chunks");
         SHOW_YIELD_TIMERS = configFile.getBoolean("Show yield timers", CATEGORY_CLIENT, SHOW_YIELD_TIMERS, "Whether to show a readout of the time until the next yield / siege in top left of your screen");
         VEIN_MEMBER_DISPLAY_TIME_MS = configFile.getInt("Vein Member Display Time", CATEGORY_CLIENT, (int) VEIN_MEMBER_DISPLAY_TIME_MS, 100, Integer.MAX_VALUE, "The time in milliseconds for which each member of a vein will be displayed when it is being cycled through, to the precision allowed by the client tick system.");
+        POS_TIMERS = ScreenPos.fromString(configFile.getString( "Yield timer position", CATEGORY_CLIENT, "BOTTOM_RIGHT", "Position of the yield timers" ));
+        POS_SIEGE = ScreenPos.fromString(configFile.getString( "Siege status position", CATEGORY_CLIENT, "TOP", "Position of the siege status" ));
+        POS_TOAST_INDICATOR = ScreenPos.fromString(configFile.getString( "Toast indicator position", CATEGORY_CLIENT, "TOP", "Position of the  toast indicator" ));
+        POS_VEIN_INDICATOR = ScreenPos.fromString(configFile.getString( "Chunk vein indicator position", CATEGORY_CLIENT, "BOTTOM", "Position of the  chunk vein indicator" ));
 
         // Other permissions
         BLOCK_ENDER_CHEST = configFile.getBoolean("Disable Ender Chest", Configuration.CATEGORY_GENERAL, BLOCK_ENDER_CHEST, "Prevent players from opening ender chests");
@@ -268,6 +271,8 @@ public class WarForgeConfig {
         // Graphics controls
         DO_FANCY_RENDERING = configFile.getBoolean("Enable WarForge Fancy Rendering", CATEGORY_CLIENT, DO_FANCY_RENDERING, "Controls whether or not fancy graphics will be enabled for this mod's rendering.");
         RANDOM_BORDER_REDRAW_DENOMINATOR = configFile.getInt("Random Border Redraw Denominator", CATEGORY_CLIENT, RANDOM_BORDER_REDRAW_DENOMINATOR, 1, Integer.MAX_VALUE, "Sets the bound on a random number generated, which when equal to 0 calls the border redraw. Effectively 1/this chance to redraw every frame");
+
+
 
         String botChannelString = configFile.getString("Discord Bot Channel ID", Configuration.CATEGORY_GENERAL, "" + FACTIONS_BOT_CHANNEL_ID, "https://github.com/Chikachi/DiscordIntegration/wiki/IMC-Feature");
         FACTIONS_BOT_CHANNEL_ID = Long.parseLong(botChannelString);

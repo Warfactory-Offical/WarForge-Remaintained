@@ -4,7 +4,7 @@ import akka.japi.Pair;
 import com.flansmod.warforge.api.Quality;
 import com.flansmod.warforge.api.Vein;
 import com.flansmod.warforge.client.util.RenderUtil;
-import com.flansmod.warforge.client.util.ScreeSpaceUtil;
+import com.flansmod.warforge.client.util.ScreenSpaceUtil;
 import com.flansmod.warforge.common.Content;
 import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
@@ -70,8 +70,7 @@ public class ClientTickHandler {
     public static Object2LongOpenHashMap<DimChunkPos> permitChunkReprobeMs = new Object2LongOpenHashMap<>();
     public static long veinRenderStartTime = -1;  // (curr time - this) / (display time (ms)) to get index
     public static boolean CLAIMS_DIRTY = false;
-    public static HashMap<DimChunkPos, Vein> chunkVeinMap = new HashMap<>(16);
-    public static boolean UI_DEBUG = true;
+    public static boolean UI_DEBUG = false;
     // -1 indicates the chunk has never been probed
     private static ArrayList<String> cachedVeinStrings = null;
     private final Tessellator tess;
@@ -208,7 +207,7 @@ public class ClientTickHandler {
 
     @SubscribeEvent
     public void onRenderHUD(RenderGameOverlayEvent event) {
-        ScreeSpaceUtil.resetOffsets(event);
+        ScreenSpaceUtil.resetOffsets(event);
 
         if (event.getType() == ElementType.BOSSHEALTH) {
             Minecraft mc = Minecraft.getMinecraft();
@@ -249,6 +248,7 @@ public class ClientTickHandler {
                         WarForgeMod.NETWORK.sendToServer(packetChunkVeinRequest);
                     }
 
+                    //renderVeinData(mc, veinInfo, hasPos, event);
                     renderVeinData(mc, veinInfo, hasPos, event);
                 }
 
@@ -257,35 +257,33 @@ public class ClientTickHandler {
     }
 
     private void renderTimers(Minecraft mc) {
-        int screenWidth = ScreeSpaceUtil.RESOLUTIONX;
-        int screenHeight = ScreeSpaceUtil.RESOLUTIONY;
+        int screenWidth = ScreenSpaceUtil.RESOLUTIONX;
 
         int padding = 4;
-        int textHeight = ScreeSpaceUtil.TEXTHEIGHT + padding;
+        int textHeight = ScreenSpaceUtil.TEXTHEIGHT + padding;
 
-        ScreeSpaceUtil.ScreenPos pos = WarForgeConfig.POS_TIMERS;
+        ScreenSpaceUtil.ScreenPos pos = WarForgeConfig.POS_TIMERS;
 
         // Siege progress
         if (!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER || UI_DEBUG) {
             String siegeText = "Siege Progress: " + formatTime(nextSiegeDayMs - System.currentTimeMillis());
             int textWidth = mc.fontRenderer.getStringWidth(siegeText);
-            int x = ScreeSpaceUtil.shouldCenterX(pos) ? ScreeSpaceUtil.centerX(screenWidth, textWidth) : ScreeSpaceUtil.getX(pos, textWidth) + ScreeSpaceUtil.getXOffset(pos, padding);
-            int ySiege = pos.getY() + ScreeSpaceUtil.getYOffset(pos, textHeight);
+            int x = ScreenSpaceUtil.shouldCenterX(pos) ? ScreenSpaceUtil.centerX(screenWidth, textWidth) : ScreenSpaceUtil.getX(pos, textWidth) + ScreenSpaceUtil.getXOffset(pos, padding);
+            int ySiege = pos.getY() + ScreenSpaceUtil.getYOffset(pos, textHeight);
 
             mc.fontRenderer.drawStringWithShadow(siegeText, x, ySiege, 0xffffff);
-            ScreeSpaceUtil.incrementY(pos, textHeight);
+            ScreenSpaceUtil.incrementY(pos, textHeight);
         }
 
         // Next yields
         String yieldText = "Next yields: " + formatTime(nextYieldDayMs - System.currentTimeMillis());
         int textWidth = mc.fontRenderer.getStringWidth(yieldText);
-        int x = ScreeSpaceUtil.shouldCenterX(pos) ? ScreeSpaceUtil.centerX(screenWidth, textWidth) : ScreeSpaceUtil.getX(pos, textWidth) + ScreeSpaceUtil.getXOffset(pos, padding);
-        int yYield = pos.getY() + ScreeSpaceUtil.getYOffset(pos, textHeight);
+        int x = ScreenSpaceUtil.shouldCenterX(pos) ? ScreenSpaceUtil.centerX(screenWidth, textWidth) : ScreenSpaceUtil.getX(pos, textWidth) + ScreenSpaceUtil.getXOffset(pos, padding);
+        int yYield = pos.getY() + ScreenSpaceUtil.getYOffset(pos, textHeight);
 
         mc.fontRenderer.drawStringWithShadow(yieldText, x, yYield, 0xffffff);
-        ScreeSpaceUtil.incrementY(pos, textHeight);
+        ScreenSpaceUtil.incrementY(pos, textHeight);
     }
-
 
     private String formatTime(long msRemaining) {
         long s = msRemaining / 1000;
@@ -313,30 +311,21 @@ public class ClientTickHandler {
         return closestInfo;
     }
 
+
+    //How is rendering fucking text so complicated
     private void renderVeinData(Minecraft mc, Pair<Vein, Quality> veinInfo, boolean hasCached, RenderGameOverlayEvent event) {
         GlStateManager.enableAlpha();
         GlStateManager.enableBlend();
-
+        ScreenSpaceUtil.ScreenPos pos = WarForgeConfig.POS_VEIN_INDICATOR;
         long currTimeMs = System.currentTimeMillis();
         if (veinRenderStartTime == -1) veinRenderStartTime = currTimeMs;
 
-        ScreeSpaceUtil.ScreenPos pos = WarForgeConfig.POS_VEIN_INDICATOR;
-        boolean isBottom = !ScreeSpaceUtil.isTop(pos);
-
-        final int paddingTopBar = 20;
-        final int iconSize = 24;
-        final int lineSpacing = 2;
-        final int textLineHeight = mc.fontRenderer.FONT_HEIGHT + lineSpacing;
-
         boolean invalidRender = veinInfo == null || veinInfo.first() == null || veinInfo.second() == null;
 
-        // Build or fetch text lines
         ArrayList<String> veinInfoStrings = cachedVeinStrings;
         if (cachedVeinStrings == null || veinRenderStartTime == -1) {
             veinInfoStrings = createVeinInfoStrings(veinInfo, hasCached);
         }
-
-        // Icon cycling
         ItemStack currMemberItemStack = null;
         if (!invalidRender) {
             int index = (int) ((currTimeMs - veinRenderStartTime) / WarForgeConfig.VEIN_MEMBER_DISPLAY_TIME_MS);
@@ -347,55 +336,61 @@ public class ClientTickHandler {
             }
             currMemberItemStack = new ItemStack(currItem, 1);
         }
+        int iconSize = 24;
+        int iconPadding = 4;
+        boolean isTop = ScreenSpaceUtil.isTop(pos);
+        if (isTop)
+            ScreenSpaceUtil.incrementY(pos, iconSize / 2 + 10);
+        int originX = 0;
+        int lineX = 0;
+        int titleX = 0;
+        switch (pos) {
+            case TOP, BOTTOM -> {
+                originX =
+                        ScreenSpaceUtil.getX(pos, invalidRender ? mc.fontRenderer.getStringWidth(veinInfoStrings.get(0)) + iconSize / 2 + iconPadding : mc.fontRenderer.getStringWidth(veinInfoStrings.get(0)));
+                titleX = originX + iconSize / 2;
+                lineX = titleX +  8 ;
+            }
+            case BOTTOM_LEFT, TOP_LEFT -> {
+                originX = iconPadding + iconSize / 2;
+                titleX = invalidRender ? 4 : originX + ScreenSpaceUtil.getXOffsetLocal(pos, iconSize / 2 + 4);
+                lineX = titleX + 8;
+            }
+            case TOP_RIGHT, BOTTOM_RIGHT -> {
+                originX = pos.getX() - (invalidRender ? mc.fontRenderer.getStringWidth(veinInfoStrings.get(0)) + 17 :
+                        mc.fontRenderer.getStringWidth(veinInfoStrings.get(0) + iconSize * 1.5)
+                );
+                titleX = originX + iconSize / 2;
+                lineX = titleX - 8;
+            }
+        }
 
-        // Compute dimensions
-        int titleWidth = mc.fontRenderer.getStringWidth(veinInfoStrings.get(0));
-        int renderWidth = invalidRender ? titleWidth : iconSize + titleWidth - iconSize / 2;
-        int renderHeight = (!invalidRender ? iconSize : 1) + (veinInfoStrings.size() - 1) * textLineHeight;
 
-        int yBase = isBottom
-                ? pos.getY() - renderHeight
-                : pos.getY() + paddingTopBar;
-        float xLeft = ScreeSpaceUtil.getX(pos, renderWidth) + ScreeSpaceUtil.getXOffset(pos, 4);
-
-
-        // Draw icon
+        int yBase = ScreenSpaceUtil.getY(pos, 24 + 20 + veinInfoStrings.size() > 1 ? veinInfoStrings.size() * (ScreenSpaceUtil.TEXTHEIGHT + 2) : 0);
         if (currMemberItemStack != null) {
             GlStateManager.pushMatrix();
             RenderHelper.disableStandardItemLighting();
             GlStateManager.enableDepth();
-
-            GlStateManager.translate(xLeft, yBase + 4, 0);
+            GlStateManager.translate(originX, yBase + 4, 0);
             GlStateManager.scale(iconSize, iconSize, 1);
             GlStateManager.rotate(180, 0, 1, 0);
             GlStateManager.rotate(180, 0, 0, 1);
-
             Minecraft.getMinecraft().getRenderItem().renderItem(currMemberItemStack, ItemCameraTransforms.TransformType.GUI);
-
             GlStateManager.disableDepth();
             RenderHelper.enableStandardItemLighting();
             GlStateManager.disableLighting();
             GlStateManager.popMatrix();
         }
+        mc.fontRenderer.drawStringWithShadow(veinInfoStrings.get(0), titleX, yBase, 0xFFFFFF);
+        ScreenSpaceUtil.incrementY(pos, 2);
 
-        // Draw main title (first line)
-        float textX = xLeft + (invalidRender ? 0 : ScreeSpaceUtil.getXOffset(pos,iconSize - iconSize / 2));
-        mc.fontRenderer.drawStringWithShadow(veinInfoStrings.get(0), textX, isNullVein? yBase +  ScreeSpaceUtil.getYOffset(pos,paddingTopBar): yBase, 0xFFFFFF);
-
-        // Draw remaining text lines
         for (int i = 1; i < veinInfoStrings.size(); ++i) {
             String line = veinInfoStrings.get(i);
-            int lineWidth = mc.fontRenderer.getStringWidth(line);
-            float lineX = xLeft + (renderWidth - lineWidth) / 2f;
-            float lineY = yBase + (invalidRender ? 0 : iconSize / 2) + (i - 1) * textLineHeight;
+            float lineY = yBase + (isTop ? 1 : -1) * (ScreenSpaceUtil.getYOffset(pos, (ScreenSpaceUtil.TEXTHEIGHT + 2) * i));
             mc.fontRenderer.drawStringWithShadow(line, lineX, lineY, 0xFFFFFF);
         }
 
-        // Adjust pos for next element
-        int finalHeight = renderHeight + 2;
-        ScreeSpaceUtil.incrementY(pos, finalHeight);
     }
-    private static boolean isNullVein = false;
 
     @SubscribeEvent
 	public void onClientTick(TickEvent.ClientTickEvent event) {
@@ -425,7 +420,6 @@ public class ClientTickHandler {
                 result.add(I18n.format(currItem.getItemStackDisplayName(new ItemStack(currItem))));
             }
 
-            isNullVein = false;
             return result;
         }
 
@@ -444,12 +438,10 @@ public class ClientTickHandler {
         // at this point, vein info must be null
         if (hasCached) {
             result.add(I18n.format("warforge.info.vein.null"));
-            isNullVein = true;
             return result;
         }
 
         result.add(I18n.format("warforge.info.vein.waiting"));
-        isNullVein = true;
         return result;
     }
 
@@ -464,10 +456,11 @@ public class ClientTickHandler {
         float defendR = (float) (infoToRender.defendingColour >> 16 & 255) / 255.0F;
         float defendG = (float) (infoToRender.defendingColour >> 8 & 255) / 255.0F;
         float defendB = (float) (infoToRender.defendingColour & 255) / 255.0F;
+        var pos = WarForgeConfig.POS_SIEGE;
 
         // Render Background and Bars
-        int xText = ScreeSpaceUtil.getX(WarForgeConfig.POS_SIEGE, 256);  // 256 = width of bar
-        int yText = ScreeSpaceUtil.getY(WarForgeConfig.POS_SIEGE, 40);   // 40 = total height (bar + text)
+        int xText = ScreenSpaceUtil.getX(pos, 256);  // 256 = width of bar
+        int yText = ScreenSpaceUtil.getY(pos, 40);   // 40 = total height (bar + text)
 
         float scroll = (mc.getFrameTimer().getIndex() + event.getPartialTicks()) * 0.25f;
         scroll = scroll % 10;
@@ -526,14 +519,14 @@ public class ClientTickHandler {
         final int stringWidth = mc.fontRenderer.getStringWidth(areaMessage);
         final int totalHeight = 24;
 
-        final ScreeSpaceUtil.ScreenPos pos = WarForgeConfig.POS_TOAST_INDICATOR;
-        final boolean isTop = ScreeSpaceUtil.isTop(pos);
-        final int extraPadding = pos == ScreeSpaceUtil.ScreenPos.TOP ? 24 : 0;
+        final ScreenSpaceUtil.ScreenPos pos = WarForgeConfig.POS_TOAST_INDICATOR;
+        final boolean isTop = ScreenSpaceUtil.isTop(pos);
+        final int extraPadding = pos == ScreenSpaceUtil.ScreenPos.TOP ? 24 : 0;
 
         final int yOffsetFromBar = 14;  // offset below/above the hotbar or title bar
         final int yText = isTop ? pos.getY() + yOffsetFromBar + extraPadding : pos.getY() - totalHeight - yOffsetFromBar;
 
-        final int xText = ScreeSpaceUtil.getX(pos, stringWidth);
+        final int xText = ScreenSpaceUtil.getX(pos, stringWidth) + ScreenSpaceUtil.getXOffset(pos, 10);
 
         float fadeOut = 2.0f * newAreaToastTime / WarForgeConfig.SHOW_NEW_AREA_TIMER;
         fadeOut = Math.min(fadeOut, 1.0f);
@@ -552,7 +545,7 @@ public class ClientTickHandler {
 
         GlStateManager.disableBlend();
         GlStateManager.disableAlpha();
-        ScreeSpaceUtil.incrementY(pos, totalHeight + 4 + extraPadding);
+        ScreenSpaceUtil.incrementY(pos, totalHeight + 14 + extraPadding);
     }
 
 

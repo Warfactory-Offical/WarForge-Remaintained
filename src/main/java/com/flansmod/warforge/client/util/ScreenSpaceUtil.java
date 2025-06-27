@@ -8,8 +8,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
 
+//GOD this ui is a clusterfuck
 @SideOnly(Side.CLIENT)
-public class ScreeSpaceUtil {
+public class ScreenSpaceUtil {
 
 
     public static int RESOLUTIONY;
@@ -25,7 +26,7 @@ public class ScreeSpaceUtil {
         RESOLUTIONX = event.getResolution().getScaledWidth();
         RESOLUTIONY = event.getResolution().getScaledHeight();
         topOffset = topLeftOffset = topRightOffset = 0;
-        bottomOffset = RESOLUTIONY - 56;
+        bottomOffset = RESOLUTIONY - 43;
         bottomLeftOffset = bottomRightOffset = RESOLUTIONY;
     }
 
@@ -44,10 +45,23 @@ public class ScreeSpaceUtil {
         };
     }
 
+    public static boolean isCenter(ScreenPos pos) {
+        return switch (pos) {
+            case TOP, BOTTOM -> true;
+            default -> false;
+        };
+    }
     public static int getXOffset(ScreenPos pos, int offset) {
         return switch (pos) {
             case TOP_RIGHT, BOTTOM_RIGHT -> -offset;
             case TOP, BOTTOM -> 0;
+            default -> offset;
+        };
+    }
+
+    public static int getXOffsetLocal(ScreenPos pos, int offset) {
+        return switch (pos) {
+            case TOP_RIGHT, BOTTOM_RIGHT -> -offset;
             default -> offset;
         };
     }
@@ -157,6 +171,12 @@ public class ScreeSpaceUtil {
             this.xSupplier = xSupplier;
             this.ySupplier = ySupplier;
             this.ySetter = ySetter;
+        }
+        public static ScreenPos fromString(String name) {
+            for (ScreenPos pos : values()) {
+                if (pos.name().equalsIgnoreCase(name)) return pos;
+            }
+            return TOP; // default fallback
         }
 
         public int getX() {
