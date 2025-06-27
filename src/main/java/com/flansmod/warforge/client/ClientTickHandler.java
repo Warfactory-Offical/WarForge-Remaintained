@@ -71,7 +71,7 @@ public class ClientTickHandler {
     public static long veinRenderStartTime = -1;  // (curr time - this) / (display time (ms)) to get index
     public static boolean CLAIMS_DIRTY = false;
     public static HashMap<DimChunkPos, Vein> chunkVeinMap = new HashMap<>(16);
-    public static boolean SIEGE_UI_DEBUG = true;
+    public static boolean UI_DEBUG = true;
     // -1 indicates the chunk has never been probed
     private static ArrayList<String> cachedVeinStrings = null;
     private final Tessellator tess;
@@ -184,7 +184,7 @@ public class ClientTickHandler {
                     } else // Left a claim
                     {
                         if (postClaim == null) {
-                            // Gone to nowhere
+                            // Gone nowhere
                             areaMessage = "Leaving " + preClaim.getClaimDisplayName();
                             areaMessageColour = preClaim.getColour();
                             newAreaToastTime = WarForgeConfig.SHOW_NEW_AREA_TIMER;
@@ -217,7 +217,7 @@ public class ClientTickHandler {
             if (player != null) {
 
                 // Siege camp info
-                SiegeCampProgressInfo infoToRender = !SIEGE_UI_DEBUG ? getClosestSiegeCampInfo(player) : SiegeCampProgressInfo.getDebugInfo();
+                SiegeCampProgressInfo infoToRender = !UI_DEBUG ? getClosestSiegeCampInfo(player) : SiegeCampProgressInfo.getDebugInfo();
 
                 if (infoToRender != null) {
                     renderSiegeOverlay(mc, infoToRender, event);
@@ -264,27 +264,26 @@ public class ClientTickHandler {
         int textHeight = ScreeSpaceUtil.TEXTHEIGHT + padding;
 
         ScreeSpaceUtil.ScreenPos pos = WarForgeConfig.POS_TIMERS;
-        int baseY = ScreeSpaceUtil.isTop(pos) ? pos.getY() + padding : pos.getY() - padding;
 
         // Siege progress
-        if (!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER) {
+        if (!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER || UI_DEBUG) {
             String siegeText = "Siege Progress: " + formatTime(nextSiegeDayMs - System.currentTimeMillis());
             int textWidth = mc.fontRenderer.getStringWidth(siegeText);
             int x = ScreeSpaceUtil.shouldCenterX(pos) ? ScreeSpaceUtil.centerX(screenWidth, textWidth) : ScreeSpaceUtil.getX(pos, textWidth) + ScreeSpaceUtil.getXOffset(pos, padding);
-            int y = Math.min(baseY, screenHeight - textHeight);
+            int ySiege = pos.getY() + ScreeSpaceUtil.getYOffset(pos, textHeight);
 
-            mc.fontRenderer.drawStringWithShadow(siegeText, x, y, 0xffffff);
-            pos.incrementY(textHeight);
+            mc.fontRenderer.drawStringWithShadow(siegeText, x, ySiege, 0xffffff);
+            ScreeSpaceUtil.incrementY(pos, textHeight);
         }
 
         // Next yields
         String yieldText = "Next yields: " + formatTime(nextYieldDayMs - System.currentTimeMillis());
         int textWidth = mc.fontRenderer.getStringWidth(yieldText);
         int x = ScreeSpaceUtil.shouldCenterX(pos) ? ScreeSpaceUtil.centerX(screenWidth, textWidth) : ScreeSpaceUtil.getX(pos, textWidth) + ScreeSpaceUtil.getXOffset(pos, padding);
-        int y = Math.min(pos.getY() + padding, screenHeight - textHeight);
+        int yYield = pos.getY() + ScreeSpaceUtil.getYOffset(pos, textHeight);
 
-        mc.fontRenderer.drawStringWithShadow(yieldText, x, y, 0xffffff);
-        pos.incrementY(textHeight + padding);
+        mc.fontRenderer.drawStringWithShadow(yieldText, x, yYield, 0xffffff);
+        ScreeSpaceUtil.incrementY(pos, textHeight);
     }
 
 
@@ -352,7 +351,7 @@ public class ClientTickHandler {
         // Compute dimensions
         int titleWidth = mc.fontRenderer.getStringWidth(veinInfoStrings.get(0));
         int renderWidth = invalidRender ? titleWidth : iconSize + titleWidth - iconSize / 2;
-        int renderHeight = (!invalidRender ? iconSize : 0) + (veinInfoStrings.size() - 1) * textLineHeight;
+        int renderHeight = (!invalidRender ? iconSize : 1) + (veinInfoStrings.size() - 1) * textLineHeight;
 
         int yBase = isBottom
                 ? pos.getY() - renderHeight
@@ -379,8 +378,8 @@ public class ClientTickHandler {
         }
 
         // Draw main title (first line)
-        float textX = xLeft + (invalidRender ? 0 : iconSize - iconSize / 2);
-        mc.fontRenderer.drawStringWithShadow(veinInfoStrings.get(0), textX, yBase, 0xFFFFFF);
+        float textX = xLeft + (invalidRender ? 0 : ScreeSpaceUtil.getXOffset(pos,iconSize - iconSize / 2));
+        mc.fontRenderer.drawStringWithShadow(veinInfoStrings.get(0), textX, isNullVein? yBase +  ScreeSpaceUtil.getYOffset(pos,paddingTopBar): yBase, 0xFFFFFF);
 
         // Draw remaining text lines
         for (int i = 1; i < veinInfoStrings.size(); ++i) {
@@ -395,6 +394,7 @@ public class ClientTickHandler {
         int finalHeight = renderHeight + 2;
         ScreeSpaceUtil.incrementY(pos, finalHeight);
     }
+    private static boolean isNullVein = false;
 
     @SubscribeEvent
 	public void onClientTick(TickEvent.ClientTickEvent event) {
@@ -424,6 +424,7 @@ public class ClientTickHandler {
                 result.add(I18n.format(currItem.getItemStackDisplayName(new ItemStack(currItem))));
             }
 
+            isNullVein = false;
             return result;
         }
 
@@ -442,10 +443,12 @@ public class ClientTickHandler {
         // at this point, vein info must be null
         if (hasCached) {
             result.add(I18n.format("warforge.info.vein.null"));
+            isNullVein = true;
             return result;
         }
 
         result.add(I18n.format("warforge.info.vein.waiting"));
+        isNullVein = true;
         return result;
     }
 

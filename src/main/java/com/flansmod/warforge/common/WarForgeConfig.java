@@ -1,6 +1,5 @@
 package com.flansmod.warforge.common;
 
-import com.flansmod.warforge.client.util.ScreeSpaceUtil;
 import com.flansmod.warforge.common.network.PacketSyncConfig;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
@@ -11,7 +10,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.flansmod.warforge.client.util.ScreeSpaceUtil.*;
+import static com.flansmod.warforge.client.util.ScreeSpaceUtil.ScreenPos;
 import static com.flansmod.warforge.common.CommonProxy.YIELD_QUALITY_MULTIPLIER;
 
 public class WarForgeConfig {
@@ -100,9 +99,9 @@ public class WarForgeConfig {
     public static boolean ENABLE_TPA_POTIONS = true;
 
     public static ScreenPos POS_TIMERS = ScreenPos.BOTTOM_RIGHT;
-    public static ScreenPos POS_VEIN_INDICATOR = ScreenPos.BOTTOM;
+    public static ScreenPos POS_VEIN_INDICATOR = ScreenPos.TOP_LEFT;
     public static ScreenPos POS_TOAST_INDICATOR = ScreenPos.TOP;
-    public static ScreenPos POS_SIEGE =  ScreenPos.TOP;
+    public static ScreenPos POS_SIEGE = ScreenPos.BOTTOM_LEFT;
 
 
     public static long FACTIONS_BOT_CHANNEL_ID = 799595436154683422L;
