@@ -376,6 +376,7 @@ public class FactionStorage {
                 TileEntity te = MC_SERVER.getWorld(blockPos.dim).getTileEntity(blockPos.toRegularPos());
                 onNonCitadelClaimPlaced((IClaim) te, attackers);
             }
+            attackers.increaseSiegeMomentum();
         } else {
             if (WarForgeConfig.DEFENDER_CONQUERED_CHUNK_PERIOD > 0) {
                 conqueredChunks.put(chunkPos, new ObjectIntPair<>(copyUUID(defenders.uuid), WarForgeConfig.DEFENDER_CONQUERED_CHUNK_PERIOD)); // defenders get won claims defended
@@ -386,6 +387,7 @@ public class FactionStorage {
             attackers.messageAll(new TextComponentTranslation("warforge.info.siege_lost_attackers", attackers.name, blockPos.toFancyString()));
             defenders.messageAll(new TextComponentTranslation("warforge.info.siege_won_defenders", defenders.name, blockPos.toFancyString()));
             defenders.notoriety += WarForgeConfig.NOTORIETY_PER_SIEGE_DEFEND_SUCCESS;
+            attackers.stopMomentum();
         }
 
         if (doCleanup) siege.onCompleted(successful);
@@ -812,11 +814,25 @@ public class FactionStorage {
                     defending.name, TimeHelper.formatTime(conqueredChunks.get(defendingPos.toChunkPos()).getRight())));
             return;
         }
+        long currentTimeStamp = System.currentTimeMillis();
+        final int SIEGE_BASE_TIME = 30 * 60;//30 min
+        int maxTime;
+        //TODO: Make it configurable
+        if (currentTimeStamp > attacking.getMomentumExpireryTimestamp())
+            maxTime = SIEGE_BASE_TIME;
+        else
+            maxTime = switch (attacking.getSiegeMomentum()) {
+                case 1 -> Math.round(SIEGE_BASE_TIME * 0.9f);
+                case 2 -> Math.round(SIEGE_BASE_TIME*0.8f);
+                case 3 -> Math.round(SIEGE_BASE_TIME*0.75f);
+                case 4 -> Math.round(SIEGE_BASE_TIME*0.50f);
+                default -> SIEGE_BASE_TIME;
+            };
 
-        Siege siege = new Siege(attacking.uuid, defendingFactionID, defendingPos);
+
+        Siege siege = new Siege(attacking.uuid, defendingFactionID, defendingPos, maxTime );
         siege.attackingCamp.add(siegeCampPos);
 
-        //requestPlaceFlag((EntityPlayerMP)factionOfficer, siegeCampPos);
         sieges.put(defendingChunk, siege);
         siegeTE.setSiegeTarget(defendingPos);
         siege.Start();
@@ -825,7 +841,7 @@ public class FactionStorage {
 
     }
 
-    public void EndSiege(DimBlockPos getPos) {
+    public void endSiege(DimBlockPos getPos) {
         Siege siege = sieges.get(getPos.toChunkPos());
         if (siege != null) {
             siege.onCancelled();
@@ -833,7 +849,7 @@ public class FactionStorage {
         }
     }
 
-    public void RequestOpClaim(EntityPlayer op, DimChunkPos pos, UUID factionID) {
+    public void requestOpClaim(EntityPlayer op, DimChunkPos pos, UUID factionID) {
         Faction zone = getFaction(factionID);
         if (zone == null) {
             op.sendMessage(new TextComponentString("Could not find that faction"));
@@ -862,7 +878,7 @@ public class FactionStorage {
 
     }
 
-    public void SendSiegeInfoToNearby(DimChunkPos siegePos) {
+    public void sendSiegeInfoToNearby(DimChunkPos siegePos) {
         Siege siege = sieges.get(siegePos);
         if (siege != null) {
             SiegeCampProgressInfo info = siege.GetSiegeInfo();
@@ -878,7 +894,7 @@ public class FactionStorage {
         for (HashMap.Entry<DimChunkPos, Siege> kvp : FACTIONS.sieges.entrySet()) {
             kvp.getValue().CalculateBasePower();
 
-            SendSiegeInfoToNearby(kvp.getKey());
+            sendSiegeInfoToNearby(kvp.getKey());
         }
 
     }
@@ -984,7 +1000,7 @@ public class FactionStorage {
         return true;
     }
 
-    public boolean RequestSetFactionColour(EntityPlayerMP player, int colour) {
+    public boolean requestSetFactionColour(EntityPlayerMP player, int colour) {
         Faction faction = getFactionOfPlayer(player.getUniqueID());
         if (faction == null) {
             player.sendMessage(new TextComponentString("You are not in a faction"));
@@ -1023,7 +1039,7 @@ public class FactionStorage {
 
     }
 
-    public boolean RequestMoveCitadel(EntityPlayerMP player, DimBlockPos pos) {
+    public boolean requestMoveCitadel(EntityPlayerMP player, DimBlockPos pos) {
         Faction faction = getFactionOfPlayer(player.getUniqueID());
         if (faction == null) {
             player.sendMessage(new TextComponentString("You are not in a faction"));

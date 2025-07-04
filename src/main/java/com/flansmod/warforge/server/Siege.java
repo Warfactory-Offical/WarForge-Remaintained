@@ -29,6 +29,7 @@ public class Siege {
     public ArrayList<DimBlockPos> attackingCamp;
     public DimBlockPos defendingClaim;
     public long timeElapsed;
+    public long maxTime;
 
     //TODO: New Kill requirement math: players in team * type of claim (2 - basic, 3 - reinforced)
     // This is defined by the chunk we are attacking and what type it is
@@ -58,11 +59,12 @@ public class Siege {
         attackingCamp = new ArrayList<>(4);
     }
 
-    public Siege(UUID attacker, UUID defender, DimBlockPos defending) {
+    public Siege(UUID attacker, UUID defender, DimBlockPos defending, long maxTime ) {
         attackingCamp = new ArrayList<>(4);
         attackingFaction = attacker;
         defendingFaction = defender;
         defendingClaim = defending;
+        this.maxTime = maxTime;
 
         TileEntity te = WarForgeMod.MC_SERVER.getWorld(defending.dim).getTileEntity(defending.toRegularPos());
         if (te instanceof IClaim) {
@@ -166,11 +168,12 @@ public class Siege {
 
         CalculateBasePower();
         WarForgeMod.INSTANCE.messageAll(new TextComponentString(attackers.name + " started a siege against " + defenders.name), true);
-        WarForgeMod.FACTIONS.SendSiegeInfoToNearby(defendingClaim.toChunkPos());
+        WarForgeMod.FACTIONS.sendSiegeInfoToNearby(defendingClaim.toChunkPos());
         return true;
     }
 
     public void updateSiegeTimer(){
+        timeElapsed++;
     }
 
     public void AdvanceDay() {
@@ -203,7 +206,7 @@ public class Siege {
             attackers.messageAll(new TextComponentString("Your siege on " + defenders.name + " at " + defendingClaim.toFancyString() + " did not shift today. The progress is at " + GetAttackProgress() + "/" + mBaseDifficulty));
         }
 
-        WarForgeMod.FACTIONS.SendSiegeInfoToNearby(defendingClaim.toChunkPos());
+        WarForgeMod.FACTIONS.sendSiegeInfoToNearby(defendingClaim.toChunkPos());
     }
 
     public void CalculateBasePower() {
@@ -312,7 +315,7 @@ public class Siege {
 
         // update progress appropriately; either valid attack, or def by this point, so state of one bool implies the state of the other
         mAttackProgress += attackValid ? WarForgeConfig.SIEGE_SWING_PER_DEFENDER_DEATH : -WarForgeConfig.SIEGE_SWING_PER_ATTACKER_DEATH;
-        WarForgeMod.FACTIONS.SendSiegeInfoToNearby(defendingClaim.toChunkPos());
+        WarForgeMod.FACTIONS.sendSiegeInfoToNearby(defendingClaim.toChunkPos());
 
         // build notification
         ITextComponent notification = new TextComponentTranslation("warforge.notification.siege_death",
