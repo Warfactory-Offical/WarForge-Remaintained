@@ -8,8 +8,11 @@ import com.flansmod.warforge.common.network.FactionDisplayInfo;
 import com.flansmod.warforge.common.network.PlayerDisplayInfo;
 import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.util.DimChunkPos;
+import com.flansmod.warforge.common.util.TimeHelper;
 import com.flansmod.warforge.server.Leaderboard.FactionStat;
 import com.mojang.authlib.GameProfile;
+import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
@@ -41,7 +44,7 @@ import java.util.function.Predicate;
  */
 public class Faction {
     public static final UUID nullUuid = new UUID(0, 0);
-    private static final float INVITE_DECAY_TIME = 20 * 60 * 5; // 5 minutes, TODO: Config
+    private static final float INVITE_DECAY_TIME = 20 * 60 * WarForgeConfig.INVITE_DECAY_TIME;
     public UUID uuid;
     public int onlinePlayerCount = 0; // the number of current online players
     public long lastSiegeTimestamp = 0;
@@ -58,6 +61,22 @@ public class Faction {
     public int legacy = 0;
     public short citadelLevel = 0;
     public int citadelMoveCooldown = 1;
+
+    public void increaseSiegeMomentum() {
+        if(siegeMomentum < WarForgeConfig.SIEGE_MOMENTUM_MAX)
+            siegeMomentum++;
+        momentumExpireryTimestamp = System.currentTimeMillis() + (long) WarForgeConfig.SIEGE_MOMENTUM_DURATION * 60 * 1000;
+    }
+
+    public void stopMomentum(){
+        siegeMomentum = 0;
+        momentumExpireryTimestamp = 0L;
+    }
+
+    @Getter
+    private byte siegeMomentum = 0;
+    @Getter
+    private long momentumExpireryTimestamp = 0L;
     //Only for new system
     public long citadelMoveTimeStamp = 0;
 
@@ -80,10 +99,6 @@ public class Faction {
     // the map used in getPlayerByUUID removes players on logout
     private static EntityPlayer getPlayer(UUID playerID) {
         return WarForgeMod.MC_SERVER.getPlayerList().getPlayerByUUID(playerID);
-    }
-
-    public void setLastSiegeTimestamp(long timestamp) {
-        lastSiegeTimestamp = timestamp;
     }
 
     public int getMemberCount() {
@@ -127,12 +142,6 @@ public class Faction {
         if (loggedInToday) {
             legacy += WarForgeConfig.LEGACY_PER_DAY;
         }
-
-//		for(HashMap.Entry<UUID, PlayerData> kvp : mMembers.entrySet())
-//		{
-//			kvp.getValue().mHasMovedFlagToday = false;
-//		}
-
         loggedInToday = false;
         citadelMoveCooldown--;
     }
@@ -413,55 +422,6 @@ public class Faction {
         this.colour = colour;
     }
 
-    public void AwardYields() {
-        //
-        for (HashMap.Entry<DimBlockPos, Integer> kvp : claims.entrySet()) {
-            DimBlockPos pos = kvp.getKey();
-            World world = WarForgeMod.MC_SERVER.getWorld(pos.dim);
-
-            // If It's loaded, process immediately
-            if (world.isBlockLoaded(pos)) {
-                TileEntity te = world.getTileEntity(pos.toRegularPos());
-                if (te instanceof TileEntityYieldCollector) {
-                    ((TileEntityYieldCollector) te).processYield(1);
-                    kvp.setValue(0);  // no claims saved
-                }
-            }
-            // Otherwise, cache the number of times it needs to process when it next loads
-            else {
-                kvp.setValue(kvp.getValue() + 1);
-            }
-        }
-    }
-
-    public void Promote(UUID playerID) {
-        PlayerData data = members.get(playerID);
-        if (data != null) {
-            if (data.role == Role.MEMBER) {
-                data.role = Role.OFFICER;
-                GameProfile profile = WarForgeMod.MC_SERVER.getPlayerProfileCache().getProfileByUUID(playerID);
-                if (profile != null)
-                    messageAll(new TextComponentString(profile.getName() + " was promoted to officer"));
-            }
-        }
-    }
-
-    public void Demote(UUID playerID) {
-        PlayerData data = members.get(playerID);
-        if (data != null) {
-            if (data.role == Role.OFFICER) {
-                data.role = Role.MEMBER;
-                GameProfile profile = WarForgeMod.MC_SERVER.getPlayerProfileCache().getProfileByUUID(playerID);
-                if (profile != null)
-                    messageAll(new TextComponentString(profile.getName() + " was demoted to member"));
-            }
-        }
-    }
-
-    public void SetColour(int colour) {
-        colour = colour;
-    }
-
 
     public void readFromNBT(NBTTagCompound tags) {
         claims.clear();
@@ -507,6 +467,8 @@ public class Faction {
         citadelMoveCooldown = tags.getInteger("citadelMoveCooldown");
         citadelMoveTimeStamp = tags.getLong("citadelMoveTimestamp");
         lastSiegeTimestamp = tags.getLong("lastSiegeTimestamp");
+        siegeMomentum = tags.getByte("siegeMomentum");
+        momentumExpireryTimestamp = tags.getLong("momentumExpireryTimestamp");
 
 
 
@@ -563,6 +525,9 @@ public class Faction {
         tags.setInteger("citadelMoveCooldown", citadelMoveCooldown);
         tags.setLong("citadelMoveTimestamp", citadelMoveTimeStamp);
         tags.setLong("lastSiegeTimestamp", lastSiegeTimestamp);
+
+        tags.setByte("siegeMomentum",siegeMomentum);
+        tags.setLong("momentumExpireryTimestamp", lastSiegeTimestamp);
 
         // Add member data
         NBTTagList memberList = new NBTTagList();

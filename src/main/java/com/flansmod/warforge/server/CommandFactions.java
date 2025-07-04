@@ -400,7 +400,7 @@ public class CommandFactions extends CommandBase {
                     if (sender instanceof EntityPlayer) {
                         EntityPlayer player = (EntityPlayer) sender;
                         DimChunkPos pos = new DimBlockPos(player.dimension, player.getPosition()).toChunkPos();
-                        WarForgeMod.FACTIONS.RequestOpClaim(player, pos, FactionStorage.SAFE_ZONE_ID);
+                        WarForgeMod.FACTIONS.requestOpClaim(player, pos, FactionStorage.SAFE_ZONE_ID);
                     } else {
                         sender.sendMessage(new TextComponentString("Use an in-game operator account."));
                     }
@@ -416,7 +416,7 @@ public class CommandFactions extends CommandBase {
                     if (sender instanceof EntityPlayer) {
                         EntityPlayer player = (EntityPlayer) sender;
                         DimChunkPos pos = new DimBlockPos(player.dimension, player.getPosition()).toChunkPos();
-                        WarForgeMod.FACTIONS.RequestOpClaim(player, pos, FactionStorage.WAR_ZONE_ID);
+                        WarForgeMod.FACTIONS.requestOpClaim(player, pos, FactionStorage.WAR_ZONE_ID);
                     } else {
                         sender.sendMessage(new TextComponentString("Use an in-game operator account."));
                     }

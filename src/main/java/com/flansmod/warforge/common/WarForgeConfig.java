@@ -43,6 +43,10 @@ public class WarForgeConfig {
     public static float YIELD_DAY_LENGTH = 1.0f; // In real-world hours
     // Sieges
     public static boolean SIEGE_ENABLE_NEW_TIMER = true;
+    public static byte SIEGE_MOMENTUM_MAX = 4;
+    public static int SIEGE_MOMENTUM_DURATION = 60;//Minutes
+
+
     public static int SIEGE_SWING_PER_DEFENDER_DEATH = 1;
     public static int SIEGE_SWING_PER_ATTACKER_DEATH = 1;
     public static int SIEGE_SWING_PER_DAY_ELAPSED_BASE = 1;
@@ -80,6 +84,7 @@ public class WarForgeConfig {
     public static String[] VAULT_BLOCK_IDS = new String[]{"minecraft:gold_block"};
     public static ArrayList<Block> VAULT_BLOCKS = new ArrayList<Block>();
     public static float SHOW_NEW_AREA_TIMER = 200.0f;
+    public static int INVITE_DECAY_TIME = 5;
     public static int RANDOM_BORDER_REDRAW_DENOMINATOR = 5;
     public static int FACTION_NAME_LENGTH_MAX = 32;
     public static boolean BLOCK_ENDER_CHEST = false;

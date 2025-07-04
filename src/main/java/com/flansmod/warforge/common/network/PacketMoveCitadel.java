@@ -34,7 +34,7 @@ public class PacketMoveCitadel extends PacketBase
 	@Override
 	public void handleServerSide(EntityPlayerMP player) 
 	{
-		WarForgeMod.FACTIONS.RequestMoveCitadel(player, pos);
+		WarForgeMod.FACTIONS.requestMoveCitadel(player, pos);
 	}
 
 	@Override
