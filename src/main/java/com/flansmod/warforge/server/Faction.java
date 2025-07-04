@@ -1,22 +1,15 @@
 package com.flansmod.warforge.server;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.function.Predicate;
-
-import com.flansmod.warforge.common.util.DimBlockPos;
-import com.flansmod.warforge.common.util.DimChunkPos;
 import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.IClaim;
 import com.flansmod.warforge.common.blocks.TileEntityYieldCollector;
 import com.flansmod.warforge.common.network.FactionDisplayInfo;
 import com.flansmod.warforge.common.network.PlayerDisplayInfo;
+import com.flansmod.warforge.common.util.DimBlockPos;
+import com.flansmod.warforge.common.util.DimChunkPos;
 import com.flansmod.warforge.server.Leaderboard.FactionStat;
 import com.mojang.authlib.GameProfile;
-
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
@@ -35,6 +28,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Predicate;
 
 
 /**
@@ -59,6 +58,8 @@ public class Faction {
     public int legacy = 0;
     public short citadelLevel = 0;
     public int citadelMoveCooldown = 1;
+    //Only for new system
+    public long citadelMoveTimeStamp = 0;
 
     public Faction() {
         members = new HashMap<UUID, PlayerData>();
@@ -303,66 +304,10 @@ public class Faction {
 
     }
 
-    public void claimNoTileEntity(DimChunkPos pos) {
+    public void claimNoTileEntity(DimChunkPos pos) {//Intetesting
         claims.put(new DimBlockPos(pos.mDim, pos.getXStart(), 0, pos.getZStart()), 0);
     }
 
-//	public boolean placeFlag(EntityPlayer player, DimBlockPos claimPos)
-//	{
-//		if(!claims.containsKey(claimPos))
-//		{
-//			player.sendMessage(new TextComponentString("Your faction does not own this claim"));
-//			return false;
-//		}
-//
-//		TileEntity te = WarForgeMod.MC_SERVER.getWorld(claimPos.dim).getTileEntity(claimPos.toRegularPos());
-//		if(!(te instanceof IClaim))
-//		{
-//			player.sendMessage(new TextComponentString("Internal error"));
-//			WarForgeMod.LOGGER.error("Faction claim could not get tile entity");
-//			return false;
-//		}
-//
-//		PlayerData data = members.get(player.getUniqueID());
-//		if(data == null)
-//		{
-//			player.sendMessage(new TextComponentString("Your faction member data is corrupt"));
-//			return false;
-//		}
-//
-//		//if(data.mHasMovedFlagToday)
-//		if(!canPlayerMoveFlag(player.getUniqueID()))
-//		{
-//			player.sendMessage(new TextComponentString("You have already moved your flag today. Check /f time"));
-//			return false;
-//		}
-//
-//		if(data.flagPosition.equals(claimPos))
-//		{
-//			player.sendMessage(new TextComponentString("Your flag is already here"));
-//			return false;
-//		}
-//
-//		// Clean up old pos
-//		if(!data.flagPosition.equals(DimBlockPos.ZERO))
-//		{
-//			TileEntity oldTE = WarForgeMod.MC_SERVER.getWorld(data.flagPosition.dim)
-//					.getTileEntity(data.flagPosition.toRegularPos());
-//			if(oldTE instanceof IClaim)
-//			{
-//				((IClaim)oldTE).onServerRemovePlayerFlag(player.getName());
-//			}
-//		}
-//
-//		data.flagPosition = claimPos;
-//		//data.mHasMovedFlagToday = true;
-//		data.addCooldown();
-//		((IClaim)te).onServerSetPlayerFlag(player.getName());
-//		messageAll(new TextComponentString(player.getName() + " placed their flag at " + claimPos.toFancyString()));
-//		player.sendMessage(new TextComponentString("Your flag can move again on the next siege day"));
-//
-//		return true;
-//	}
 
     // Messaging
     public void messageAll(ITextComponent chat) {
@@ -429,7 +374,7 @@ public class Faction {
                 TileEntity te = world.getTileEntity(pos.toRegularPos());
                 if (te instanceof TileEntityYieldCollector) {
                     ((TileEntityYieldCollector) te).processYield(1);
-					kvp.setValue(0);
+                    kvp.setValue(0);
                 }
             }
             // Otherwise, cache the number of times it needs to process when it next loads
@@ -468,78 +413,54 @@ public class Faction {
         this.colour = colour;
     }
 
-	public void AwardYields()
-	{
-		//
-		for(HashMap.Entry<DimBlockPos, Integer> kvp : claims.entrySet())
-		{
-			DimBlockPos pos = kvp.getKey();
-			World world = WarForgeMod.MC_SERVER.getWorld(pos.dim);
+    public void AwardYields() {
+        //
+        for (HashMap.Entry<DimBlockPos, Integer> kvp : claims.entrySet()) {
+            DimBlockPos pos = kvp.getKey();
+            World world = WarForgeMod.MC_SERVER.getWorld(pos.dim);
 
-			// If It's loaded, process immediately
-			if(world.isBlockLoaded(pos))
-			{
-				TileEntity te = world.getTileEntity(pos.toRegularPos());
-				if(te instanceof TileEntityYieldCollector)
-				{
-					((TileEntityYieldCollector)te).processYield(1);
-					kvp.setValue(0);  // no claims saved
-				}
-			}
-			// Otherwise, cache the number of times it needs to process when it next loads
-			else
-			{
-				kvp.setValue(kvp.getValue() + 1);
-			}
-		}
-	}
+            // If It's loaded, process immediately
+            if (world.isBlockLoaded(pos)) {
+                TileEntity te = world.getTileEntity(pos.toRegularPos());
+                if (te instanceof TileEntityYieldCollector) {
+                    ((TileEntityYieldCollector) te).processYield(1);
+                    kvp.setValue(0);  // no claims saved
+                }
+            }
+            // Otherwise, cache the number of times it needs to process when it next loads
+            else {
+                kvp.setValue(kvp.getValue() + 1);
+            }
+        }
+    }
 
-	public void Promote(UUID playerID)
-	{
-		PlayerData data = members.get(playerID);
-		if(data != null)
-		{
-			if(data.role == Role.MEMBER)
-			{
-				data.role = Role.OFFICER;
-				GameProfile profile = WarForgeMod.MC_SERVER.getPlayerProfileCache().getProfileByUUID(playerID);
-				if(profile != null)
-					messageAll(new TextComponentString(profile.getName() + " was promoted to officer"));
-			}
-		}
-	}
+    public void Promote(UUID playerID) {
+        PlayerData data = members.get(playerID);
+        if (data != null) {
+            if (data.role == Role.MEMBER) {
+                data.role = Role.OFFICER;
+                GameProfile profile = WarForgeMod.MC_SERVER.getPlayerProfileCache().getProfileByUUID(playerID);
+                if (profile != null)
+                    messageAll(new TextComponentString(profile.getName() + " was promoted to officer"));
+            }
+        }
+    }
 
-	public void Demote(UUID playerID)
-	{
-		PlayerData data = members.get(playerID);
-		if(data != null)
-		{
-			if(data.role == Role.OFFICER)
-			{
-				data.role = Role.MEMBER;
-				GameProfile profile = WarForgeMod.MC_SERVER.getPlayerProfileCache().getProfileByUUID(playerID);
-				if(profile != null)
-					messageAll(new TextComponentString(profile.getName() + " was demoted to member"));
-			}
-		}
-	}
+    public void Demote(UUID playerID) {
+        PlayerData data = members.get(playerID);
+        if (data != null) {
+            if (data.role == Role.OFFICER) {
+                data.role = Role.MEMBER;
+                GameProfile profile = WarForgeMod.MC_SERVER.getPlayerProfileCache().getProfileByUUID(playerID);
+                if (profile != null)
+                    messageAll(new TextComponentString(profile.getName() + " was demoted to member"));
+            }
+        }
+    }
 
-	public boolean CanPlayerMoveFlag(UUID uniqueID)
-	{
-		PlayerData data = members.get(uniqueID);
-		if(data != null)
-		{
-			//return !data.mHasMovedFlagToday;
-		if(data.moveFlagCooldown - System.currentTimeMillis() <= 0)
-				return true;
-		}
-		return false;
-	}
-
-	public void SetColour(int colour)
-	{
-		colour = colour;
-	}
+    public void SetColour(int colour) {
+        colour = colour;
+    }
 
 
     public void readFromNBT(NBTTagCompound tags) {
@@ -584,6 +505,10 @@ public class Faction {
         legacy = tags.getInteger("legacy");
 
         citadelMoveCooldown = tags.getInteger("citadelMoveCooldown");
+        citadelMoveTimeStamp = tags.getLong("citadelMoveTimestamp");
+        lastSiegeTimestamp = tags.getLong("lastSiegeTimestamp");
+
+
 
         // Get member data
         NBTTagList memberList = tags.getTagList("members", 10); // NBTTagCompound (see NBTBase.class)
@@ -636,6 +561,8 @@ public class Faction {
         tags.setInteger("legacy", legacy);
 
         tags.setInteger("citadelMoveCooldown", citadelMoveCooldown);
+        tags.setLong("citadelMoveTimestamp", citadelMoveTimeStamp);
+        tags.setLong("lastSiegeTimestamp", lastSiegeTimestamp);
 
         // Add member data
         NBTTagList memberList = new NBTTagList();
@@ -685,7 +612,6 @@ public class Faction {
 
         public void writeToNBT(NBTTagCompound tags) {
             tags.setString("role", role.name());
-            //tags.setBoolean("movedFlag", mHasMovedFlagToday);
             tags.setLong("flagCooldown", moveFlagCooldown);
             tags.setInteger("dim", flagPosition.dim);
             tags.setInteger("x", flagPosition.getX());
@@ -693,6 +619,7 @@ public class Faction {
             tags.setInteger("z", flagPosition.getZ());
         }
 
+        @Deprecated
         public void addCooldown() {
             moveFlagCooldown = System.currentTimeMillis() + (long) (WarForgeConfig.FLAG_COOLDOWN * 60 * 1000);
         }

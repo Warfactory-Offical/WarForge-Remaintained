@@ -104,6 +104,7 @@ public class WarForgeMod implements ILateMixinLoader {
     // Timers
     public static long serverTick = 0L;
     public static long currTickTimestamp = 0L;
+    public static long serverStopTimestamp = 0L;
     // Border toggle
     public static boolean showBorders = true;
     public static TimeHelper timeHelper = new TimeHelper();
@@ -625,6 +626,7 @@ public class WarForgeMod implements ILateMixinLoader {
         timestampOfFirstDay = tags.getLong("zero-timestamp");
         numberOfSiegeDaysTicked = tags.getLong("num-days-elapsed");
         numberOfYieldDaysTicked = tags.getLong("num-yields-awarded");
+        serverStopTimestamp = tags.getLong("shutdown-timestamp");
     }
 
     private void WriteToNBT(NBTTagCompound tags) {
@@ -633,6 +635,7 @@ public class WarForgeMod implements ILateMixinLoader {
         tags.setLong("zero-timestamp", timestampOfFirstDay);
         tags.setLong("num-days-elapsed", numberOfSiegeDaysTicked);
         tags.setLong("num-yields-awarded", numberOfYieldDaysTicked);
+        tags.setLong("shutdown-timestamp", serverStopTimestamp);
     }
 
     @EventHandler

@@ -1,7 +1,10 @@
 package com.flansmod.warforge.server;
 
 import com.flansmod.warforge.api.ObjectIntPair;
-import com.flansmod.warforge.common.*;
+import com.flansmod.warforge.common.Content;
+import com.flansmod.warforge.common.Sounds;
+import com.flansmod.warforge.common.WarForgeConfig;
+import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.IClaim;
 import com.flansmod.warforge.common.blocks.TileEntityCitadel;
 import com.flansmod.warforge.common.blocks.TileEntityClaim;
@@ -257,7 +260,8 @@ public class FactionStorage {
             }
         }
     }
-    public void updateSiegeTimers(){
+
+    public void updateSiegeTimers() {
         for (HashMap.Entry<DimChunkPos, Siege> kvp : sieges.entrySet()) {
             kvp.getValue().AdvanceDay();
         }
@@ -1037,12 +1041,16 @@ public class FactionStorage {
                 return false;
             }
         }
+        long currentTimestamp = System.currentTimeMillis();
 
-
-        if (faction.citadelMoveCooldown > 0) {
+        if (!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER && faction.citadelMoveCooldown > 0) {
             player.sendMessage(new TextComponentString("You must wait an additional " + faction.citadelMoveCooldown + " days until you can move your citadel"));
             return false;
+        } else if (WarForgeConfig.SIEGE_ENABLE_NEW_TIMER && faction.citadelMoveTimeStamp > currentTimestamp) {
+            player.sendMessage(new TextComponentString("You must wait an additional " + TimeHelper.formatTime(faction.citadelMoveTimeStamp - currentTimestamp) + " days until you can move your citadel"));
+
         }
+
 
         // Set new citadel
         MC_SERVER.getWorld(pos.dim).setBlockState(pos.toRegularPos(), Content.citadelBlock.getDefaultState());
