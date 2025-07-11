@@ -266,7 +266,7 @@ public class ClientTickHandler {
 
         // Siege progress
         if (!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER || UI_DEBUG) {
-            String siegeText = "Siege Progress: " + formatTime(nextSiegeDayMs - System.currentTimeMillis());
+            String siegeText = "Siege Progress: " + formatPaddedTimer(nextSiegeDayMs - System.currentTimeMillis());
             int textWidth = mc.fontRenderer.getStringWidth(siegeText);
             int x = ScreenSpaceUtil.shouldCenterX(pos) ? ScreenSpaceUtil.centerX(screenWidth, textWidth) : ScreenSpaceUtil.getX(pos, textWidth) + ScreenSpaceUtil.getXOffset(pos, padding);
             int ySiege = pos.getY() + ScreenSpaceUtil.getYOffset(pos, textHeight);
@@ -276,7 +276,7 @@ public class ClientTickHandler {
         }
 
         // Next yields
-        String yieldText = "Next yields: " + formatTime(nextYieldDayMs - System.currentTimeMillis());
+        String yieldText = "Next yields: " + formatPaddedTimer(nextYieldDayMs - System.currentTimeMillis());
         int textWidth = mc.fontRenderer.getStringWidth(yieldText);
         int x = ScreenSpaceUtil.shouldCenterX(pos) ? ScreenSpaceUtil.centerX(screenWidth, textWidth) : ScreenSpaceUtil.getX(pos, textWidth) + ScreenSpaceUtil.getXOffset(pos, padding);
         int yYield = pos.getY() + ScreenSpaceUtil.getYOffset(pos, textHeight);
@@ -285,7 +285,7 @@ public class ClientTickHandler {
         ScreenSpaceUtil.incrementY(pos, textHeight);
     }
 
-    private String formatTime(long msRemaining) {
+    public static String formatPaddedTimer(long msRemaining) {
         long s = msRemaining / 1000;
         long m = s / 60;
         long h = m / 60;
@@ -474,7 +474,13 @@ public class ClientTickHandler {
 
         renderSiegeText(mc, infoToRender, xText, yText);
         if(WarForgeConfig.SIEGE_ENABLE_NEW_TIMER)
-            renderSiegeTimer;
+            renderSiegeTimer(mc, infoToRender, xText, yText+5);
+    }
+
+    private void renderSiegeTimer(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText){
+        String siegeText = formatPaddedTimer( infoToRender.timeProgress);
+        int textWidth = mc.fontRenderer.getStringWidth(siegeText);
+        mc.fontRenderer.drawStringWithShadow(siegeText, xText-textWidth, yText + 6, 0xFFFFFF);
     }
 
     private void renderSiegeProgressBar(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText, float attackR, float attackG, float attackB, float defendR, float defendG, float defendB, float scroll) {

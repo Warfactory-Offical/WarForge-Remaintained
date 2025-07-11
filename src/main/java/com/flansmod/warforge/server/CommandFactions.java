@@ -1,13 +1,13 @@
 package com.flansmod.warforge.server;
 
-import com.flansmod.warforge.common.util.DimBlockPos;
-import com.flansmod.warforge.common.util.DimChunkPos;
 import com.flansmod.warforge.common.ProtectionsModule;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.FactionDisplayInfo;
 import com.flansmod.warforge.common.network.LeaderboardInfo;
 import com.flansmod.warforge.common.network.PacketFactionInfo;
 import com.flansmod.warforge.common.network.PacketLeaderboardInfo;
+import com.flansmod.warforge.common.util.DimBlockPos;
+import com.flansmod.warforge.common.util.DimChunkPos;
 import com.flansmod.warforge.server.Faction.PlayerData;
 import com.flansmod.warforge.server.Leaderboard.FactionStat;
 import com.mojang.authlib.GameProfile;
@@ -34,7 +34,7 @@ public class CommandFactions extends CommandBase {
     };
     private static final String[] tabCompletionsOp = new String[]{
             "invite", "accept", "disband", "expel", "leave", "time", "info", "top", "notoriety", "wealth", "legacy",
-            "promote", "demote", "msg", "setleader", "borders",
+            "promote", "demote", "msg", "setleader, siege", "borders",
             "safe", "war", "protection", "resetflagcooldowns",
     };
 
@@ -438,6 +438,63 @@ public class CommandFactions extends CommandBase {
                 } else {
                     sender.sendMessage(new TextComponentString("You are not op."));
                 }
+                break;
+            }
+            case "siege": {
+                if (!WarForgeMod.isOp(sender)) {
+                    sender.sendMessage(new TextComponentString("You are not op."));
+                    break;
+                }
+                if (args.length < 1) {
+                    sender.sendMessage(new TextComponentString("More arguments required. Possible arguments: list, terminate"));
+                    break;
+                }
+                switch (args[1]) {
+                    case "list", "l" -> {
+                        var STORAGE = WarForgeMod.FACTIONS;
+                        var sieges = STORAGE.getSieges();
+                        sender.sendMessage(new TextComponentString("List of current sieges.\nFormat: <ChunkX>, <ChunkY>, <DimID>; <Attacker>-<Defender>"));
+
+
+                        sieges.forEach((dpos, siege) -> {
+                            TextComponentString line = new TextComponentString("§7" + dpos.x + ", " + dpos.z + ", " + dpos.mDim + "§r;  " + STORAGE.getFaction(siege.attackingFaction) + "-" + STORAGE.getFaction(siege.defendingFaction));
+                            sender.sendMessage(line);
+                        });
+                    }
+                    case "terminate", "t" -> {
+                        if (args.length < 4) {
+                            sender.sendMessage(new TextComponentString("Not enough arguments. Required: ChunkX, ChunkZ, Dim, <Conclusion type>"));
+                            sender.sendMessage(new TextComponentString("Conclusion types WIN, LOSS, NEUTRAL (counting from attacker perspective) Default: NEUTRAL"));
+                        }
+                        DimChunkPos dimPos;
+                        try {
+                            int cX = Integer.getInteger(args[2]);
+                            int cZ = Integer.getInteger(args[3]);
+                            int dim = Integer.getInteger(args[4]);
+
+                            dimPos = new DimChunkPos(dim, cX, cZ);
+                        } catch (NumberFormatException e) {
+                            sender.sendMessage(new TextComponentString("Incorrect arguments. Required: ChunkX, ChunkZ, Dim, <Conclusion type>"));
+                            sender.sendMessage(new TextComponentString("Conclusion types WIN, LOSS, NEUTRAL (counting from attacker perspective) Default: NEUTRAL"));
+                            break;
+                        }
+                        FactionStorage.siegeTermination termType;
+                        try {
+                            termType = FactionStorage.siegeTermination.valueOf(args[5]);
+                        } catch (Exception e) {
+                            termType = FactionStorage.siegeTermination.NEUTRAL;
+                        }
+
+                        var STORAGE = WarForgeMod.FACTIONS;
+                        var sieges = STORAGE.getSieges();
+                        if (!sieges.keySet().contains(dimPos)) {
+                            sender.sendMessage(new TextComponentString("Provided siege does not exist."));
+                        }
+                        STORAGE.handleCompletedSiege(dimPos, termType);
+                        sender.sendMessage(new TextComponentString("Terminated siege at: " + dimPos.x + ", " + dimPos.z + ", " + dimPos.mDim + " with termination type: " + termType.name()));
+                    }
+                }
+
                 break;
             }
             case "home": {
