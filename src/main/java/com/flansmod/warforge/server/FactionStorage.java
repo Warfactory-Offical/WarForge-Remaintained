@@ -20,6 +20,7 @@ import com.flansmod.warforge.common.util.TimeHelper;
 import com.flansmod.warforge.server.Faction.PlayerData;
 import com.flansmod.warforge.server.Faction.Role;
 import com.mojang.authlib.GameProfile;
+import lombok.Getter;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
@@ -55,6 +56,7 @@ public class FactionStorage {
     // So if you take one of these and try to look it up in the faction, check their active sieges too
     private final HashMap<DimChunkPos, UUID> mClaims = new HashMap<>();
     // This is all the currently active sieges, keyed by the defending position
+    @Getter
     private final HashMap<DimChunkPos, Siege> sieges = new HashMap<>();
     //This is all chunks that are under the "Grace" period
     public HashMap<DimChunkPos, ObjectIntPair<UUID>> conqueredChunks = new HashMap<>();
@@ -135,10 +137,6 @@ public class FactionStorage {
 
     public long getPlayerCooldown(UUID playerID) {
         return mFactions.get(playerID).members.get(playerID).moveFlagCooldown;
-    }
-
-    public HashMap<DimChunkPos, Siege> getSieges() {
-        return sieges;
     }
 
     public HashMap<DimChunkPos, UUID> getClaims() {
@@ -344,6 +342,83 @@ public class FactionStorage {
     public void handleCompletedSiege(DimChunkPos chunkPos) {
         handleCompletedSiege(chunkPos, true);
     }
+    public static enum siegeTermination{
+        WIN,LOSE,NEUTRAL
+    }
+
+
+    // Forceful siege termination, called via privlaged user
+    public void handleCompletedSiege(DimChunkPos chunkPos, siegeTermination termType) {
+        Siege siege = sieges.get(chunkPos);
+        if (siege == null) {
+            LOGGER.warn("Attempted to complete non-existent siege at {}", chunkPos);
+            return;
+        }
+
+        Faction attackers = getFaction(siege.attackingFaction);
+        Faction defenders = getFaction(siege.defendingFaction);
+
+        if (attackers == null || defenders == null) {
+            LOGGER.error("Invalid factions in completed siege. Nothing will happen.");
+            return;
+        }
+
+        DimBlockPos blockPos = defenders.getSpecificPosForClaim(chunkPos);
+
+        switch (termType) {
+            case WIN -> {
+                if (WarForgeConfig.ATTACKER_CONQUERED_CHUNK_PERIOD > 0) {
+                    conqueredChunks.put(chunkPos, new ObjectIntPair<>(copyUUID(attackers.uuid), WarForgeConfig.ATTACKER_CONQUERED_CHUNK_PERIOD));
+                    for (DimBlockPos siegeCampPos : siege.attackingCamp) {
+                        if (siegeCampPos != null)
+                            conqueredChunks.put(siegeCampPos.toChunkPos(), new ObjectIntPair<>(copyUUID(attackers.uuid), WarForgeConfig.ATTACKER_CONQUERED_CHUNK_PERIOD));
+                    }
+                }
+
+                defenders.onClaimLost(blockPos, true);
+                mClaims.remove(blockPos.toChunkPos());
+
+                attackers.messageAll(new TextComponentTranslation("warforge.info.siege_won_attackers", attackers.name, blockPos.toFancyString()));
+                defenders.messageAll(new TextComponentTranslation("warforge.info.siege_lost_defenders", defenders.name, blockPos.toFancyString()));
+                attackers.notoriety += WarForgeConfig.NOTORIETY_PER_SIEGE_ATTACK_SUCCESS;
+
+                if (WarForgeConfig.SIEGE_CAPTURE) {
+                    MC_SERVER.getWorld(blockPos.dim).setBlockState(blockPos.toRegularPos(), Content.basicClaimBlock.getDefaultState());
+                    TileEntity te = MC_SERVER.getWorld(blockPos.dim).getTileEntity(blockPos.toRegularPos());
+                    onNonCitadelClaimPlaced((IClaim) te, attackers);
+                }
+
+                attackers.increaseSiegeMomentum();
+                siege.onCompleted(true);
+            }
+
+            case LOSE -> {
+                if (WarForgeConfig.DEFENDER_CONQUERED_CHUNK_PERIOD > 0) {
+                    conqueredChunks.put(chunkPos, new ObjectIntPair<>(copyUUID(defenders.uuid), WarForgeConfig.DEFENDER_CONQUERED_CHUNK_PERIOD));
+                    for (DimBlockPos siegeCampPos : siege.attackingCamp) {
+                        if (siegeCampPos != null)
+                            conqueredChunks.put(siegeCampPos.toChunkPos(), new ObjectIntPair<>(copyUUID(defenders.uuid), WarForgeConfig.DEFENDER_CONQUERED_CHUNK_PERIOD));
+                    }
+                }
+
+                attackers.messageAll(new TextComponentTranslation("warforge.info.siege_lost_attackers", attackers.name, blockPos.toFancyString()));
+                defenders.messageAll(new TextComponentTranslation("warforge.info.siege_won_defenders", defenders.name, blockPos.toFancyString()));
+                defenders.notoriety += WarForgeConfig.NOTORIETY_PER_SIEGE_DEFEND_SUCCESS;
+
+                attackers.stopMomentum();
+                siege.onCompleted(false);
+            }
+
+            case NEUTRAL -> {
+                attackers.messageAll(new TextComponentTranslation("warforge.info.siege_cancelled_attackers", attackers.name, blockPos.toFancyString()));
+                defenders.messageAll(new TextComponentTranslation("warforge.info.siege_cancelled_defenders", defenders.name, blockPos.toFancyString()));
+                siege.onCompleted(false); // tbh Idk what to put here
+            }
+        }
+
+        sieges.remove(chunkPos);
+    }
+
 
     // cleanup is done by failing, passing, or cancelling siege through the TE class. If called without boolean, it is assumed to not be from inside TE
     public void handleCompletedSiege(DimChunkPos chunkPos, boolean doCleanup) {
@@ -815,22 +890,22 @@ public class FactionStorage {
             return;
         }
         long currentTimeStamp = System.currentTimeMillis();
-        final int SIEGE_BASE_TIME = 30 * 60;//30 min
-        int maxTime;
+        final long SIEGE_BASE_TIME = 30 * 60 * 1000;//30 min
+        long maxTime;
         //TODO: Make it configurable
         if (currentTimeStamp > attacking.getMomentumExpireryTimestamp())
             maxTime = SIEGE_BASE_TIME;
         else
             maxTime = switch (attacking.getSiegeMomentum()) {
                 case 1 -> Math.round(SIEGE_BASE_TIME * 0.9f);
-                case 2 -> Math.round(SIEGE_BASE_TIME*0.8f);
-                case 3 -> Math.round(SIEGE_BASE_TIME*0.75f);
-                case 4 -> Math.round(SIEGE_BASE_TIME*0.50f);
+                case 2 -> Math.round(SIEGE_BASE_TIME * 0.8f);
+                case 3 -> Math.round(SIEGE_BASE_TIME * 0.75f);
+                case 4 -> Math.round(SIEGE_BASE_TIME * 0.50f);
                 default -> SIEGE_BASE_TIME;
             };
 
 
-        Siege siege = new Siege(attacking.uuid, defendingFactionID, defendingPos, maxTime );
+        Siege siege = new Siege(attacking.uuid, defendingFactionID, defendingPos, maxTime);
         siege.attackingCamp.add(siegeCampPos);
 
         sieges.put(defendingChunk, siege);

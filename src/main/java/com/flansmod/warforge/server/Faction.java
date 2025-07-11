@@ -322,7 +322,8 @@ public class Faction {
     public void messageAll(ITextComponent chat) {
         for (UUID playerID : members.keySet()) {
             final EntityPlayer player = getPlayer(playerID);
-            player.sendMessage(chat);
+            if(player != null)
+                player.sendMessage(chat);
         }
     }
 

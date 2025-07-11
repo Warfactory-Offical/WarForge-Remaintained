@@ -427,12 +427,14 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 	}
 
 	private boolean isPlayerInWarzone(EntityPlayer player) {
+		if(player == null) return false;
 		DimChunkPos playerChunk = new DimChunkPos(player.dimension, player.getPosition());
 		DimChunkPos blockChunk = new DimChunkPos(world.provider.getDimension(), getClaimPos());
 		return !player.isDead && Siege.isPlayerInRadius(blockChunk, playerChunk);
 	}
 
 	private boolean isPlayerInRadius(EntityPlayer player, int radius) {
+		if(player == null) return false;
 		DimChunkPos playerChunk = new DimChunkPos(player.dimension, player.getPosition());
 		DimChunkPos blockChunk = new DimChunkPos(world.provider.getDimension(), getClaimPos());
 		return !player.isDead && Siege.isPlayerInRadius(blockChunk, playerChunk, radius);

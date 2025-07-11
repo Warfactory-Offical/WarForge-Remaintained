@@ -29,7 +29,6 @@ public class Siege {
     public ArrayList<DimBlockPos> attackingCamp;
     public DimBlockPos defendingClaim;
     public long timeElapsed;
-    public long maxTime;
 
     //TODO: New Kill requirement math: players in team * type of claim (2 - basic, 3 - reinforced)
     // This is defined by the chunk we are attacking and what type it is
@@ -59,12 +58,12 @@ public class Siege {
         attackingCamp = new ArrayList<>(4);
     }
 
-    public Siege(UUID attacker, UUID defender, DimBlockPos defending, long maxTime) {
+    public Siege(UUID attacker, UUID defender, DimBlockPos defending, long time) {
         attackingCamp = new ArrayList<>(4);
         attackingFaction = attacker;
         defendingFaction = defender;
         defendingClaim = defending;
-        this.maxTime = maxTime;
+        this.timeElapsed = time;
 
         TileEntity te = WarForgeMod.MC_SERVER.getWorld(defending.dim).getTileEntity(defending.toRegularPos());
         if (te instanceof IClaim) {
@@ -111,7 +110,7 @@ public class Siege {
         if (!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER)
             return !hasAbandonedSieges() && GetAttackProgress() >= GetAttackSuccessThreshold() || GetDefenceProgress() >= 5;
         else
-            return !hasAbandonedSieges() && GetAttackProgress() >= GetAttackSuccessThreshold() || GetDefenceProgress() >= 5 || timeElapsed > maxTime;
+            return !hasAbandonedSieges() && GetAttackProgress() >= GetAttackSuccessThreshold() || GetDefenceProgress() >= 5 || timeElapsed  == 0;
     }
 
     // ensures attackers are within warzone before siege completes
@@ -157,7 +156,6 @@ public class Siege {
         info.progress = GetAttackProgress();
         info.completionPoint = GetAttackSuccessThreshold();
         info.timeProgress = timeElapsed;
-        info.maxTime = maxTime;
 
         return info;
     }
@@ -178,7 +176,7 @@ public class Siege {
     }
 
     public void updateSiegeTimer() {
-        timeElapsed++;
+        timeElapsed--;
     }
 
     public void AdvanceDay() {
