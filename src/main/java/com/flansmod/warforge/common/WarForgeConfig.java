@@ -168,7 +168,7 @@ public class WarForgeConfig {
         CLAIM_FOE.ALLOW_MOUNT_ENTITY = false;
         CLAIM_FOE.ALLOW_DISMOUNT_ENTITY = false;
         UNCLAIMED.EXPLOSION_DAMAGE = true;
-        WarForgeMod.VEIN_MAP.defaultReturnValue(null);
+        //WarForgeMod.VEIN_MAP.defaultReturnValue(null);
     }
 
     public static void syncConfig(File suggestedFile) {

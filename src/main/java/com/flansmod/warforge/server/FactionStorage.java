@@ -263,7 +263,7 @@ public class FactionStorage {
 
     public void updateSiegeTimers() {
         for (HashMap.Entry<DimChunkPos, Siege> kvp : sieges.entrySet()) {
-            kvp.getValue().AdvanceDay();
+            kvp.getValue().updateSiegeTimer();
         }
         CheckForCompleteSieges();
     }

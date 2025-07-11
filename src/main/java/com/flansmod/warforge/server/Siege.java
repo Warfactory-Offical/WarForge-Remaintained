@@ -1,12 +1,12 @@
 package com.flansmod.warforge.server;
 
-import com.flansmod.warforge.common.util.DimBlockPos;
-import com.flansmod.warforge.common.util.DimChunkPos;
 import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.IClaim;
 import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
+import com.flansmod.warforge.common.util.DimBlockPos;
+import com.flansmod.warforge.common.util.DimChunkPos;
 import com.flansmod.warforge.server.Faction.PlayerData;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTBase;
@@ -59,7 +59,7 @@ public class Siege {
         attackingCamp = new ArrayList<>(4);
     }
 
-    public Siege(UUID attacker, UUID defender, DimBlockPos defending, long maxTime ) {
+    public Siege(UUID attacker, UUID defender, DimBlockPos defending, long maxTime) {
         attackingCamp = new ArrayList<>(4);
         attackingFaction = attacker;
         defendingFaction = defender;
@@ -108,7 +108,10 @@ public class Siege {
     }
 
     public boolean IsCompleted() {
-        return !hasAbandonedSieges() && GetAttackProgress() >= GetAttackSuccessThreshold() || GetDefenceProgress() >= 5;
+        if (!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER)
+            return !hasAbandonedSieges() && GetAttackProgress() >= GetAttackSuccessThreshold() || GetDefenceProgress() >= 5;
+        else
+            return !hasAbandonedSieges() && GetAttackProgress() >= GetAttackSuccessThreshold() || GetDefenceProgress() >= 5 || timeElapsed > maxTime;
     }
 
     // ensures attackers are within warzone before siege completes
@@ -153,6 +156,8 @@ public class Siege {
         info.defendingColour = defenders.colour;
         info.progress = GetAttackProgress();
         info.completionPoint = GetAttackSuccessThreshold();
+        info.timeProgress = timeElapsed;
+        info.maxTime = maxTime;
 
         return info;
     }
@@ -172,7 +177,7 @@ public class Siege {
         return true;
     }
 
-    public void updateSiegeTimer(){
+    public void updateSiegeTimer() {
         timeElapsed++;
     }
 
