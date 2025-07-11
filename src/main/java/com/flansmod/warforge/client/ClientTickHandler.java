@@ -473,6 +473,8 @@ public class ClientTickHandler {
         renderSiegeNotches(mc, infoToRender, xText, yText);
 
         renderSiegeText(mc, infoToRender, xText, yText);
+        if(WarForgeConfig.SIEGE_ENABLE_NEW_TIMER)
+            renderSiegeTimer;
     }
 
     private void renderSiegeProgressBar(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText, float attackR, float attackG, float attackB, float defendR, float defendG, float defendB, float scroll) {

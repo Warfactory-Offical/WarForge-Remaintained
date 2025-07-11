@@ -14,9 +14,12 @@ public class SiegeCampProgressInfo {
     public String attackingName;
     public String defendingName;
 
+
     public int completionPoint = 5;
     public int mPreviousProgress = 0;
     public int progress = 0;
+    public long maxTime = 0;
+    public long timeProgress = 0;
 
     public int expiredTicks = 0;
 
@@ -32,6 +35,8 @@ public class SiegeCampProgressInfo {
         info.progress = 6;
         info.mPreviousProgress = 4;
         info.expiredTicks = 20;
+        info.maxTime = 1800;
+        info.timeProgress = info.maxTime/2;
 
         return info;
     }
