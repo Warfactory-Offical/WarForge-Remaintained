@@ -439,7 +439,8 @@ public class CommandFactions extends CommandBase {
                 }
                 break;
             }
-            case "siege": {
+            case "siege":
+            case "sieges":{
                 if (!WarForgeMod.isOp(sender)) {
                     sender.sendMessage(new TextComponentString("You are not op."));
                     break;
@@ -456,7 +457,7 @@ public class CommandFactions extends CommandBase {
 
 
                         sieges.forEach((dpos, siege) -> {
-                            TextComponentString line = new TextComponentString("§7" + dpos.x + ", " + dpos.z + ", " + dpos.mDim + "§r;  " + STORAGE.getFaction(siege.attackingFaction) + "-" + STORAGE.getFaction(siege.defendingFaction));
+                            TextComponentString line = new TextComponentString("§7" + dpos.x + ", " + dpos.z + ", " + dpos.mDim + "§r;  " + STORAGE.getFaction(siege.attackingFaction).name + "-" + STORAGE.getFaction(siege.defendingFaction).name);
                             sender.sendMessage(line);
                         });
                     }
@@ -467,9 +468,9 @@ public class CommandFactions extends CommandBase {
                         }
                         DimChunkPos dimPos;
                         try {
-                            int cX = Integer.getInteger(args[2]);
-                            int cZ = Integer.getInteger(args[3]);
-                            int dim = Integer.getInteger(args[4]);
+                            int cX = Integer.parseInt(args[2]);
+                            int cZ = Integer.parseInt(args[3]);
+                            int dim = Integer.parseInt(args[4]);
 
                             dimPos = new DimChunkPos(dim, cX, cZ);
                         } catch (NumberFormatException e) {
