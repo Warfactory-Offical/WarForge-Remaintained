@@ -342,12 +342,8 @@ public class FactionStorage {
     public void handleCompletedSiege(DimChunkPos chunkPos) {
         handleCompletedSiege(chunkPos, true);
     }
-    public static enum siegeTermination{
-        WIN,LOSE,NEUTRAL
-    }
 
-
-    // Forceful siege termination, called via privlaged user
+    // Forceful siege termination, called via privileged user
     public void handleCompletedSiege(DimChunkPos chunkPos, siegeTermination termType) {
         Siege siege = sieges.get(chunkPos);
         if (siege == null) {
@@ -388,7 +384,13 @@ public class FactionStorage {
                     onNonCitadelClaimPlaced((IClaim) te, attackers);
                 }
 
-                attackers.increaseSiegeMomentum();
+                boolean increased = attackers.increaseSiegeMomentum();
+                if (increased)
+                    attackers.messageAll(new TextComponentTranslation("warforge.info_momentum_gained",
+                            attackers.getSiegeMomentum(),
+                            TimeHelper.formatTime(attackers.getMomentumExpireryTimestamp() - System.currentTimeMillis())));
+                else
+                    attackers.messageAll(new TextComponentTranslation("warforge.info_momentum_extended", TimeHelper.formatTime((long) WarForgeConfig.SIEGE_MOMENTUM_DURATION * 60 * 1000)));
                 siege.onCompleted(true);
             }
 
@@ -406,6 +408,8 @@ public class FactionStorage {
                 defenders.notoriety += WarForgeConfig.NOTORIETY_PER_SIEGE_DEFEND_SUCCESS;
 
                 attackers.stopMomentum();
+                attackers.messageAll(new TextComponentTranslation("warforge.info_momentum_lost"));
+
                 siege.onCompleted(false);
             }
 
@@ -418,7 +422,6 @@ public class FactionStorage {
 
         sieges.remove(chunkPos);
     }
-
 
     // cleanup is done by failing, passing, or cancelling siege through the TE class. If called without boolean, it is assumed to not be from inside TE
     public void handleCompletedSiege(DimChunkPos chunkPos, boolean doCleanup) {
@@ -615,7 +618,6 @@ public class FactionStorage {
         EffectUpgrade.composeEffect(faction.citadelPos.dim, faction.citadelPos.toRegularPos().up(2), 100, 400, 1f, 0.2D, faction.colour, 10);
         return true;
     }
-
 
     public boolean requestRemovePlayerFromFaction(ICommandSender remover, UUID factionID, UUID toRemove) {
         Faction faction = getFaction(factionID);
@@ -890,9 +892,9 @@ public class FactionStorage {
             return;
         }
         long currentTimeStamp = System.currentTimeMillis();
+        //TODO: Make it all configurable
         final long SIEGE_BASE_TIME = 30 * 60 * 1000;//30 min
         long maxTime;
-        //TODO: Make it configurable
         if (currentTimeStamp > attacking.getMomentumExpireryTimestamp())
             maxTime = SIEGE_BASE_TIME;
         else
@@ -910,7 +912,7 @@ public class FactionStorage {
 
         sieges.put(defendingChunk, siege);
         siegeTE.setSiegeTarget(defendingPos);
-        siege.Start();
+        siege.start();
 
         attacking.lastSiegeTimestamp = serverTick;
 
@@ -939,7 +941,7 @@ public class FactionStorage {
 
         // Place a bedrock tile entity at 0,0,0 chunk coords
         // This might look a bit dodge in End. It's only for admin claims though
-        DimBlockPos tePos = new DimBlockPos(pos.mDim, pos.getXStart(), 0, pos.getZStart());
+        DimBlockPos tePos = new DimBlockPos(pos.dim, pos.getXStart(), 0, pos.getZStart());
         op.world.setBlockState(tePos.toRegularPos(), Content.adminClaimBlock.getDefaultState());
         TileEntity te = op.world.getTileEntity(tePos.toRegularPos());
         if (te == null || !(te instanceof IClaim)) {
@@ -960,14 +962,14 @@ public class FactionStorage {
             if (info != null) {
                 PacketSiegeCampProgressUpdate packet = new PacketSiegeCampProgressUpdate();
                 packet.info = info;
-                NETWORK.sendToAllAround(packet, siegePos.x * 16, 128d, siegePos.z * 16, WarForgeConfig.SIEGE_INFO_RADIUS + 128f, siegePos.mDim);
+                NETWORK.sendToAllAround(packet, siegePos.x * 16, 128d, siegePos.z * 16, WarForgeConfig.SIEGE_INFO_RADIUS + 128f, siegePos.dim);
             }
         }
     }
 
     public void sendAllSiegeInfoToNearby() {
         for (HashMap.Entry<DimChunkPos, Siege> kvp : FACTIONS.sieges.entrySet()) {
-            kvp.getValue().CalculateBasePower();
+            kvp.getValue().calculateBasePower();
 
             sendSiegeInfoToNearby(kvp.getKey());
         }
@@ -975,7 +977,7 @@ public class FactionStorage {
     }
 
     // returns arraylist with nulls for invalid claim directions, with positions in their horizontal ordering
-    public int GetAdjacentClaims(UUID excludingFaction, DimBlockPos pos, ArrayList<DimChunkPos> positions) {
+    public int getAdjacentClaims(UUID excludingFaction, DimBlockPos pos, ArrayList<DimChunkPos> positions) {
         // allows setting in horizontal index order, which is useful in some cases
         if (positions.size() < 4) positions = new ArrayList<>(Arrays.asList(new DimChunkPos[4]));
         int numValidTargets = 0;
@@ -984,7 +986,7 @@ public class FactionStorage {
         for (EnumFacing facing : EnumFacing.HORIZONTALS) {
             DimChunkPos targetChunkPos = pos.toChunkPos().Offset(facing, 1);
             UUID targetID = getClaim(targetChunkPos);
-            if (!IsClaimed(excludingFaction, targetChunkPos)) continue; // also screens for dimension
+            if (!isClaimed(excludingFaction, targetChunkPos)) continue; // also screens for dimension
             int targetY = getFaction(targetID).getSpecificPosForClaim(targetChunkPos).getY();
             if (pos.getY() < targetY - WarForgeConfig.VERTICAL_SIEGE_DIST || pos.getY() > targetY + WarForgeConfig.VERTICAL_SIEGE_DIST)
                 continue;
@@ -995,7 +997,6 @@ public class FactionStorage {
         return numValidTargets;
     }
 
-    //
     public LinkedHashMap<DimChunkPos, Boolean> getClaimRadiusAround(UUID excludedFaction, DimBlockPos originPos, int radius) {
         LinkedHashMap<DimChunkPos, Boolean> posMap = new LinkedHashMap<>((int) Math.pow(radius * 2, 2) + 1, 0.75f, true);
         DimChunkPos centerChunk = originPos.toChunkPos();
@@ -1004,8 +1005,8 @@ public class FactionStorage {
         for (int x = centerX - radius; x <= centerX + radius; x++) {
             for (int z = centerZ - radius; z <= centerZ + radius; z++) {
                 boolean canSiege = true;
-                DimChunkPos targetChunkPos = new DimChunkPos(centerChunk.mDim, x, z);
-                if (!IsClaimed(excludedFaction, targetChunkPos)) canSiege = false; // also screens for dimension
+                DimChunkPos targetChunkPos = new DimChunkPos(centerChunk.dim, x, z);
+                if (!isClaimed(excludedFaction, targetChunkPos)) canSiege = false; // also screens for dimension
                 UUID chunkClaim = getClaim(targetChunkPos);
                 if (chunkClaim.equals(excludedFaction) || chunkClaim.equals(Faction.nullUuid)) canSiege = false;
                 else {
@@ -1020,25 +1021,13 @@ public class FactionStorage {
         return posMap;
     }
 
-//	public boolean requestPlaceFlag(EntityPlayerMP player, DimBlockPos pos) {
-//		Faction faction = getFactionOfPlayer(player.getUniqueID());
-//		if(faction == null) {
-
-//			player.sendMessage(new TextComponentString("You are not in a faction"));
-//			return false;
-//		}
-//
-//		sendAllSiegeInfoToNearby();
-//
-//		return faction.placeFlag(player, pos);
-//	}
-
-    public boolean IsClaimed(UUID excludingFaction, DimChunkPos pos) {
+    public boolean isClaimed(UUID excludingFaction, DimChunkPos pos) {
         UUID factionID = getClaim(pos);
         return factionID != null && !factionID.equals(excludingFaction) && !factionID.equals(Faction.nullUuid);
     }
 
-    public boolean RequestRemoveClaim(EntityPlayerMP player, DimBlockPos pos) {
+
+    public boolean requestRemoveClaim(EntityPlayerMP player, DimBlockPos pos) {
         UUID factionID = getClaim(pos);
         Faction faction = getFaction(factionID);
         if (factionID.equals(Faction.nullUuid) || faction == null) {
@@ -1177,6 +1166,7 @@ public class FactionStorage {
             Faction faction;
 
 
+            assert uuid != null;
             if (uuid.equals(SAFE_ZONE_ID)) {
                 faction = SAFE_ZONE;
             } else if (uuid.equals(WAR_ZONE_ID)) {
@@ -1245,7 +1235,7 @@ public class FactionStorage {
         NBTTagList siegeList = new NBTTagList();
         for (HashMap.Entry<DimChunkPos, Siege> kvp : sieges.entrySet()) {
             NBTTagCompound siegeTags = new NBTTagCompound();
-            siegeTags.setInteger("dim", kvp.getKey().mDim);
+            siegeTags.setInteger("dim", kvp.getKey().dim);
             siegeTags.setInteger("x", kvp.getKey().x);
             siegeTags.setInteger("z", kvp.getKey().z);
             kvp.getValue().WriteToNBT(siegeTags);
@@ -1263,7 +1253,7 @@ public class FactionStorage {
         for (DimChunkPos chunkPosKey : conqueredChunks.keySet()) {
             // values in tag list must all be same, so all types are changed to use int arrays
             NBTTagList keyValPair = new NBTTagList();
-            keyValPair.appendTag(new NBTTagIntArray(new int[]{chunkPosKey.mDim, chunkPosKey.x, chunkPosKey.z}));
+            keyValPair.appendTag(new NBTTagIntArray(new int[]{chunkPosKey.dim, chunkPosKey.x, chunkPosKey.z}));
             keyValPair.appendTag(new NBTTagIntArray(UUIDToBEIntArray(conqueredChunks.get(chunkPosKey).getLeft())));
             keyValPair.appendTag(new NBTTagIntArray(new int[]{conqueredChunks.get(chunkPosKey).getRight()}));
 
@@ -1320,5 +1310,9 @@ public class FactionStorage {
         }
         WarForgeMod.NETWORK.sendTo(packet, playerEntity);
 
+    }
+
+    public static enum siegeTermination {
+        WIN, LOSE, NEUTRAL
     }
 }

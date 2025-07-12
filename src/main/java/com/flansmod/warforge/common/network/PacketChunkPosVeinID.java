@@ -33,7 +33,7 @@ public class PacketChunkPosVeinID extends PacketBase {
         }
 
         // encode the chunk position
-        data.writeInt(veinLocation.mDim);
+        data.writeInt(veinLocation.dim);
         data.writeInt(veinLocation.x);
         data.writeInt(veinLocation.z);
         data.writeInt(resultID);
