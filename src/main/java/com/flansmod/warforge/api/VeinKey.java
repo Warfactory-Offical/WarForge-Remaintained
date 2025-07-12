@@ -201,6 +201,6 @@ public class VeinKey implements Comparable<VeinKey> {
     }
 
     public static Pair<Vein, Quality> getVein(DimChunkPos dimChunkPos, long seed) {
-        return getVein(dimChunkPos.mDim, dimChunkPos.x, dimChunkPos.z, seed);
+        return getVein(dimChunkPos.dim, dimChunkPos.x, dimChunkPos.z, seed);
     }
 }

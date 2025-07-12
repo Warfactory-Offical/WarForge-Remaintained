@@ -604,24 +604,24 @@ public class ClientTickHandler {
             GlStateManager.glNewList(data.renderList, 4864);
 
             boolean renderNorth = true, renderEast = true, renderWest = true, renderSouth = true, renderNorthWest = true, renderNorthEast = true, renderSouthWest = true, renderSouthEast = true;
-            if (renderData.containsKey(pos.North()))
-                renderNorth = !renderData.get(pos.North()).claim.getFaction().equals(data.claim.getFaction());
-            if (renderData.containsKey(pos.East()))
-                renderEast = !renderData.get(pos.East()).claim.getFaction().equals(data.claim.getFaction());
-            if (renderData.containsKey(pos.South()))
-                renderSouth = !renderData.get(pos.South()).claim.getFaction().equals(data.claim.getFaction());
-            if (renderData.containsKey(pos.West()))
-                renderWest = !renderData.get(pos.West()).claim.getFaction().equals(data.claim.getFaction());
+            if (renderData.containsKey(pos.north()))
+                renderNorth = !renderData.get(pos.north()).claim.getFaction().equals(data.claim.getFaction());
+            if (renderData.containsKey(pos.east()))
+                renderEast = !renderData.get(pos.east()).claim.getFaction().equals(data.claim.getFaction());
+            if (renderData.containsKey(pos.south()))
+                renderSouth = !renderData.get(pos.south()).claim.getFaction().equals(data.claim.getFaction());
+            if (renderData.containsKey(pos.west()))
+                renderWest = !renderData.get(pos.west()).claim.getFaction().equals(data.claim.getFaction());
 
             //for super spesific edge cases
-            if (renderData.containsKey(pos.North().West()))
-                renderNorthWest = !renderData.get(pos.North().West()).claim.getFaction().equals(data.claim.getFaction());
-            if (renderData.containsKey(pos.North().East()))
-                renderNorthEast = !renderData.get(pos.North().East()).claim.getFaction().equals(data.claim.getFaction());
-            if (renderData.containsKey(pos.South().West()))
-                renderSouthWest = !renderData.get(pos.South().West()).claim.getFaction().equals(data.claim.getFaction());
-            if (renderData.containsKey(pos.South().East()))
-                renderSouthEast = !renderData.get(pos.South().East()).claim.getFaction().equals(data.claim.getFaction());
+            if (renderData.containsKey(pos.north().west()))
+                renderNorthWest = !renderData.get(pos.north().west()).claim.getFaction().equals(data.claim.getFaction());
+            if (renderData.containsKey(pos.north().east()))
+                renderNorthEast = !renderData.get(pos.north().east()).claim.getFaction().equals(data.claim.getFaction());
+            if (renderData.containsKey(pos.south().west()))
+                renderSouthWest = !renderData.get(pos.south().west()).claim.getFaction().equals(data.claim.getFaction());
+            if (renderData.containsKey(pos.south().east()))
+                renderSouthEast = !renderData.get(pos.south().east()).claim.getFaction().equals(data.claim.getFaction());
 
             // North edge, [0,0] -> [16,0] wall
             if (renderNorth) {

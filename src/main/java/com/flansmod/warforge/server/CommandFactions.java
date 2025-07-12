@@ -85,6 +85,7 @@ public class CommandFactions extends CommandBase {
     }
 
     @Override
+    //TODO: Holy fucking shit, this needs a total fucking redo
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         if (args.length == 0) {
             sender.sendMessage(new TextComponentString("Try /f help"));
@@ -441,7 +442,7 @@ public class CommandFactions extends CommandBase {
                 break;
             }
             case "siege":
-            case "sieges":{
+            case "sieges": {
                 if (!WarForgeMod.isOp(sender)) {
                     sender.sendMessage(new TextComponentString("You are not op."));
                     break;
@@ -458,7 +459,7 @@ public class CommandFactions extends CommandBase {
 
 
                         sieges.forEach((dpos, siege) -> {
-                            TextComponentString line = new TextComponentString("§7" + dpos.x + ", " + dpos.z + ", " + dpos.mDim + "§r;  " + STORAGE.getFaction(siege.attackingFaction).name + "-" + STORAGE.getFaction(siege.defendingFaction).name);
+                            TextComponentString line = new TextComponentString("§7" + dpos.x + ", " + dpos.z + ", " + dpos.dim + "§r;  " + STORAGE.getFaction(siege.attackingFaction).name + "-" + STORAGE.getFaction(siege.defendingFaction).name);
                             sender.sendMessage(line);
                         });
                     }
@@ -492,7 +493,7 @@ public class CommandFactions extends CommandBase {
                             sender.sendMessage(new TextComponentString("Provided siege does not exist."));
                         }
                         STORAGE.handleCompletedSiege(dimPos, termType);
-                        sender.sendMessage(new TextComponentString("Terminated siege at: " + dimPos.x + ", " + dimPos.z + ", " + dimPos.mDim + " with termination type: " + termType.name()));
+                        sender.sendMessage(new TextComponentString("Terminated siege at: " + dimPos.x + ", " + dimPos.z + ", " + dimPos.dim + " with termination type: " + termType.name()));
                     }
                 }
 

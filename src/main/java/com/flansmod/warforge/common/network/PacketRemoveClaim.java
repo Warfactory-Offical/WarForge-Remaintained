@@ -34,7 +34,7 @@ public class PacketRemoveClaim extends PacketBase
 	@Override
 	public void handleServerSide(EntityPlayerMP playerEntity) 
 	{
-		WarForgeMod.FACTIONS.RequestRemoveClaim(playerEntity, pos);
+		WarForgeMod.FACTIONS.requestRemoveClaim(playerEntity, pos);
 	}
 
 	@Override

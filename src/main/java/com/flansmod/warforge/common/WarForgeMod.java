@@ -458,7 +458,7 @@ public class WarForgeMod implements ILateMixinLoader {
             }
         }
 
-        if (!containsInt(WarForgeConfig.CLAIM_DIM_WHITELIST, pos.mDim)) {
+        if (!containsInt(WarForgeConfig.CLAIM_DIM_WHITELIST, pos.dim)) {
             player.sendMessage(new TextComponentString("You cannot claim chunks in this dimension"));
             event.setCanceled(true);
             return;
@@ -512,7 +512,7 @@ public class WarForgeMod implements ILateMixinLoader {
             }
 
             ArrayList<DimChunkPos> validTargets = new ArrayList<>(Arrays.asList(new DimChunkPos[4]));
-            int numTargets = FACTIONS.GetAdjacentClaims(playerFaction.uuid, new DimBlockPos(event.getWorld().provider.getDimension(), event.getPos()), validTargets);
+            int numTargets = FACTIONS.getAdjacentClaims(playerFaction.uuid, new DimBlockPos(event.getWorld().provider.getDimension(), event.getPos()), validTargets);
             if (numTargets == 0) {
                 player.sendMessage(new TextComponentString("There are no adjacent claims to siege; Siege camp Y level must be w/in " + WarForgeConfig.VERTICAL_SIEGE_DIST + " of target."));
                 event.setCanceled(true);

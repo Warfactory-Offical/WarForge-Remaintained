@@ -76,7 +76,7 @@ public class Siege {
     }
 
     public static boolean isPlayerInRadius(DimChunkPos centerChunkPos, DimChunkPos playerChunkPos, int radius) {
-        if (playerChunkPos.mDim != centerChunkPos.mDim) return false;
+        if (playerChunkPos.dim != centerChunkPos.dim) return false;
 
         // Check if the player's chunk coordinates are within a 3x3 chunk area
         int minChunkX = centerChunkPos.x - radius;
@@ -160,7 +160,7 @@ public class Siege {
         return info;
     }
 
-    public boolean Start() {
+    public boolean start() {
         Faction attackers = WarForgeMod.FACTIONS.getFaction(attackingFaction);
         Faction defenders = WarForgeMod.FACTIONS.getFaction(defendingFaction);
 
@@ -169,7 +169,7 @@ public class Siege {
             return false;
         }
 
-        CalculateBasePower();
+        calculateBasePower();
         WarForgeMod.INSTANCE.messageAll(new TextComponentString(attackers.name + " started a siege against " + defenders.name), true);
         WarForgeMod.FACTIONS.sendSiegeInfoToNearby(defendingClaim.toChunkPos());
         return true;
@@ -188,7 +188,7 @@ public class Siege {
             return;
         }
 
-        CalculateBasePower();
+        calculateBasePower();
         float totalSwing = 0.0f;
         totalSwing += WarForgeConfig.SIEGE_SWING_PER_DAY_ELAPSED_BASE;
         if (!defenders.loggedInToday)
@@ -212,7 +212,7 @@ public class Siege {
         WarForgeMod.FACTIONS.sendSiegeInfoToNearby(defendingClaim.toChunkPos());
     }
 
-    public void CalculateBasePower() {
+    public void calculateBasePower() {
         Faction attackers = WarForgeMod.FACTIONS.getFaction(attackingFaction);
         Faction defenders = WarForgeMod.FACTIONS.getFaction(defendingFaction);
 

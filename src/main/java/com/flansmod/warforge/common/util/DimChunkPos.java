@@ -7,29 +7,29 @@ import net.minecraft.util.math.Vec3i;
 
 public class DimChunkPos extends ChunkPos
 {
-	public int mDim;
+	public int dim;
 	
 	public DimChunkPos(int dim, int x, int z) 
 	{
 		super(x, z);
-		mDim = dim;
+		this.dim = dim;
 	}
 	
 	public DimChunkPos(int dim, BlockPos pos)
 	{
 		super(pos);
-		mDim = dim;
+		this.dim = dim;
 	}
 
-	public boolean InSameDimension(DimChunkPos other)
+	public boolean isSameDim(DimChunkPos other)
 	{
-		return other.mDim == mDim;
+		return other.dim == dim;
 	}
 	
-	@Override
+	@Override//Magic numbers ffs
 	public int hashCode()
     {
-		return super.hashCode() ^ (155225 * this.mDim + 140501023);
+		return super.hashCode() ^ (155225 * this.dim + 140501023);
     }
 
 	@Override
@@ -42,27 +42,27 @@ public class DimChunkPos extends ChunkPos
             return false;
 
         DimChunkPos dcpos = (DimChunkPos)other;
-        return this.mDim == dcpos.mDim && this.x == dcpos.x && this.z == dcpos.z;
+        return this.dim == dcpos.dim && this.x == dcpos.x && this.z == dcpos.z;
     }
     
 	@Override
     public String toString()
     {
-        return "[" + this.mDim + ": " + this.x + ", " + this.z + "]";
+        return "[" + this.dim + ": " + this.x + ", " + this.z + "]";
     }
 	
 	public DimChunkPos Offset(EnumFacing facing, int n)
 	{
-	    return new DimChunkPos(mDim, x + facing.getXOffset() * n, z + facing.getZOffset() * n);
+	    return new DimChunkPos(dim, x + facing.getXOffset() * n, z + facing.getZOffset() * n);
 	}
 
 	public DimChunkPos Offset(Vec3i offset)
 	{
-		return new DimChunkPos(mDim, x +  offset.getX(), z + offset.getZ());
+		return new DimChunkPos(dim, x +  offset.getX(), z + offset.getZ());
 	}
 
-	public DimChunkPos North() { return Offset(EnumFacing.NORTH, 1); }
-	public DimChunkPos South() { return Offset(EnumFacing.SOUTH, 1); }
-	public DimChunkPos East() { return Offset(EnumFacing.EAST, 1); }
-	public DimChunkPos West() { return Offset(EnumFacing.WEST, 1); }
+	public DimChunkPos north() { return Offset(EnumFacing.NORTH, 1); }
+	public DimChunkPos south() { return Offset(EnumFacing.SOUTH, 1); }
+	public DimChunkPos east() { return Offset(EnumFacing.EAST, 1); }
+	public DimChunkPos west() { return Offset(EnumFacing.WEST, 1); }
 }

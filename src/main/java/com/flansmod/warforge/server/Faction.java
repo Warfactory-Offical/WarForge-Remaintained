@@ -8,11 +8,9 @@ import com.flansmod.warforge.common.network.FactionDisplayInfo;
 import com.flansmod.warforge.common.network.PlayerDisplayInfo;
 import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.util.DimChunkPos;
-import com.flansmod.warforge.common.util.TimeHelper;
 import com.flansmod.warforge.server.Leaderboard.FactionStat;
 import com.mojang.authlib.GameProfile;
 import lombok.Getter;
-import lombok.Setter;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
@@ -62,16 +60,21 @@ public class Faction {
     public short citadelLevel = 0;
     public int citadelMoveCooldown = 1;
 
-    public void increaseSiegeMomentum() {
-        if(siegeMomentum < WarForgeConfig.SIEGE_MOMENTUM_MAX)
+    public boolean increaseSiegeMomentum() {
+        boolean increased = false;
+        if(siegeMomentum < WarForgeConfig.SIEGE_MOMENTUM_MAX) {
             siegeMomentum++;
+            increased = true;
+        }
         momentumExpireryTimestamp = System.currentTimeMillis() + (long) WarForgeConfig.SIEGE_MOMENTUM_DURATION * 60 * 1000;
+        return increased;
     }
 
     public void stopMomentum(){
         siegeMomentum = 0;
         momentumExpireryTimestamp = 0L;
     }
+
 
     @Getter
     private byte siegeMomentum = 0;
@@ -314,7 +317,7 @@ public class Faction {
     }
 
     public void claimNoTileEntity(DimChunkPos pos) {//Intetesting
-        claims.put(new DimBlockPos(pos.mDim, pos.getXStart(), 0, pos.getZStart()), 0);
+        claims.put(new DimBlockPos(pos.dim, pos.getXStart(), 0, pos.getZStart()), 0);
     }
 
 
