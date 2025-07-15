@@ -92,16 +92,6 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 		return super.shouldRefresh(world, pos, oldState, newState);
 	}
 
-	// called when player flag is removed, but not necessarily when siege ends?
-	//@Override
-//	public void onServerRemovePlayerFlag(String playerName) {
-//		super.onServerRemovePlayerFlag(playerName);
-//
-//        // can cause crash as placing a siege block, not selecting a target, and then placing your flag at another siege block will call this
-//		if(playerFlags.isEmpty() && siegeStatus == SiegeStatus.ACTIVE && siegeTarget != null) {
-//            endSiegePrepped(); // if siege block runs out of player flags, siege fails
-//        }
-//	}
 
 	private enum SiegeStatus {
 		IDLING,
@@ -216,44 +206,6 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 	public boolean receiveClientEvent(int id, int type) {
 		return true;
 	}
-
-	// called to create update data packet nbt info
-    /*
-	@Override
-	public NBTTagCompound getUpdateTag() {
-		// You have to get parent tags so that x, y, z are added.
-		NBTTagCompound tags = super.getUpdateTag();
-
-		// Custom partial nbt write method
-		WarForgeMod.LOGGER.always().log("setting siegeStatus with siegeStatus: " + siegeStatus + ", blockstate at pos: " +  world.getBlockState(getPos()));
-		tags.setByte("siegeStatus", siegeStatus);
-
-		// do destruction only after relevant info has been sent
-		if (siegeStatus == 2)  {
-			destroy();
-		}
-
-		return tags;
-	}
-
-	@Override
-	public void onDataPacket(net.minecraft.network.NetworkManager net, SPacketUpdateTileEntity packet) {
-		super.onDataPacket(net, packet);
-		WarForgeMod.LOGGER.always().log("Got data packet with passed status of: " + packet.getNbtCompound().getByte("siegeStatus") + ", curr status: " + siegeStatus);
-		byte prevSiegeStatus = siegeStatus;
-		siegeStatus = packet.getNbtCompound().getByte("siegeStatus");
-
-		// because 2 and 3 encode failure and success, respectively, we only check for > 1 and equality to 2, assuming that if it is > 1 and not 2, then 3 is the status
-		if (world.isRemote && prevSiegeStatus < 2 && siegeStatus > 1) {
-			WarForgeMod.LOGGER.always().log("Notified siege is ending; closing gui");
-			SiegeCampProgressInfo info = ClientProxy.sSiegeInfo.get(GetPos());
-			WarForgeMod.LOGGER.always().log("Info is: " + info + " from map: " + ClientProxy.sSiegeInfo.toString());
-			WarForgeMod.LOGGER.always().log("doSiegeFail of: " + siegeStatus + ", with INFO - attacking: " + info.mAttackingName + ", defending: " + info.mDefendingName + ", attack pos: " + info.mAttackingPos + ", defend pos: " + info.mDefendingPos + ", completionPoint: " + info.mCompletionPoint);
-			info.mProgress = siegeStatus == 2 ? -5 : info.mCompletionPoint;
-			ClientProxy.sSiegeInfo.get(GetPos()).mProgress = siegeStatus == 2 ? -5 : ClientProxy.sSiegeInfo.get(GetPos()).mCompletionPoint; // forcefully indicate to client that siege is over
-		}
-	}
-	 */
 
 	@Override
 	public void update() {

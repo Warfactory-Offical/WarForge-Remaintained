@@ -18,6 +18,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
+import org.lwjgl.Sys;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,6 +30,7 @@ public class Siege {
     public ArrayList<DimBlockPos> attackingCamp;
     public DimBlockPos defendingClaim;
     public long timeElapsed;
+    public long siegeEndTimeStamp = Long.MAX_VALUE;
 
     //TODO: New Kill requirement math: players in team * type of claim (2 - basic, 3 - reinforced)
     // This is defined by the chunk we are attacking and what type it is
@@ -156,6 +158,7 @@ public class Siege {
         info.progress = GetAttackProgress();
         info.completionPoint = GetAttackSuccessThreshold();
         info.timeProgress = timeElapsed;
+        info.endTimestamp = siegeEndTimeStamp;
 
         return info;
     }
@@ -163,6 +166,7 @@ public class Siege {
     public boolean start() {
         Faction attackers = WarForgeMod.FACTIONS.getFaction(attackingFaction);
         Faction defenders = WarForgeMod.FACTIONS.getFaction(defendingFaction);
+        siegeEndTimeStamp = System.currentTimeMillis() + timeElapsed;
 
         if (attackers == null || defenders == null) {
             WarForgeMod.LOGGER.error("Invalid factions in siege. Cannot start");
@@ -176,7 +180,7 @@ public class Siege {
     }
 
     public void updateSiegeTimer() {
-        timeElapsed--;
+        timeElapsed = timeElapsed - 20L;
     }
 
     public void AdvanceDay() {
@@ -351,6 +355,11 @@ public class Siege {
         mAttackProgress = tags.getInteger("progress");
         mBaseDifficulty = tags.getInteger("baseDifficulty");
         mExtraDifficulty = tags.getInteger("extraDifficulty");
+        if(WarForgeConfig.SIEGE_ENABLE_NEW_TIMER){
+
+            timeElapsed = tags.getInteger("timeElapsed");
+            siegeEndTimeStamp = System.currentTimeMillis() + timeElapsed;
+        }
     }
 
     public void WriteToNBT(NBTTagCompound tags) {
@@ -369,5 +378,6 @@ public class Siege {
         tags.setInteger("progress", mAttackProgress);
         tags.setInteger("baseDifficulty", mBaseDifficulty);
         tags.setInteger("extraDifficulty", mExtraDifficulty);
+        tags.setLong("timeElapsed", timeElapsed);
     }
 }

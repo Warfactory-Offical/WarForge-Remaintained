@@ -447,7 +447,7 @@ public class CommandFactions extends CommandBase {
                     sender.sendMessage(new TextComponentString("You are not op."));
                     break;
                 }
-                if (args.length < 1) {
+                if (args.length < 2) {
                     sender.sendMessage(new TextComponentString("More arguments required. Possible arguments: list, terminate"));
                     break;
                 }

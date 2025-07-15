@@ -135,10 +135,6 @@ public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvi
                 FACTIONS.onNonCitadelClaimPlaced(siegeCamp, placer);
                 siegeCamp.onPlacedBy(placer);
                 super.onBlockPlacedBy(world, pos, state, placer, stack);
-//				if(placer instanceof EntityPlayerMP)
-//				{
-//					FACTIONS.requestPlaceFlag((EntityPlayerMP)placer, new DimBlockPos(world.provider.getDimension(), pos));
-//				}
             }
         }
     }

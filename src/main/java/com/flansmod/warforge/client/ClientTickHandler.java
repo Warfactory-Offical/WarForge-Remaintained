@@ -67,6 +67,7 @@ public class ClientTickHandler {
     private static final ResourceLocation siegeprogress = new ResourceLocation(WarForgeMod.MODID, "gui/siegeprogressslim.png");
     public static long nextSiegeDayMs = 0L;
     public static long nextYieldDayMs = 0L;
+    public static long timerSiegeEndStamp = 0L;
     public static Object2LongOpenHashMap<DimChunkPos> permitChunkReprobeMs = new Object2LongOpenHashMap<>();
     public static long veinRenderStartTime = -1;  // (curr time - this) / (display time (ms)) to get index
     public static boolean CLAIMS_DIRTY = false;

@@ -20,6 +20,7 @@ public class SiegeCampProgressInfo {
     public int progress = 0;
     public long maxTime = 0;
     public long timeProgress = 0;
+    public long endTimestamp = Long.MAX_VALUE;
 
     public int expiredTicks = 0;
 
