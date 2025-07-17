@@ -59,29 +59,11 @@ public class Faction {
     public int legacy = 0;
     public short citadelLevel = 0;
     public int citadelMoveCooldown = 1;
-
-    public boolean increaseSiegeMomentum() {
-        boolean increased = false;
-        if(siegeMomentum < WarForgeConfig.SIEGE_MOMENTUM_MAX) {
-            siegeMomentum++;
-            increased = true;
-        }
-        momentumExpireryTimestamp = System.currentTimeMillis() + (long) WarForgeConfig.SIEGE_MOMENTUM_DURATION * 60 * 1000;
-        return increased;
-    }
-
-    public void stopMomentum(){
-        siegeMomentum = 0;
-        momentumExpireryTimestamp = 0L;
-    }
-
-
-    @Getter
+    //Only for new system
+    public long citadelMoveTimeStamp = 0;
     private byte siegeMomentum = 0;
     @Getter
     private long momentumExpireryTimestamp = 0L;
-    //Only for new system
-    public long citadelMoveTimeStamp = 0;
 
     public Faction() {
         members = new HashMap<UUID, PlayerData>();
@@ -102,6 +84,28 @@ public class Faction {
     // the map used in getPlayerByUUID removes players on logout
     private static EntityPlayer getPlayer(UUID playerID) {
         return WarForgeMod.MC_SERVER.getPlayerList().getPlayerByUUID(playerID);
+    }
+
+    public boolean increaseSiegeMomentum() {
+        boolean increased = false;
+        if (siegeMomentum < WarForgeConfig.SIEGE_MOMENTUM_MAX) {
+            siegeMomentum++;
+            increased = true;
+        }
+        momentumExpireryTimestamp = System.currentTimeMillis() + (long) WarForgeConfig.SIEGE_MOMENTUM_DURATION * 60 * 1000;
+        return increased;
+    }
+
+    public void stopMomentum() {
+        siegeMomentum = 0;
+        momentumExpireryTimestamp = 0L;
+    }
+
+    public byte getSiegeMomentum() {
+        if (System.currentTimeMillis() > momentumExpireryTimestamp)
+            return 0;
+        else
+            return siegeMomentum;
     }
 
     public int getMemberCount() {
@@ -325,7 +329,7 @@ public class Faction {
     public void messageAll(ITextComponent chat) {
         for (UUID playerID : members.keySet()) {
             final EntityPlayer player = getPlayer(playerID);
-            if(player != null)
+            if (player != null)
                 player.sendMessage(chat);
         }
     }
@@ -475,7 +479,6 @@ public class Faction {
         momentumExpireryTimestamp = tags.getLong("momentumExpireryTimestamp");
 
 
-
         // Get member data
         NBTTagList memberList = tags.getTagList("members", 10); // NBTTagCompound (see NBTBase.class)
         for (NBTBase base : memberList) {
@@ -530,7 +533,7 @@ public class Faction {
         tags.setLong("citadelMoveTimestamp", citadelMoveTimeStamp);
         tags.setLong("lastSiegeTimestamp", lastSiegeTimestamp);
 
-        tags.setByte("siegeMomentum",siegeMomentum);
+        tags.setByte("siegeMomentum", siegeMomentum);
         tags.setLong("momentumExpireryTimestamp", lastSiegeTimestamp);
 
         // Add member data

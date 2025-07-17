@@ -18,7 +18,6 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
-import org.lwjgl.Sys;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -108,7 +107,7 @@ public class Siege {
         return mBaseDifficulty + mExtraDifficulty;
     }
 
-    public boolean IsCompleted() {
+    public boolean isCompleted() {
         if (!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER)
             return !hasAbandonedSieges() && GetAttackProgress() >= GetAttackSuccessThreshold() || GetDefenceProgress() >= 5;
         else

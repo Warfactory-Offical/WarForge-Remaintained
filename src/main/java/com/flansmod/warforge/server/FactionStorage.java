@@ -58,6 +58,7 @@ public class FactionStorage {
     // This is all the currently active sieges, keyed by the defending position
     @Getter
     private final HashMap<DimChunkPos, Siege> sieges = new HashMap<>();
+    private final Queue<DimChunkPos> finishedSiegeQueue = new ArrayDeque<>(4); //Array queue used due to small amount of data
     //This is all chunks that are under the "Grace" period
     public HashMap<DimChunkPos, ObjectIntPair<UUID>> conqueredChunks = new HashMap<>();
 
@@ -248,9 +249,11 @@ public class FactionStorage {
     public void advanceSiegeDay() {
         for (HashMap.Entry<DimChunkPos, Siege> kvp : sieges.entrySet()) {
             kvp.getValue().AdvanceDay();
+            if(kvp.getValue().isCompleted())
+                finishedSiegeQueue.add(kvp.getKey());
         }
 
-        CheckForCompleteSieges();
+        processCompleteSieges();
 
         if (!WarForgeConfig.LEGACY_USES_YIELD_TIMER) {
             for (HashMap.Entry<UUID, Faction> entry : mFactions.entrySet()) {
@@ -262,8 +265,10 @@ public class FactionStorage {
     public void updateSiegeTimers() {
         for (HashMap.Entry<DimChunkPos, Siege> kvp : sieges.entrySet()) {
             kvp.getValue().updateSiegeTimer();
+            if(kvp.getValue().isCompleted())
+                finishedSiegeQueue.add(kvp.getKey());
         }
-        CheckForCompleteSieges();
+        processCompleteSieges();
     }
 
     public void advanceYieldDay() {
@@ -288,7 +293,7 @@ public class FactionStorage {
                     kvp.getValue().onPVPKill(killer, playerWhoDied);
                 }
 
-                CheckForCompleteSieges();
+                processCompleteSieges();
             }
 
             if (killerFac != null) {
@@ -325,17 +330,10 @@ public class FactionStorage {
         }
     }
 
-    public void CheckForCompleteSieges() {
-        // Cache in a list so we can remove from the siege HashMap
-        ArrayList<DimChunkPos> completedSieges = new ArrayList<DimChunkPos>();
-        for (HashMap.Entry<DimChunkPos, Siege> kvp : sieges.entrySet()) {
-            if (kvp.getValue().IsCompleted())
-                completedSieges.add(kvp.getKey());
+    public synchronized void processCompleteSieges() {
+        while (!finishedSiegeQueue.isEmpty()){
+           handleCompletedSiege(finishedSiegeQueue.poll());
         }
-
-        // Now process the results
-        for (DimChunkPos chunkPos : completedSieges)
-            handleCompletedSiege(chunkPos);
     }
 
     // cleaner separation between action to be done on completed sieges and the determination of these sieges
@@ -839,9 +837,10 @@ public class FactionStorage {
 
     public void requestStartSiege(EntityPlayer factionOfficer, DimBlockPos siegeCampPos, Vec3i direction) {
         Faction attacking = getFactionOfPlayer(factionOfficer.getUniqueID());
+        long currentTimeStamp = System.currentTimeMillis();
 
         // for some reason, server tick is in number of ticks and last siege timestamp is in ms, while siege cooldown is in mins (according to description), though through calculations looks like hours? it should be in ms
-        if (serverTick - attacking.lastSiegeTimestamp < WarForgeConfig.SIEGE_COOLDOWN_FAIL) {
+        if (attacking.getSiegeMomentum() == 0 && attacking.lastSiegeTimestamp < currentTimeStamp) {
             factionOfficer.sendMessage(new TextComponentString("Your faction is on cooldown on starting a new siege"));
 
             long s = INSTANCE.getCooldownRemainingSeconds(WarForgeConfig.SIEGE_COOLDOWN_FAIL, attacking.lastSiegeTimestamp % 60);
@@ -891,7 +890,6 @@ public class FactionStorage {
                     defending.name, TimeHelper.formatTime(conqueredChunks.get(defendingPos.toChunkPos()).getRight())));
             return;
         }
-        long currentTimeStamp = System.currentTimeMillis();
         //TODO: Make it all configurable
         final long SIEGE_BASE_TIME = 30 * 60 * 1000;//30 min
         long maxTime;
