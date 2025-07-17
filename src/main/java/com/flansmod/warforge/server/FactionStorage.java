@@ -334,7 +334,9 @@ public class FactionStorage {
 
     public synchronized void processCompleteSieges() {
         while (!finishedSiegeQueue.isEmpty()){
-           handleCompletedSiege(finishedSiegeQueue.poll());
+            var siege  = finishedSiegeQueue.poll();
+            sieges.get(siege).finished = true;
+           handleCompletedSiege(siege);
         }
     }
 
@@ -420,6 +422,7 @@ public class FactionStorage {
             }
         }
 
+        WarForgeMod.FACTIONS.sendSiegeInfoToNearby(siege.defendingClaim.toChunkPos());
         sieges.remove(chunkPos);
     }
 
@@ -672,7 +675,7 @@ public class FactionStorage {
         return true;
     }
 
-    public boolean RequestInvitePlayerToMyFaction(EntityPlayer factionOfficer, UUID invitee) {
+    public boolean requestInvitePlayerToMyFaction(EntityPlayer factionOfficer, UUID invitee) {
         Faction myFaction = getFactionOfPlayer(factionOfficer.getUniqueID());
         if (myFaction != null)
             return RequestInvitePlayerToFaction(factionOfficer, myFaction.uuid, invitee);

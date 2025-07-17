@@ -37,6 +37,7 @@ public class PacketSiegeCampProgressUpdate extends PacketBase
 
 		//Common
 		data.writeLong(info.timeProgress);
+		data.writeBoolean(info.finished);
 	}
 
 	@Override
@@ -66,6 +67,9 @@ public class PacketSiegeCampProgressUpdate extends PacketBase
 		info.mPreviousProgress = data.readInt();
 		info.completionPoint = data.readInt();
 
+		//Common
+		info.timeProgress = data.readLong();
+		info.finished = data.readBoolean();
 	}
 
 	@Override

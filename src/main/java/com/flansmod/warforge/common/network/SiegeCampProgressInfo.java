@@ -23,6 +23,7 @@ public class SiegeCampProgressInfo {
     public long endTimestamp = Long.MAX_VALUE;
 
     public int expiredTicks = 0;
+    public boolean finished = false;
 
     public static SiegeCampProgressInfo getDebugInfo() {
         SiegeCampProgressInfo info = new SiegeCampProgressInfo();
@@ -44,7 +45,7 @@ public class SiegeCampProgressInfo {
 
 
     public void ClientTick() {
-        if (progress <= -5 || progress >= completionPoint) {
+        if ((progress <= -5 || progress >= completionPoint) || finished)  {
             expiredTicks++;
         }
     }

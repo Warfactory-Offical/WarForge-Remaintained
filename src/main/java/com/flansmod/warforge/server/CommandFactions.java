@@ -151,7 +151,7 @@ public class CommandFactions extends CommandBase {
 
                 // Any other case, we assume players can only invite to their own faction
                 if (sender instanceof EntityPlayer) {
-                    WarForgeMod.FACTIONS.RequestInvitePlayerToMyFaction((EntityPlayer) sender, invitee.getUniqueID());
+                    WarForgeMod.FACTIONS.requestInvitePlayerToMyFaction((EntityPlayer) sender, invitee.getUniqueID());
                 }
 
                 break;

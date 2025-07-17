@@ -4,6 +4,7 @@ import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.IClaim;
 import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
+import com.flansmod.warforge.common.network.PacketSiegeCampProgressUpdate;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
 import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.util.DimChunkPos;
@@ -29,7 +30,8 @@ public class Siege {
     public ArrayList<DimBlockPos> attackingCamp;
     public DimBlockPos defendingClaim;
     public long timeElapsed;
-    public long siegeEndTimeStamp = Long.MAX_VALUE;
+    public long siegeEndTimeStamp = 999L;
+    public boolean finished = false; //Used for controlling whenever siege has been concluded, Does not require saving
 
     //TODO: New Kill requirement math: players in team * type of claim (2 - basic, 3 - reinforced)
     // This is defined by the chunk we are attacking and what type it is
@@ -90,6 +92,19 @@ public class Siege {
                 && (playerChunkPos.z >= minChunkZ && playerChunkPos.z <= maxChunkZ);
     }
 
+    // sends packet to client which clears all previously remembered sieges; identical attacking and def names = clear packet
+    public static PacketSiegeCampProgressUpdate clearSiegeData() {
+        PacketSiegeCampProgressUpdate clearSiegesPacket = new PacketSiegeCampProgressUpdate();
+        clearSiegesPacket.info = new SiegeCampProgressInfo();
+        clearSiegesPacket.info.expiredTicks = 0;
+        clearSiegesPacket.info.attackingName = "c"; // normally attacking and def names cannot be identical
+        clearSiegesPacket.info.defendingName = "c";
+        clearSiegesPacket.info.attackingPos = DimBlockPos.ZERO;
+        clearSiegesPacket.info.defendingPos = DimBlockPos.ZERO;
+
+        return clearSiegesPacket;
+    }
+
     // Attack progress starts at 0 and can be moved to -5 or mAttackSuccessThreshold
     public int GetAttackProgress() {
         return mAttackProgress;
@@ -111,7 +126,7 @@ public class Siege {
         if (!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER)
             return !hasAbandonedSieges() && GetAttackProgress() >= GetAttackSuccessThreshold() || GetDefenceProgress() >= 5;
         else
-            return !hasAbandonedSieges() && GetAttackProgress() >= GetAttackSuccessThreshold() || GetDefenceProgress() >= 5 || timeElapsed  == 0;
+            return !hasAbandonedSieges() && GetAttackProgress() >= GetAttackSuccessThreshold() || GetDefenceProgress() >= 5 || timeElapsed == 0;
     }
 
     // ensures attackers are within warzone before siege completes
@@ -158,6 +173,7 @@ public class Siege {
         info.completionPoint = GetAttackSuccessThreshold();
         info.timeProgress = timeElapsed;
         info.endTimestamp = siegeEndTimeStamp;
+        info.finished = finished;
 
         return info;
     }
@@ -270,6 +286,7 @@ public class Siege {
     // called when natural conclusion of siege occurs, not called from TE itself
     public void onCompleted(boolean successful) {
         // for every attacking siege camp attempt to locate it, and if an actual siege camp handle appropriately
+        finished = true;
         for (DimBlockPos siegeCampPos : attackingCamp) {
             TileEntity siegeCamp = WarForgeMod.MC_SERVER.getWorld(siegeCampPos.dim).getTileEntity(siegeCampPos.toRegularPos());
             if (siegeCamp != null) {
@@ -354,7 +371,7 @@ public class Siege {
         mAttackProgress = tags.getInteger("progress");
         mBaseDifficulty = tags.getInteger("baseDifficulty");
         mExtraDifficulty = tags.getInteger("extraDifficulty");
-        if(WarForgeConfig.SIEGE_ENABLE_NEW_TIMER){
+        if (WarForgeConfig.SIEGE_ENABLE_NEW_TIMER) {
 
             timeElapsed = tags.getInteger("timeElapsed");
             siegeEndTimeStamp = System.currentTimeMillis() + timeElapsed;

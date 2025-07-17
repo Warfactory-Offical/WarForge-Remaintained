@@ -563,14 +563,8 @@ public class WarForgeMod implements ILateMixinLoader {
             NETWORK.sendTo(packet, (EntityPlayerMP) event.player);
 
             // sends packet to client which clears all previously remembered sieges; identical attacking and def names = clear packet
-            PacketSiegeCampProgressUpdate clearSiegesPacket = new PacketSiegeCampProgressUpdate();
-            clearSiegesPacket.info = new SiegeCampProgressInfo();
-            clearSiegesPacket.info.expiredTicks = 0;
-            clearSiegesPacket.info.attackingName = "c"; // normally attacking and def names cannot be identical
-            clearSiegesPacket.info.defendingName = "c";
-            clearSiegesPacket.info.attackingPos = DimBlockPos.ZERO;
-            clearSiegesPacket.info.defendingPos = DimBlockPos.ZERO;
-            NETWORK.sendTo(clearSiegesPacket, (EntityPlayerMP) event.player);
+
+            NETWORK.sendTo(Siege.clearSiegeData(), (EntityPlayerMP) event.player);
             FACTIONS.sendAllSiegeInfoToNearby();
 
             // begin queued sync info
