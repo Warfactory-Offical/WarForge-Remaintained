@@ -7,6 +7,10 @@ public class TimeHelper {
     public TimeHelper() {
     }
 
+    public static long minToMs(int minutes){
+        return (long) minutes * 60L * 1000L;
+    }
+
     public static long getSiegeDayLengthMS() {
         return (long) (
                 WarForgeConfig.SIEGE_DAY_LENGTH // In hours

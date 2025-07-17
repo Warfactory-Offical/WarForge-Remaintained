@@ -479,7 +479,7 @@ public class ClientTickHandler {
     }
 
     private void renderSiegeTimer(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText){
-        String siegeText = formatPaddedTimer( infoToRender.timeProgress);
+        String siegeText = formatPaddedTimer( infoToRender.endTimestamp - System.currentTimeMillis() );
         int textWidth = mc.fontRenderer.getStringWidth(siegeText);
         mc.fontRenderer.drawStringWithShadow(siegeText, xText-textWidth, yText + 6, 0xFFFFFF);
     }

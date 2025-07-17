@@ -291,6 +291,8 @@ public class FactionStorage {
             if (killedFac != null && killerFac != null) {
                 for (HashMap.Entry<DimChunkPos, Siege> kvp : sieges.entrySet()) {
                     kvp.getValue().onPVPKill(killer, playerWhoDied);
+                    if(kvp.getValue().isCompleted())
+                        finishedSiegeQueue.add(kvp.getKey());
                 }
 
                 processCompleteSieges();
@@ -840,14 +842,11 @@ public class FactionStorage {
         long currentTimeStamp = System.currentTimeMillis();
 
         // for some reason, server tick is in number of ticks and last siege timestamp is in ms, while siege cooldown is in mins (according to description), though through calculations looks like hours? it should be in ms
-        if (attacking.getSiegeMomentum() == 0 && attacking.lastSiegeTimestamp < currentTimeStamp) {
+        if (attacking.getSiegeMomentum() == 0 && attacking.lastSiegeTimestamp+WarForgeConfig.SIEGE_COOLDOWN_FAIL > currentTimeStamp) {
             factionOfficer.sendMessage(new TextComponentString("Your faction is on cooldown on starting a new siege"));
 
-            long s = INSTANCE.getCooldownRemainingSeconds(WarForgeConfig.SIEGE_COOLDOWN_FAIL, attacking.lastSiegeTimestamp % 60);
-            int m = INSTANCE.getCooldownRemainingMinutes(WarForgeConfig.SIEGE_COOLDOWN_FAIL, attacking.lastSiegeTimestamp % 60);
-            int h = INSTANCE.getCooldownRemainingHours(WarForgeConfig.SIEGE_COOLDOWN_FAIL, attacking.lastSiegeTimestamp);
 
-            factionOfficer.sendMessage(new TextComponentString(String.format("Cooldown remaining: %dh %dm %ds or %d ticks", h, m, s, s * 20)));
+            factionOfficer.sendMessage(new TextComponentString("Cooldown remaining:" + TimeHelper.formatTime(attacking.lastSiegeTimestamp+WarForgeConfig.SIEGE_COOLDOWN_FAIL - currentTimeStamp)));
             return;
         }
 

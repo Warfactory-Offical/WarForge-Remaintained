@@ -179,7 +179,7 @@ public class Siege {
     }
 
     public void updateSiegeTimer() {
-        timeElapsed = timeElapsed - 20L;
+        timeElapsed = timeElapsed - 20L;//One tick
     }
 
     public void AdvanceDay() {
