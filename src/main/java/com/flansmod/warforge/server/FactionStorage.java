@@ -48,7 +48,7 @@ import static com.flansmod.warforge.common.WarForgeMod.*;
 public class FactionStorage {
     // SafeZone and WarZone
     public static UUID SAFE_ZONE_ID = Faction.createUUID("safezone");
-    public static UUID WAR_ZONE_ID = Faction.createUUID("warzone");
+    public static UUID WAR_ZONE_ID = Faction.createUUID("conquered zone");
     public static Faction SAFE_ZONE = null;
     public static Faction WAR_ZONE = null;
     private final HashMap<UUID, Faction> mFactions = new HashMap<>();
@@ -976,26 +976,49 @@ public class FactionStorage {
 
     }
 
-    // returns arraylist with nulls for invalid claim directions, with positions in their horizontal ordering
+    // Returns arraylist with nulls for invalid claim directions, in horizontal + diagonal ordering
     public int getAdjacentClaims(UUID excludingFaction, DimBlockPos pos, ArrayList<DimChunkPos> positions) {
-        // allows setting in horizontal index order, which is useful in some cases
-        if (positions.size() < 4) positions = new ArrayList<>(Arrays.asList(new DimChunkPos[4]));
+        // Ensure list has 8 entries: [N, S, W, E, NW, NE, SW, SE]
+        if (positions.size() < 8)
+            positions = new ArrayList<>(Arrays.asList(new DimChunkPos[8]));
         int numValidTargets = 0;
 
-        // checks all horizontal directions
+        // Cardinal directions (indices 0–3)
         for (EnumFacing facing : EnumFacing.HORIZONTALS) {
             DimChunkPos targetChunkPos = pos.toChunkPos().Offset(facing, 1);
+            if (!isClaimed(excludingFaction, targetChunkPos)) continue;
             UUID targetID = getClaim(targetChunkPos);
-            if (!isClaimed(excludingFaction, targetChunkPos)) continue; // also screens for dimension
             int targetY = getFaction(targetID).getSpecificPosForClaim(targetChunkPos).getY();
-            if (pos.getY() < targetY - WarForgeConfig.VERTICAL_SIEGE_DIST || pos.getY() > targetY + WarForgeConfig.VERTICAL_SIEGE_DIST)
-                continue;
+            if (Math.abs(pos.getY() - targetY) > WarForgeConfig.VERTICAL_SIEGE_DIST) continue;
+
             positions.set(facing.getHorizontalIndex(), targetChunkPos);
+            ++numValidTargets;
+        }
+
+        // Diagonal directions (indices 4–7): NW, NE, SW, SE
+        EnumFacing[][] diagonalPairs = {
+                {EnumFacing.NORTH, EnumFacing.WEST},  // NW
+                {EnumFacing.NORTH, EnumFacing.EAST},  // NE
+                {EnumFacing.SOUTH, EnumFacing.WEST},  // SW
+                {EnumFacing.SOUTH, EnumFacing.EAST}   // SE
+        };
+
+        for (int i = 0; i < diagonalPairs.length; i++) {
+            EnumFacing f1 = diagonalPairs[i][0];
+            EnumFacing f2 = diagonalPairs[i][1];
+            DimChunkPos diagonalPos = pos.toChunkPos().Offset(f1, 1).Offset(f2, 1);
+            if (!isClaimed(excludingFaction, diagonalPos)) continue;
+            UUID targetID = getClaim(diagonalPos);
+            int targetY = getFaction(targetID).getSpecificPosForClaim(diagonalPos).getY();
+            if (Math.abs(pos.getY() - targetY) > WarForgeConfig.VERTICAL_SIEGE_DIST) continue;
+
+            positions.set(4 + i, diagonalPos);
             ++numValidTargets;
         }
 
         return numValidTargets;
     }
+
 
     public LinkedHashMap<DimChunkPos, Boolean> getClaimRadiusAround(UUID excludedFaction, DimBlockPos originPos, int radius) {
         LinkedHashMap<DimChunkPos, Boolean> posMap = new LinkedHashMap<>((int) Math.pow(radius * 2, 2) + 1, 0.75f, true);
