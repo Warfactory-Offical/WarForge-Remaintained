@@ -1,19 +1,18 @@
 package com.flansmod.warforge.client;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 import akka.japi.Pair;
-import com.flansmod.warforge.api.Quality;
-import com.flansmod.warforge.api.Vein;
-import com.flansmod.warforge.api.VeinKey;
+import com.flansmod.warforge.api.vein.Quality;
+import com.flansmod.warforge.api.vein.Vein;
+import com.flansmod.warforge.api.vein.init.VeinUtils;
 import com.flansmod.warforge.common.*;
 import com.flansmod.warforge.common.blocks.IClaim;
 import com.flansmod.warforge.common.network.PacketChunkPosVeinID;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
 
 import com.flansmod.warforge.server.Faction;
+import com.flansmod.warforge.server.StackComparable;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -39,9 +38,9 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 import static com.flansmod.warforge.client.ClientProxy.CHUNK_VEIN_CACHE;
+import static com.flansmod.warforge.common.CommonProxy.YIELD_QUALITY_MULTIPLIER;
 
 public class ClientTickHandler 
 {
@@ -59,9 +58,10 @@ public class ClientTickHandler
 	public static long nextYieldDayMs = 0L;
 
 	// -1 indicates the chunk has never been probed
-	private static ArrayList<String> cachedVeinStrings = null;
-	public static Object2LongOpenHashMap<DimChunkPos> permitChunkReprobeMs = new Object2LongOpenHashMap<>();
-	public static long veinRenderStartTime = -1;  // (curr time - this) / (display time (ms)) to get index
+	private static ArrayList<String> cachedCompStrings = null;
+	private static Object2LongOpenHashMap<DimChunkPos> permitChunkReprobeMs = new Object2LongOpenHashMap<>();
+	private static long lastRenderStartTimeMs = -1;  // (curr time - this) / (display time (ms)) to get index
+	private static Iterator<StackComparable> compIt = null;
 
 	private final HashMap<ItemStack, ResourceLocation> bannerTextures = new HashMap<ItemStack, ResourceLocation>();
 
@@ -80,8 +80,9 @@ public class ClientTickHandler
 		// init and clear stale data
 		permitChunkReprobeMs = new Object2LongOpenHashMap<>();
 		permitChunkReprobeMs.defaultReturnValue(-1);
-		veinRenderStartTime = -1;
-		cachedVeinStrings = null;
+		lastRenderStartTimeMs = -1;
+		compIt = null;
+		cachedCompStrings = null;
 
 		// clear stale data
 		CHUNK_VEIN_CACHE.purge();
@@ -132,7 +133,7 @@ public class ClientTickHandler
 
 			// when we leave a chunk, restart iteration on vein members
 			if (!standing.equals(playerChunkPos)) {
-				veinRenderStartTime = -1;
+				lastRenderStartTimeMs = -1;
 			}
 
 			// Show new area timer if configured
@@ -211,19 +212,20 @@ public class ClientTickHandler
 				// get the vein info
 				if (player.isSneaking()) {
 					DimChunkPos currPos = new DimChunkPos(player.dimension, player.getPosition());
-					boolean hasPos = CHUNK_VEIN_CACHE.contains(currPos);
+					boolean hasPosData = CHUNK_VEIN_CACHE.isReceived(currPos);
+					boolean hasValidData = hasPosData && CHUNK_VEIN_CACHE.isRecognized(currPos);
 					Pair<Vein, Quality> veinInfo = CHUNK_VEIN_CACHE.get(currPos);
 
 					// probe the server for the data for this chunk
-					if (!hasPos && permitChunkReprobeMs.getLong(currPos) <= System.currentTimeMillis()) {
+					if (!hasValidData && permitChunkReprobeMs.getLong(currPos) <= System.currentTimeMillis()) {
 						WarForgeMod.LOGGER.atInfo().log("Pinging server for chunk vein info");
-						permitChunkReprobeMs.put(currPos, System.currentTimeMillis() + 60000);  // only ping every min
+						permitChunkReprobeMs.put(currPos, System.currentTimeMillis() + 5000);  // only ping every 5s as needed
 						PacketChunkPosVeinID packetChunkVeinRequest = new PacketChunkPosVeinID();
 						packetChunkVeinRequest.veinLocation = currPos;
 						WarForgeMod.NETWORK.sendToServer(packetChunkVeinRequest);
 					}
 
-					renderVeinData(mc, veinInfo, hasPos, event);
+					renderVeinData(mc, veinInfo, hasPosData, event);
 				}
 
 				// New Area Toast
@@ -278,47 +280,58 @@ public class ClientTickHandler
 		return closestInfo;
 	}
 
-	private void renderVeinData(Minecraft mc, Pair<Vein, Quality> veinInfo, boolean hasCached, RenderGameOverlayEvent event) {
+	private void renderVeinData(Minecraft mc, Pair<Vein, Quality> veinInfo, boolean hasData, RenderGameOverlayEvent event) {
 		GlStateManager.enableAlpha();
 		GlStateManager.enableBlend();
 
 		// even if we aren't rendering, count up start time to indicate we are within the same chunk as before
+		boolean isNewChunk = lastRenderStartTimeMs == -1;
 		long currTimeMs = System.currentTimeMillis();
-		if (veinRenderStartTime == -1) { veinRenderStartTime = currTimeMs; }  // timer restarted
 		float xTextCenter = (float) event.getResolution().getScaledWidth() / 2; // Centered;
 		float yText = 32;
 
 		// even though intelliJ thinks veinInfo is never null, it definitely should be able to be
 		// we render either the item, or some waiting icon
-		int index = -1;
 		ItemStack currMemberItemStack = null;
-		boolean invalidRenderAttempt = veinInfo == null || veinInfo.first() == null || veinInfo.second() == null;
-		if (!invalidRenderAttempt)  {
-			index = (int) ((currTimeMs - veinRenderStartTime) / WarForgeConfig.VEIN_MEMBER_DISPLAY_TIME_MS);
-			Item currMemberItem = ForgeRegistries.ITEMS.getValue(veinInfo.first().component_ids[index % veinInfo.first().component_ids.length]);
-			if (currMemberItem == null) {
-				WarForgeMod.LOGGER.atError().log("Got null item for vein " + veinInfo.first().VEIN_ENTRY);
-				return;
+		boolean hasItemToRender = veinInfo == null || veinInfo.first() == null || veinInfo.first().compIds.size() == 0;
+		if (!hasItemToRender)  {
+			// initialize render info
+			if (lastRenderStartTimeMs == -1) {
+				lastRenderStartTimeMs = currTimeMs;
+				compIt = veinInfo.first().compIds.iterator();  // LinkedHashSet should give a consistent ordering
 			}
 
-			currMemberItemStack = new ItemStack(currMemberItem, 1);
+			// check if the display time is up
+			else if (currTimeMs - lastRenderStartTimeMs > WarForgeConfig.VEIN_MEMBER_DISPLAY_TIME_MS) {
+				lastRenderStartTimeMs = currTimeMs;  // we are updating the component that we are rendering
+				if (!compIt.hasNext()) { compIt = veinInfo.first().compIds.iterator(); } // restart from beginning
+			}
+
+			StackComparable compId = compIt.next();
+			currMemberItemStack = compId.toItem();
+
+			if (currMemberItemStack == null) {
+				WarForgeMod.LOGGER.atError().log("Got unexpected null stack for vein " + veinInfo.first().toString());
+				return;
+			}
 		}
 
 		// either use the cached string or make a new one if either no cached exists or we are in a new chunk
-		ArrayList<String> veinInfoStrings = cachedVeinStrings;
-		if (cachedVeinStrings == null || veinRenderStartTime == -1) {
-			veinInfoStrings = createVeinInfoStrings(veinInfo, hasCached);
+		ArrayList<String> compInfoStrings = cachedCompStrings;
+		if (cachedCompStrings == null || isNewChunk) {
+			compInfoStrings = createVeinInfoStrings(veinInfo, hasData);
 		}
 
-		final int imageSize = invalidRenderAttempt ? 0 : 24;
+		final int imageSize = hasItemToRender ? 0 : 24;
 		final int imageTextOverlap = imageSize / 2;
-		final int nameWidth =  mc.fontRenderer.getStringWidth(veinInfoStrings.get(0));
+		final int nameWidth =  mc.fontRenderer.getStringWidth(compInfoStrings.get(0));
 		final float titleLeftShift = (float) (imageSize + nameWidth - imageTextOverlap) / 2;
 
 		// draw the vein info
-		mc.fontRenderer.drawStringWithShadow(veinInfoStrings.get(0), xTextCenter + imageSize - imageTextOverlap - titleLeftShift, yText, 0xFFFFFF);
+		mc.fontRenderer.drawStringWithShadow(compInfoStrings.get(0), xTextCenter + imageSize - imageTextOverlap - titleLeftShift, yText, 0xFFFFFF);
 
-		if (veinInfo != null && currMemberItemStack != null) {
+		// draw the item
+		if (currMemberItemStack != null) {
 			// prepare to render
 			GlStateManager.pushMatrix();
 			RenderHelper.disableStandardItemLighting();
@@ -340,8 +353,9 @@ public class ClientTickHandler
 			GlStateManager.popMatrix();
 		}
 
-		for (int i = 1; i < veinInfoStrings.size(); ++i) {
-			String currFormattedComp = veinInfoStrings.get(i);
+		// draw the component strings
+		for (int i = 1; i < compInfoStrings.size(); ++i) {
+			String currFormattedComp = compInfoStrings.get(i);
 			yText += mc.fontRenderer.FONT_HEIGHT + 2;
 			mc.fontRenderer.drawStringWithShadow(currFormattedComp, xTextCenter - (float) mc.fontRenderer.getStringWidth(currFormattedComp) / 2, yText, 0xFFFFFF);
 		}
@@ -349,46 +363,74 @@ public class ClientTickHandler
 
 	private ArrayList<String> createVeinInfoStrings(Pair<Vein, Quality> veinInfo, boolean hasCached) {
 		ArrayList<String> result = new ArrayList<>(1);
-		if (veinInfo != null) {
-			// translate and format the vein name by supplying the localized quality name as an argument
-			Vein currVein = veinInfo.first();
-			Quality currQual = veinInfo.second();
-			result.add(I18n.format(currVein.translation_key, I18n.format(currQual.getTranslationKey())));
 
-			for (int i = 0; i < currVein.component_ids.length; ++i) {
-				Item currItem = ForgeRegistries.ITEMS.getValue(currVein.component_ids[i]);
-				if (currItem == null) {
-					WarForgeMod.LOGGER.atError().log("Couldn't find item with component id " +
-						currVein.component_ids[i] + " in vein " + currVein.VEIN_ENTRY);
-					continue;
-				}
-
-				result.add(I18n.format(currItem.getItemStackDisplayName(new ItemStack(currItem))));
-			}
-
+		// handle no data specially
+		if (!hasCached) {
+			result.add(I18n.format("warforge.info.vein.waiting"));
 			return result;
 		}
 
-		if (veinInfo != null) {
-			if (veinInfo.first() == null) {
-				result.add(I18n.format("warforge.info.vein.unknown_vein_id"));
-				return result;
-			}
-
-			if (veinInfo.second() == null) {
-				result.add(I18n.format("warforge.info.vein.unknown_qual_id"));
-				return result;
-			}
-		}
-
-		// at this point, vein info must be null
-		if (hasCached) {
+		// handle null veins specially
+		if (veinInfo == null) {
 			result.add(I18n.format("warforge.info.vein.null"));
 			return result;
 		}
 
-		result.add(I18n.format("warforge.info.vein.waiting"));
+		// translate and format the vein name by supplying the localized quality name as an argument
+		Vein currVein = veinInfo.first();
+		Quality currQual = veinInfo.second();
+
+		// handle unrecognized veins specially
+		if (currVein == null || currQual == null) {
+			result.add(I18n.format("warforge.info.vein.unrecognized"));
+			return result;
+		}
+
+		// vein is now guaranteed valid and received; begin formatting data to be displayed
+		result.add(I18n.format(currVein.translationKey, I18n.format(currQual.getTranslationKey())));
+		int dim = Minecraft.getMinecraft().player.dimension;
+
+		// turn each component into the item we will be displaying and list them
+		for (StackComparable currComp : currVein.compIds) {
+			ItemStack currStack = currComp.toItem();
+			if (currStack == null) {
+				WarForgeMod.LOGGER.atError().log("Couldn't find item with component id " +
+						currComp + " in vein " + currVein.translationKey);
+				continue;
+			}
+
+			// if we got an item stack, translate it and display information about it
+			StringBuilder compInfo = new StringBuilder(I18n.format(currStack.getTranslationKey()));
+			parseCompInfo(compInfo, currComp, veinInfo, dim);
+			result.add(compInfo.toString());
+		}
+
 		return result;
+	}
+
+	private void parseCompInfo(StringBuilder compInfoStr, StackComparable currComp, Pair<Vein, Quality> veinInfo, int dim) {
+		compInfoStr.append(":");
+		ArrayList<short[]> yieldInfos = VeinUtils.getYieldInfo(currComp, veinInfo, dim);  // weight, guaranteed yield, % extra yield
+
+		// format each subComp in the form <guaranteedYield# - %comp; +%extra> to show yield distribution for item
+		for (short[] subCompInfo : yieldInfos) {
+			// show the guaranteed yield info and component weight
+			compInfoStr.append(" <");
+			compInfoStr.append(subCompInfo[1]);
+			compInfoStr.append("-");
+			compInfoStr.append(VeinUtils.shortToPercentStr(subCompInfo[0]));
+
+			// if there is a chance for an extra yield, display as much
+			if (subCompInfo[2] > 0) {
+				compInfoStr.append(";+");
+				compInfoStr.append(VeinUtils.shortToPercentStr(subCompInfo[2]));
+			}
+
+			compInfoStr.append(">,");  // setup next sub comp
+		}
+
+		// there will be an extra comma at the end
+		compInfoStr.deleteCharAt(compInfoStr.length() - 1);
 	}
 
 	private void renderSiegeOverlay(Minecraft mc, SiegeCampProgressInfo infoToRender, RenderGameOverlayEvent event) {

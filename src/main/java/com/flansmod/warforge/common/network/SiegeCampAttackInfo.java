@@ -1,7 +1,7 @@
 package com.flansmod.warforge.common.network;
 
-import com.flansmod.warforge.api.Quality;
-import com.flansmod.warforge.api.Vein;
+import com.flansmod.warforge.api.vein.Quality;
+import com.flansmod.warforge.api.vein.Vein;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import net.minecraft.util.math.Vec3i;

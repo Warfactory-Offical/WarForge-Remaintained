@@ -1,7 +1,10 @@
 package com.flansmod.warforge.server;
 
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.oredict.OreDictionary;
 
 public class StackComparable {
@@ -33,6 +36,22 @@ public class StackComparable {
         this.registryName = registryName;
         this.meta = (short) meta;
     }
+
+    // will just pick the first registry name from the given oredict
+    public static StackComparable parseArbitraryResource(String resource) {
+        if (OreDictionary.doesOreNameExist(resource)) {
+            return new StackComparable().toOredict(resource);
+        }
+
+        // if we have SOURCE:item_name:meta, then treat as stack with meta
+        if (resource.indexOf(':') != resource.lastIndexOf(':')) {
+            int lastSepIndex = resource.lastIndexOf(':');
+            return new StackComparable(resource.substring(0, lastSepIndex), Integer.parseInt(resource.substring(lastSepIndex)));
+        }
+
+        return new StackComparable(resource);
+    }
+
 
     public static String[] getOreDictNames(ItemStack stack) {
         int[] ids = OreDictionary.getOreIDs(stack);
@@ -67,6 +86,41 @@ public class StackComparable {
         return this;
     }
 
+    // return an item stack of 1 corresponding to this item, preferring oredict use and returning its first result
+    public ItemStack toItem() {
+        return toItem(1);
+    }
+
+    // return the corresponding item stack w/ the amount provided, preferring oredict and if possible the first oredict result
+    public ItemStack toItem(int amount) {
+        return toItem(amount, 0);
+    }
+
+    // return the item stack corresponding to this stack comparable, based on the amount and oredict index provided
+    // oredict will be used first, assuming both oredict and the registry name are present
+    public ItemStack toItem(int amount, int oredictIndex) {
+        // try to get the oredict of the ore
+        if (this.oredict != null && OreDictionary.doesOreNameExist(oredict)) {
+            return OreDictionary.getOres(oredict).get(oredictIndex);
+        }
+
+        // no matching oredict and no registry name means there is no item
+        if (registryName == null) { return null; }
+
+        // check that the resource exists
+        ResourceLocation resource = new ResourceLocation(registryName);
+        if (!ForgeRegistries.ITEMS.containsKey(resource)) { return null; }  // cannot return item that doesnt exist
+
+        // likely redundant check to ensure item is not null, but intellij complains and I can't guarantee that the
+        // registry wouldn't return a null value if the key exists
+        Item item = ForgeRegistries.ITEMS.getValue(resource);
+        if (item == null) { return null; }
+
+        // create the itemstack with the metadata needed, if applicable
+        if (meta == -1) { return new ItemStack(item, amount); }
+        else { return new ItemStack(item, amount, meta); }
+    }
+
     public boolean equals(ItemStack stack) {
         //Oredict check
         if (oredict != null && !oredict.isEmpty()) {
@@ -78,7 +132,6 @@ public class StackComparable {
 
         }
 
-
         //Registry key check
         if (registryName != null && stack.getItem().getRegistryName().toString().equals(registryName)) {
             if (meta == -1) {
@@ -87,7 +140,33 @@ public class StackComparable {
                 return stack.getMetadata() == meta;
             }
         }
+
         return false;
+    }
+
+    // attempts all possible checks to guarantee inequality to passed stack comparable
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof StackComparable otherStack)) { return false; }
+
+        return (registryName.equals(otherStack.registryName) && meta == otherStack.meta) ||
+                oredict.equals(otherStack.oredict) ||
+                this.equals(otherStack.toItem());
+    }
+
+    @Override
+    public String toString() {
+        return "RegName: " + (registryName == null ? "NULL" : registryName) + ", Oredict: " +
+                (oredict == null ? "NULL" : oredict) + ", Meta: " + meta;
+    }
+
+    // adds the meta to the hashes of oredict and the registry name, using 0 as the hash for null strings
+    @Override
+    public int hashCode() {
+        int hash = meta;
+        if (oredict != null) { hash += oredict.hashCode(); }
+        if (registryName != null) { hash += registryName.hashCode(); }
+        return hash;
     }
 
     public StackComparableResult toStackComparableResult(int playerInvCount, int required) {
@@ -122,8 +201,6 @@ public class StackComparable {
         public static StackComparableResult readFromNBT(NBTTagCompound tag) {
             StackComparable sc = StackComparable.readFromNBT(tag);
             return sc.toStackComparableResult(tag.getInteger("has"), tag.getInteger("need"));
-
-
         }
 
         public boolean isEnough() {

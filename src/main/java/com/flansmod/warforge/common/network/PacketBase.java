@@ -37,7 +37,7 @@ public abstract class PacketBase
 	public abstract void handleClientSide(EntityPlayer clientPlayer);
 	
 	/**
-	 * Util method for quickly writing strings
+	 * Util method for quickly writing strings - stores at most 2 bytes for string length
 	 */
 	public static void writeUTF(ByteBuf data, String s)
 	{

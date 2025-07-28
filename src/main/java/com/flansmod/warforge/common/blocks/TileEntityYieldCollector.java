@@ -4,13 +4,16 @@ import java.util.*;
 import java.util.Arrays;
 
 import akka.japi.Pair;
-import com.flansmod.warforge.api.Quality;
-import com.flansmod.warforge.api.Vein;
-import com.flansmod.warforge.api.VeinKey;
+import com.flansmod.warforge.api.vein.Quality;
+import com.flansmod.warforge.api.vein.Vein;
+import com.flansmod.warforge.api.vein.init.VeinUtils;
+import com.flansmod.warforge.common.DimChunkPos;
 import com.flansmod.warforge.common.InventoryHelper;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.server.Faction;
 
+import com.flansmod.warforge.server.StackComparable;
+import it.unimi.dsi.fastutil.ints.Int2FloatOpenHashMap;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
@@ -19,182 +22,163 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
-import static com.flansmod.warforge.api.Quality.*;
+import static com.flansmod.warforge.api.vein.Quality.*;
 import static com.flansmod.warforge.common.CommonProxy.YIELD_QUALITY_MULTIPLIER;
-import static com.flansmod.warforge.common.WarForgeMod.VEIN_MAP;
+import static com.flansmod.warforge.common.WarForgeMod.VEIN_HANDLER;
 
 public abstract class TileEntityYieldCollector extends TileEntityClaim implements IInventory
 {
 	public static final int NUM_YIELD_STACKS = 9;
 	public static final int NUM_BASE_SLOTS = NUM_YIELD_STACKS;
-			
+
 	protected abstract float getYieldMultiplier();
 
 	// The yield stacks are where items arrive when your faction is above a deposit
 	protected ItemStack[] yieldStacks = new ItemStack[NUM_YIELD_STACKS];
 
-	public TileEntityYieldCollector()
-	{
+	public TileEntityYieldCollector() {
         Arrays.fill(yieldStacks, ItemStack.EMPTY);
 	}
-			
+
 	public void processYield(int numYields) {
 		if(world.isRemote) { return; }
 
-		ChunkPos chunk = new ChunkPos(getPos());
-		if (!VEIN_MAP.containsKey(world.provider.getDimension())) { return; }  // if dim doesn't have any veins
+		DimChunkPos currPos = new DimChunkPos(world.provider.getDimension(), getPos());
+		if (!VEIN_HANDLER.dimHasVeins(currPos.mDim)) { return; }
 
 		// get vein data
-		Pair<Vein, Quality> vein_info = VeinKey.getVein(world.provider.getDimension(), chunk.x, chunk.z, world.getSeed());
-		if (vein_info == null) {
-			// extra precaution in case something goes wrong
-			WarForgeMod.LOGGER.atError().log("Unexpected null vein info. Terminating yield processing.");
-			return;
-		}
-		Vein chunk_vein = vein_info.first();
-		Quality vein_quality = vein_info.second();
+		Pair<Vein, Quality> veinInfo = VEIN_HANDLER.getVein(world.provider.getDimension(), currPos.x, currPos.z, world.getSeed());
+		if (veinInfo == null) { return; }  // ignore null veins
 
-		if (chunk_vein.isNullVein()) { return; }  // ignore null vein
+		Vein currVein = veinInfo.first();
+		Quality currQual = veinInfo.second();
 
 		Random rand = new Random((WarForgeMod.currTickTimestamp * world.getSeed()) * 2654435761L);
-		ArrayList<ItemStack> vein_components = new ArrayList<>(chunk_vein.component_ids.length);
+		ArrayList<ItemStack> yieldComps = new ArrayList<>(currVein.compIds.size());
 
 		// for each component in the vein, attempt to yield it numYields many times
-		for (int i = 0; i < chunk_vein.component_ids.length; ++i) {
-			int num_items = 0;  // figure out how many items of this component are needed
+		for (StackComparable currComp : currVein.compIds) {
+			short numItems = 0;  // figure out how many items of this component are needed
 
 			// determine yield amount based on quality and component base yield
-			float curr_yield = chunk_vein.component_yields[i];
+			ArrayList<short[]> subCompYieldInfos = VeinUtils.getYieldInfo(currComp, veinInfo, currPos.mDim);
 
-			// modify yield based on quality
-			if (vein_quality == POOR) { curr_yield /= YIELD_QUALITY_MULTIPLIER; }
-			else if (vein_quality == RICH) { curr_yield *= YIELD_QUALITY_MULTIPLIER; }
-
-			// calculate the number of times to yield this component
+			// yield this component the appropriate number of times
 			for (int j = 0; j < numYields; ++j) {
-				if (rand.nextInt(1000) < chunk_vein.component_weights[i]) {
-					num_items += (int) curr_yield;
-					float remaining_yield = curr_yield - (float) num_items;
+				// for each subcomponent, apply the yielding logic
+				for (short[] subCompInfo : subCompYieldInfos) {
+					// apply a chance to yield this subcomponent
+					if (rand.nextInt(VeinUtils.WEIGHT_FRACTION_TENS_POW) + 1 > subCompInfo[0]) { continue; }
 
-					// handle fractional yield cases
-					if (remaining_yield != 0) {
-						int yield_chance = (int) (remaining_yield * 1000);
-						if (rand.nextInt(1000) < yield_chance) {
-							num_items += 1;
-						}
-					}
+					// apply a chance to yield an extra item of this sub component
+					numItems += subCompInfo[1];  // add guaranteed yield
+					if (rand.nextInt(VeinUtils.WEIGHT_FRACTION_TENS_POW) + 1 > subCompInfo[2]) { continue; }
+
+					++numItems;  // add extra yield
 				}
 			}
 
-			if (num_items == 0) { continue; } // adding an itemstack with 0 of the item will result in an air itemstack
+			if (numItems == 0) { continue; } // adding an itemstack with 0 of the item will result in an air itemstack
 
 			// attempt to locate the item and append the new item stack representing yield amounts
-			final Item curr_component = ForgeRegistries.ITEMS.getValue(chunk_vein.component_ids[i]);
-			if (curr_component == null) {
+			ItemStack compStack = currComp.toItem(numItems);
+			if (compStack == null) {
 				// item does not exist for some reason
-				WarForgeMod.LOGGER.atError().log("Got null item component for vein w/ key: " + chunk_vein.translation_key);
+				WarForgeMod.LOGGER.atError().log("Got null item component for vein w/ key: " + currVein.translationKey);
 				continue;
 			}
 
-			vein_components.add(new ItemStack(curr_component, num_items));
+			yieldComps.add(compStack);
 		}
 
+		if (yieldComps.size() == 0) { return; }  // don't go through the process of marking dirty if we won't do anything
+
 		// try to add the items
-		for (ItemStack curr_component_stack : vein_components) {
-			if(!InventoryHelper.addItemStackToInventory(this, curr_component_stack, false))
-			{
+		for (ItemStack curr_component_stack : yieldComps) {
+			if(!InventoryHelper.addItemStackToInventory(this, curr_component_stack, false)) {
 				WarForgeMod.LOGGER.atError().log("Failed to add <" + curr_component_stack.toString() + "> to yield " +
 						"collector at " + this.getPos());
 			}
 		}
-		
+
 		markDirty();
 	}
-	
+
 	@Override
-	public void onLoad()
-	{
-		if(!world.isRemote)
-		{
+	public void onLoad() {
+		if(!world.isRemote) {
 			Faction faction = WarForgeMod.FACTIONS.getFaction(factionUUID);
-			if(faction != null)
-			{
+			if(faction != null) {
 				int pendingYields = faction.claims.get(this.getClaimPos());
-				if(pendingYields > 0)
-				{
+				if(pendingYields > 0) {
 					processYield(pendingYields);
 				}
 				faction.claims.replace(this.getClaimPos(), 0);
-			}
-			else if(!factionUUID.equals(Faction.nullUuid))
-			{
+			} else if(!factionUUID.equals(Faction.nullUuid)) {
 				WarForgeMod.LOGGER.error("Loaded YieldCollector with invalid faction");
 			}
 		}
-		
+
 	}
-	
+
 	@Override
-	public NBTTagCompound writeToNBT(NBTTagCompound nbt)
-	{
+	public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
 		super.writeToNBT(nbt);
-		
-		// Write all our stacks out		
-		for(int i = 0; i < NUM_YIELD_STACKS; i++)
-		{
+
+		// Write all our stacks out
+		for(int i = 0; i < NUM_YIELD_STACKS; i++) {
 			NBTTagCompound yieldStackTags = new NBTTagCompound();
 			yieldStacks[i].writeToNBT(yieldStackTags);
 			nbt.setTag("yield_" + i, yieldStackTags);
 		}
-		
+
 		return nbt;
 	}
 
-	
+
 	@Override
-	public void readFromNBT(NBTTagCompound nbt)
-	{
+	public void readFromNBT(NBTTagCompound nbt) {
 		super.readFromNBT(nbt);
-	
+
 		// Read inventory, or as much as we can find
-		for(int i = 0; i < NUM_YIELD_STACKS; i++)
-		{
+		for(int i = 0; i < NUM_YIELD_STACKS; i++) {
 			if(nbt.hasKey("yield_" + i))
 				yieldStacks[i] = new ItemStack(nbt.getCompoundTag("yield_" + i));
-			else 
+			else
 				yieldStacks[i] = ItemStack.EMPTY;
 		}
 	}
-	
+
 	// ----------------------------------------------------------
 	// The GIGANTIC amount of IInventory methods...
 	@Override
 	public String getName() { return factionName; }
+
 	@Override
 	public boolean hasCustomName() { return false; }
+
 	@Override
 	public int getSizeInventory() { return NUM_BASE_SLOTS; }
+
 	@Override
-	public boolean isEmpty() 
-	{
+	public boolean isEmpty() {
 		for(int i = 0; i < NUM_YIELD_STACKS; i++)
 			if(!yieldStacks[i].isEmpty())
 				return false;
 		return true;
 	}
+
 	// In terms of indexing, the yield stacks are 0 - 8
 	@Override
-	public ItemStack getStackInSlot(int index) 
-	{
+	public ItemStack getStackInSlot(int index) {
 		if(index < NUM_YIELD_STACKS)
 			return yieldStacks[index];
 		return ItemStack.EMPTY;
 	}
+
 	@Override
-	public ItemStack decrStackSize(int index, int count) 
-	{
-		if(index < NUM_YIELD_STACKS)
-		{
+	public ItemStack decrStackSize(int index, int count) {
+		if(index < NUM_YIELD_STACKS) {
 			int numToTake = Math.max(count, yieldStacks[index].getCount());
 			ItemStack result = yieldStacks[index].copy();
 			result.setCount(numToTake);
@@ -203,53 +187,56 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 		}
 		return ItemStack.EMPTY;
 	}
+
 	@Override
-	public ItemStack removeStackFromSlot(int index) 
-	{
+	public ItemStack removeStackFromSlot(int index) {
 		ItemStack result = ItemStack.EMPTY;
-		if(index < NUM_YIELD_STACKS)
-		{
+		if(index < NUM_YIELD_STACKS) {
 			result = yieldStacks[index];
 			yieldStacks[index] = ItemStack.EMPTY;
 		}
 		return result;
 	}
+
 	@Override
-	public void setInventorySlotContents(int index, ItemStack stack) 
-	{
-		if(index < NUM_YIELD_STACKS)
-		{
+	public void setInventorySlotContents(int index, ItemStack stack) {
+		if(index < NUM_YIELD_STACKS) {
 			yieldStacks[index] = stack;
 		}
 	}
+
 	@Override
-	public int getInventoryStackLimit() 
-	{
+	public int getInventoryStackLimit() {
 		return 64;
 	}
+
 	@Override
-	public boolean isUsableByPlayer(EntityPlayer player) 
-	{
+	public boolean isUsableByPlayer(EntityPlayer player) {
 		return factionUUID.equals(Faction.nullUuid) || WarForgeMod.FACTIONS.IsPlayerInFaction(player.getUniqueID(), factionUUID);
 	}
+
 	@Override
 	public void openInventory(EntityPlayer player) { }
+
 	@Override
 	public void closeInventory(EntityPlayer player) { }
+
 	@Override
-	public boolean isItemValidForSlot(int index, ItemStack stack) 
-	{
+	public boolean isItemValidForSlot(int index, ItemStack stack) {
         return index < NUM_YIELD_STACKS;
     }
+
 	@Override
 	public int getField(int id)  { return 0; }
+
 	@Override
 	public void setField(int id, int value) { }
+
 	@Override
 	public int getFieldCount() { return 0; }
+
 	@Override
-	public void clear() 
-	{
+	public void clear() {
         Arrays.fill(yieldStacks, ItemStack.EMPTY);
 	}
 	// ----------------------------------------------------------

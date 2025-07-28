@@ -1,12 +1,9 @@
 package com.flansmod.warforge.common;
 
-import com.flansmod.warforge.api.Vein;
-import com.flansmod.warforge.api.VeinKey;
 import com.flansmod.warforge.common.blocks.TileEntityBasicClaim;
 import com.flansmod.warforge.common.blocks.TileEntityCitadel;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.tileentity.TileEntity;
@@ -18,8 +15,6 @@ import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.network.IGuiHandler;
 import net.minecraftforge.fml.relauncher.Side;
-
-import java.util.TreeMap;
 
 public class CommonProxy implements IGuiHandler
 {
@@ -33,7 +28,7 @@ public class CommonProxy implements IGuiHandler
 	public static final int GUI_TYPE_SHOP = 7;
 
 	// determines the bonus multiplier or reduction multiplier (reciprocal) for veins of
-	// increasing or decreasing quality, respectively
+	// increasing or decreasing quality, respectively; not configurable for now, but would need sync packets if it were
 	public static float YIELD_QUALITY_MULTIPLIER = 2;
 	
 	public void preInit(FMLPreInitializationEvent event)

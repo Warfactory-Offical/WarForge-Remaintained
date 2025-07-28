@@ -7,10 +7,6 @@ import net.minecraftforge.common.config.Configuration;
 import java.io.File;
 import java.util.*;
 
-import com.flansmod.warforge.api.Vein;
-import com.flansmod.warforge.api.VeinKey;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-
 import static com.flansmod.warforge.common.CommonProxy.YIELD_QUALITY_MULTIPLIER;
 
 public class WarForgeConfig
@@ -93,6 +89,7 @@ public class WarForgeConfig
 	public static boolean SHOW_YIELD_TIMERS = true;
 	public static int CITADEL_MOVE_NUM_DAYS = 7;
 
+    // Vein
 	public static boolean DO_FANCY_RENDERING = true;
 	public static boolean SHOW_OPPONENT_BORDERS = true;
 	public static boolean SHOW_ALLY_BORDERS = true;
@@ -170,9 +167,9 @@ public class WarForgeConfig
         CLAIM_FOE.ALLOW_DISMOUNT_ENTITY = false;
 
         UNCLAIMED.EXPLOSION_DAMAGE = true;
-        WarForgeMod.VEIN_MAP.defaultReturnValue(null);
     }
 
+    /*
 	public static void initializeVeins() {
 		final String VEIN_ENTRY_EXPLANATION = "All veins should be entered in the follow format: \n" +
 				"<translation_key>, {<valid dim id's>}, {<vein dim weights 0.0000 - 1.0000>}, {<yield_amount>~<component item id>, ...}, {<component weights 0.0000 - 1.0000>}; \n" +
@@ -183,6 +180,7 @@ public class WarForgeConfig
 		String[] vein_entries = configFile.getStringList("Vein list", CATEGORY_YIELDS, new String[0], VEIN_ENTRY_EXPLANATION);  // if the default value is null then the returned result is null which causes a npe
 		VeinKey.populateVeinMap(WarForgeMod.VEIN_MAP, vein_entries);
 	}
+     */
 
 	public static void syncConfig(File suggestedFile) {
 		configFile = new Configuration(suggestedFile);

@@ -1,6 +1,6 @@
 package com.flansmod.warforge.client;
 
-import com.flansmod.warforge.api.Vein;
+import com.flansmod.warforge.api.vein.Vein;
 import com.flansmod.warforge.common.CommonProxy;
 import com.flansmod.warforge.common.Content;
 import com.flansmod.warforge.common.DimBlockPos;
@@ -10,6 +10,7 @@ import com.flansmod.warforge.common.effect.AnimatedEffectHandler;
 import com.flansmod.warforge.common.network.PacketRequestFactionInfo;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.shorts.Short2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
@@ -36,7 +37,7 @@ public class ClientProxy extends CommonProxy
 {
 	public static HashMap<DimBlockPos, SiegeCampProgressInfo> sSiegeInfo = new HashMap<DimBlockPos, SiegeCampProgressInfo>();
 
-	public static Int2ObjectOpenHashMap<Vein> VEIN_ENTRIES = new Int2ObjectOpenHashMap<>();
+	public static Short2ObjectOpenHashMap<Vein> VEIN_ENTRIES = new Short2ObjectOpenHashMap<>();
 
 	public static ChunkVeinCache CHUNK_VEIN_CACHE = new ChunkVeinCache();
 

@@ -1,9 +1,9 @@
 package com.flansmod.warforge.common.blocks;
 
 import akka.japi.Pair;
-import com.flansmod.warforge.api.Quality;
-import com.flansmod.warforge.api.Vein;
-import com.flansmod.warforge.api.VeinKey;
+import com.flansmod.warforge.api.vein.Quality;
+import com.flansmod.warforge.api.vein.Vein;
+import com.flansmod.warforge.api.vein.VeinKey;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.DimChunkPos;
 import com.flansmod.warforge.common.WarForgeMod;
@@ -37,8 +37,7 @@ import java.util.*;
 
 import static com.flansmod.warforge.common.Content.dummyTranslusent;
 import static com.flansmod.warforge.common.Content.statue;
-import static com.flansmod.warforge.common.WarForgeMod.FACTIONS;
-import static com.flansmod.warforge.common.WarForgeMod.isOp;
+import static com.flansmod.warforge.common.WarForgeMod.*;
 import static com.flansmod.warforge.common.blocks.BlockDummy.MODEL;
 import static com.flansmod.warforge.common.blocks.BlockDummy.modelEnum.BERSERKER;
 import static com.flansmod.warforge.common.blocks.BlockDummy.modelEnum.TRANSLUCENT;
@@ -213,7 +212,8 @@ public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvi
             info.mFactionUUID = claimedBy == null ? Faction.nullUuid : claimedBy.uuid;
             info.mFactionName = claimedBy == null ? "" : claimedBy.name;
             info.mFactionColour = claimedBy == null ? 0 : claimedBy.colour;
-            Pair<Vein, Quality> veinInfo = VeinKey.getVein(chunk, FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0].getSeed());
+            Pair<Vein, Quality> veinInfo = VEIN_HANDLER.getVein(chunk.mDim, chunk.x, chunk.z,
+                    FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0].getSeed());
             if (veinInfo != null) {
                 info.mWarforgeVein = veinInfo.first();
                 info.mOreQuality =  veinInfo.second();

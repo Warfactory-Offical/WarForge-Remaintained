@@ -195,7 +195,7 @@ public class MapDrawable implements IDrawable, Interactable {
         int b = Math.max((color & 0xFF) - 16, 0);
         return 0xFF000000 | (r << 16) | (g << 8) | b;
     }
-    
+
     private static void setGLColor(float[] rgb){
         GlStateManager.color(rgb[0], rgb[1], rgb[2]);
     }

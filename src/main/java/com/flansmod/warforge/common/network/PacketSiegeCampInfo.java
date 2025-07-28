@@ -1,7 +1,7 @@
 package com.flansmod.warforge.common.network;
 
 import com.cleanroommc.modularui.factory.ClientGUI;
-import com.flansmod.warforge.api.Quality;
+import com.flansmod.warforge.api.vein.Quality;
 import com.flansmod.warforge.client.ClientProxy;
 import com.flansmod.warforge.client.GuiSiegeCamp;
 import com.flansmod.warforge.common.DimBlockPos;
@@ -38,7 +38,7 @@ public class PacketSiegeCampInfo extends PacketBase {
             data.writeByte(info.mOffset.getX());
             data.writeByte(info.mOffset.getZ());
             data.writeInt(info.mFactionColour);
-            data.writeInt(info.mWarforgeVein != null ? info.mWarforgeVein.getID() : -1);
+            data.writeInt(info.mWarforgeVein != null ? info.mWarforgeVein.getId() : -1);
             data.writeByte((byte) info.mOreQuality.ordinal());
         }
     }

@@ -1,15 +1,14 @@
 package com.flansmod.warforge.client;
 
 import akka.japi.Pair;
-import com.flansmod.warforge.api.Quality;
-import com.flansmod.warforge.api.Vein;
-import com.flansmod.warforge.api.VeinKey;
+import com.flansmod.warforge.api.vein.Quality;
+import com.flansmod.warforge.api.vein.Vein;
 import com.flansmod.warforge.api.WarforgeCache;
 import com.flansmod.warforge.common.DimChunkPos;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-import static com.flansmod.warforge.client.ClientProxy.VEIN_ENTRIES;
+import static com.flansmod.warforge.common.WarForgeMod.VEIN_HANDLER;
 
 @SideOnly(Side.CLIENT)
 public class ChunkVeinCache {
@@ -25,20 +24,27 @@ public class ChunkVeinCache {
         cache.clear();
     }
 
-    public void add(DimChunkPos chunkPos, int veinID, byte qualOrd){
-        if (veinID == -1 || qualOrd == -1) {
-            cache.put(chunkPos, null);
-            return;
-        }
-
-        cache.put(chunkPos, new Pair<>(VEIN_ENTRIES.get(veinID), Quality.values()[qualOrd]));
+    public void add(DimChunkPos chunkPos, short compressedVeinInfo) {
+        cache.put(chunkPos, VEIN_HANDLER.decompressVeinInfo(compressedVeinInfo));
     }
 
     public Pair<Vein, Quality> get(DimChunkPos chunkPos) {
         return cache.get(chunkPos);
     }
 
-    public boolean contains(DimChunkPos chunkPosKey) {
+    // checks if a packet is received and recognized
+    public boolean hasValidData(DimChunkPos chunkPosKey) {
+        return isReceived(chunkPosKey) && isRecognized(chunkPosKey);
+    }
+
+    // checks if a packet for the position was ever received and processed
+    public boolean isReceived(DimChunkPos chunkPosKey) {
         return cache.contains(chunkPosKey);
+    }
+
+    // checks that the pos is recognized, not checking if it has already been received
+    public boolean isRecognized(DimChunkPos chunkPosKey) {
+        Pair<Vein, Quality> veinInfo = cache.get(chunkPosKey);
+        return veinInfo == null || veinInfo.first() != null;
     }
 }

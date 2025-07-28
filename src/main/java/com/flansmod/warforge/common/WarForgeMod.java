@@ -1,8 +1,10 @@
 package com.flansmod.warforge.common;
 
 import com.flansmod.warforge.api.ObjectIntPair;
-import com.flansmod.warforge.api.Vein;
-import com.flansmod.warforge.api.VeinKey;
+import com.flansmod.warforge.api.vein.Vein;
+import com.flansmod.warforge.api.vein.VeinKey;
+import com.flansmod.warforge.api.vein.init.VeinConfigHandler;
+import com.flansmod.warforge.api.vein.init.VeinUtils;
 import com.flansmod.warforge.client.PlayerNametagCache;
 import com.flansmod.warforge.common.blocks.IMultiBlockInit;
 import com.flansmod.warforge.common.blocks.TileEntityClaim;
@@ -12,7 +14,6 @@ import com.flansmod.warforge.common.network.*;
 import com.flansmod.warforge.common.potions.PotionsModule;
 import com.flansmod.warforge.server.*;
 import com.flansmod.warforge.server.Faction.Role;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandHandler;
@@ -34,12 +35,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.event.world.ChunkDataEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
@@ -82,8 +83,10 @@ public class WarForgeMod implements ILateMixinLoader {
     public static final UpgradeHandler UPGRADE_HANDLER = new UpgradeHandler();
     // Discord integration
     private static final String DISCORD_MODID = "discordintegration";
-    private static final HashMap<String, UUID> discordUserIdMap = new HashMap<String, UUID>();
-    public static Int2ObjectOpenHashMap<TreeMap<VeinKey, Vein>> VEIN_MAP = new Int2ObjectOpenHashMap<>();
+    private static final HashMap<String, UUID> discordUserIdMap = new HashMap<>();
+
+    public static VeinUtils VEIN_HANDLER = null;
+
     @SideOnly(Side.CLIENT)
     public static PlayerNametagCache NAMETAG_CACHE;
     @Instance(MODID)
@@ -253,22 +256,19 @@ public class WarForgeMod implements ILateMixinLoader {
                 e.printStackTrace();
             }
         }
-        List<VeinConfigHandler.VeinEntry> veinList = new ArrayList<>();
+
+        // initialize the vein data
         try {
             VeinConfigHandler.writeStubIfEmpty();
-            veinList = VeinConfigHandler.loadVeins();
-        } catch (IOException e) {
+            VeinConfigHandler.loadVeins();
+        } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
         }
-        if (!veinList.isEmpty() && veinList != null)
-            VeinKey.populateVeinMap(WarForgeMod.VEIN_MAP, veinList);
 
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
             NAMETAG_CACHE = new PlayerNametagCache(60_000, 200);
         }
-
-
     }
 
     public long getSiegeDayLengthMS() {
@@ -500,13 +500,13 @@ public class WarForgeMod implements ILateMixinLoader {
         ObjectIntPair<UUID> conqueredChunkInfo = FACTIONS.conqueredChunks.get(pos);
         if (conqueredChunkInfo != null) {
             // remove invalid entries if necessary, and if not then do actual comparison
-            if (conqueredChunkInfo.getLeft() == null || conqueredChunkInfo.getLeft().equals(Faction.nullUuid) || FACTIONS.getFaction(conqueredChunkInfo.getLeft()) == null) {
+            if (conqueredChunkInfo.getObj() == null || conqueredChunkInfo.getObj().equals(Faction.nullUuid) || FACTIONS.getFaction(conqueredChunkInfo.getObj()) == null) {
                 WarForgeMod.LOGGER.atError().log("Found invalid conquered chunk at " + pos + "; removing and permitting placement.");
                 FACTIONS.conqueredChunks.remove(pos);
-            } else if (!conqueredChunkInfo.getLeft().equals(playerFaction.uuid)) {
+            } else if (!conqueredChunkInfo.getObj().equals(playerFaction.uuid)) {
                 player.sendMessage(new TextComponentTranslation("warforge.info.chunk_is_conquered",
-                        WarForgeMod.FACTIONS.getFaction(FACTIONS.conqueredChunks.get(pos).getLeft()).name,
-                        formatTime(FACTIONS.conqueredChunks.get(pos).getRight())));
+                        WarForgeMod.FACTIONS.getFaction(FACTIONS.conqueredChunks.get(pos).getObj()).name,
+                        formatTime(FACTIONS.conqueredChunks.get(pos).getInteger())));
                 event.setCanceled(true);
                 return;
             }
@@ -663,15 +663,12 @@ public class WarForgeMod implements ILateMixinLoader {
             }
 
             // go over all ordered veins that the server has and send them to the client
-            for (int veinID = 0; veinID < Vein.orderedVeins.size(); ) {
-                PacketVeinEntries currEntries = new PacketVeinEntries().fillFrom(Vein.orderedVeins, veinID);
-                veinID += currEntries.entryCount();
-
-                // queue up each compressed packet to be sent
-                SyncQueueHandler.enqueue(() -> {
-                            NETWORK.sendTo(currEntries, (EntityPlayerMP) event.player);
-                        }
-                );
+            int veinIndex = 0;
+            ArrayList<Vein> veins = new ArrayList<>(VEIN_HANDLER.ID_TO_VEINS.values());
+            while (veinIndex < veins.size()) {
+                PacketVeinEntries currPacket = new PacketVeinEntries();
+                veinIndex = currPacket.fillFrom(veins, veinIndex);
+                SyncQueueHandler.enqueue(() -> NETWORK.sendTo(currPacket, (EntityPlayerMP) event.player));
             }
         }
     }
@@ -698,6 +695,7 @@ public class WarForgeMod implements ILateMixinLoader {
 
     private void readFromNBT(NBTTagCompound tags) {
         FACTIONS.readFromNBT(tags);
+        VEIN_HANDLER.readFromNBT(tags);
 
         timestampOfFirstDay = tags.getLong("zero-timestamp");
         numberOfSiegeDaysTicked = tags.getLong("num-days-elapsed");
@@ -706,6 +704,7 @@ public class WarForgeMod implements ILateMixinLoader {
 
     private void WriteToNBT(NBTTagCompound tags) {
         FACTIONS.WriteToNBT(tags);
+        VEIN_HANDLER.WriteToNBT(tags);
 
         tags.setLong("zero-timestamp", timestampOfFirstDay);
         tags.setLong("num-days-elapsed", numberOfSiegeDaysTicked);

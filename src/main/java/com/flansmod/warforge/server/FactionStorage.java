@@ -232,8 +232,8 @@ public class FactionStorage {
             for (DimChunkPos chunkPosKey : conqueredChunks.keySet()) {
                 ObjectIntPair<UUID> chunkEntry = conqueredChunks.get(chunkPosKey);
 
-                if (chunkEntry.getRight() < msPassed) conqueredChunks.remove(chunkPosKey);
-                else chunkEntry.setRight(chunkEntry.getRight() - msPassed);
+                if (chunkEntry.getInteger() < msPassed) conqueredChunks.remove(chunkPosKey);
+                else chunkEntry.setInteger(chunkEntry.getInteger() - msPassed);
             }
         } catch (Exception e) {
             LOGGER.atError().log("Error when updating conquered chunk of type " + e + ", with stacktrace:");
@@ -796,7 +796,7 @@ public class FactionStorage {
 
         if (conqueredChunks.get(defendingPos.toChunkPos()) != null) {
             factionOfficer.sendMessage(new TextComponentTranslation("warforge.info.chunk_is_conquered",
-                    defending.name, formatTime(conqueredChunks.get(defendingPos.toChunkPos()).getRight())));
+                    defending.name, formatTime(conqueredChunks.get(defendingPos.toChunkPos()).getInteger())));
             return;
         }
 
@@ -1156,8 +1156,8 @@ public class FactionStorage {
             // values in tag list must all be same, so all types are changed to use int arrays
             NBTTagList keyValPair = new NBTTagList();
             keyValPair.appendTag(new NBTTagIntArray(new int[]{chunkPosKey.mDim, chunkPosKey.x, chunkPosKey.z}));
-            keyValPair.appendTag(new NBTTagIntArray(UUIDToBEIntArray(conqueredChunks.get(chunkPosKey).getLeft())));
-            keyValPair.appendTag(new NBTTagIntArray(new int[]{conqueredChunks.get(chunkPosKey).getRight()}));
+            keyValPair.appendTag(new NBTTagIntArray(UUIDToBEIntArray(conqueredChunks.get(chunkPosKey).getObj())));
+            keyValPair.appendTag(new NBTTagIntArray(new int[]{conqueredChunks.get(chunkPosKey).getInteger()}));
 
             conqueredChunksDataList.setTag("conqueredChunk_" + index, keyValPair);
 

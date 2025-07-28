@@ -14,6 +14,7 @@ import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketStartSiege;
 import com.flansmod.warforge.common.network.SiegeCampAttackInfo;
 import com.flansmod.warforge.common.network.SiegeCampAttackInfoRender;
+import com.flansmod.warforge.server.StackComparable;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
@@ -218,13 +219,11 @@ public class GuiSiegeCamp {
                             if (chunkInfo.mWarforgeVein != null) {
 
                                 richTooltip.addLine(new IngredientDrawable(
-                                        Arrays.stream(chunkInfo.mWarforgeVein.component_ids)
-                                                .map(ForgeRegistries.ITEMS::getValue)
-                                                .filter(Objects::nonNull)
-                                                .map(ItemStack::new)
+                                        chunkInfo.mWarforgeVein.compIds.stream()
+                                                .map(StackComparable::toItem)
                                                 .toArray(ItemStack[]::new)
                                 ).asIcon().size(25));
-                                richTooltip.addLine(IKey.str("Ore In the chunk: " + I18n.format(chunkInfo.mWarforgeVein.translation_key)));
+                                richTooltip.addLine(IKey.str("Ore In the chunk: " + I18n.format(chunkInfo.mWarforgeVein.translationKey)));
                                 richTooltip.addLine(IKey.str("Quality: " + I18n.format(chunkInfo.mOreQuality.getTranslationKey())));
                             } else {
                                 richTooltip.addLine(IKey.str("No ores in this chunk"));

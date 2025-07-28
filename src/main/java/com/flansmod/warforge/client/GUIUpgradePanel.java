@@ -96,6 +96,7 @@ public class GUIUpgradePanel {
             Ingredient ingredient;
             String displayName;
 
+            // tries to get oredict ingredient, then tries to get raw item as ingredient
             if (comparableResult.compared.getOredict() != null) {
                 ingredient = new OreIngredient(comparableResult.compared.getOredict());
                 displayName = humanizeOreDictName(comparableResult.compared.getOredict());
