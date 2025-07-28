@@ -3,7 +3,7 @@ package com.flansmod.warforge.common.network;
 import java.util.ArrayList;
 import java.util.UUID;
 
-import com.flansmod.warforge.common.DimBlockPos;
+import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.server.Faction;
 
 // What gets sent over network to display faction information on client

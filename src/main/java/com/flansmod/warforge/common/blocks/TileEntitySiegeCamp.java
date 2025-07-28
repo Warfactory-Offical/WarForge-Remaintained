@@ -3,12 +3,13 @@ package com.flansmod.warforge.common.blocks;
 import java.util.Objects;
 import java.util.UUID;
 
-import com.flansmod.warforge.common.DimBlockPos;
-import com.flansmod.warforge.common.DimChunkPos;
+import com.flansmod.warforge.common.util.DimBlockPos;
+import com.flansmod.warforge.common.util.DimChunkPos;
 import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketSiegeCampProgressUpdate;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
+import com.flansmod.warforge.common.util.TimeHelper;
 import com.flansmod.warforge.server.Faction;
 
 import com.flansmod.warforge.server.Siege;
@@ -91,16 +92,6 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 		return super.shouldRefresh(world, pos, oldState, newState);
 	}
 
-	// called when player flag is removed, but not necessarily when siege ends?
-	//@Override
-//	public void onServerRemovePlayerFlag(String playerName) {
-//		super.onServerRemovePlayerFlag(playerName);
-//
-//        // can cause crash as placing a siege block, not selecting a target, and then placing your flag at another siege block will call this
-//		if(playerFlags.isEmpty() && siegeStatus == SiegeStatus.ACTIVE && siegeTarget != null) {
-//            endSiegePrepped(); // if siege block runs out of player flags, siege fails
-//        }
-//	}
 
 	private enum SiegeStatus {
 		IDLING,
@@ -216,44 +207,6 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 		return true;
 	}
 
-	// called to create update data packet nbt info
-    /*
-	@Override
-	public NBTTagCompound getUpdateTag() {
-		// You have to get parent tags so that x, y, z are added.
-		NBTTagCompound tags = super.getUpdateTag();
-
-		// Custom partial nbt write method
-		WarForgeMod.LOGGER.always().log("setting siegeStatus with siegeStatus: " + siegeStatus + ", blockstate at pos: " +  world.getBlockState(getPos()));
-		tags.setByte("siegeStatus", siegeStatus);
-
-		// do destruction only after relevant info has been sent
-		if (siegeStatus == 2)  {
-			destroy();
-		}
-
-		return tags;
-	}
-
-	@Override
-	public void onDataPacket(net.minecraft.network.NetworkManager net, SPacketUpdateTileEntity packet) {
-		super.onDataPacket(net, packet);
-		WarForgeMod.LOGGER.always().log("Got data packet with passed status of: " + packet.getNbtCompound().getByte("siegeStatus") + ", curr status: " + siegeStatus);
-		byte prevSiegeStatus = siegeStatus;
-		siegeStatus = packet.getNbtCompound().getByte("siegeStatus");
-
-		// because 2 and 3 encode failure and success, respectively, we only check for > 1 and equality to 2, assuming that if it is > 1 and not 2, then 3 is the status
-		if (world.isRemote && prevSiegeStatus < 2 && siegeStatus > 1) {
-			WarForgeMod.LOGGER.always().log("Notified siege is ending; closing gui");
-			SiegeCampProgressInfo info = ClientProxy.sSiegeInfo.get(GetPos());
-			WarForgeMod.LOGGER.always().log("Info is: " + info + " from map: " + ClientProxy.sSiegeInfo.toString());
-			WarForgeMod.LOGGER.always().log("doSiegeFail of: " + siegeStatus + ", with INFO - attacking: " + info.mAttackingName + ", defending: " + info.mDefendingName + ", attack pos: " + info.mAttackingPos + ", defend pos: " + info.mDefendingPos + ", completionPoint: " + info.mCompletionPoint);
-			info.mProgress = siegeStatus == 2 ? -5 : info.mCompletionPoint;
-			ClientProxy.sSiegeInfo.get(GetPos()).mProgress = siegeStatus == 2 ? -5 : ClientProxy.sSiegeInfo.get(GetPos()).mCompletionPoint; // forcefully indicate to client that siege is over
-		}
-	}
-	 */
-
 	@Override
 	public void update() {
 		// do not do logic on client
@@ -294,7 +247,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 			// --- DEFENDER HANDLING ---
 
 			if (lastSeenDefenderCount == 0 && defenders.onlinePlayerCount > 0 && defenderOfflineTimerMs > 0) {
-				defenders.messageAll(new TextComponentString("Your faction [" + defenders.name + "] has an offline timer of " + WarForgeMod.formatTime(defenderOfflineTimerMs) + " for the siege camp at " + getClaimPos()));
+				defenders.messageAll(new TextComponentString("Your faction [" + defenders.name + "] has an offline timer of " + TimeHelper.formatTime(defenderOfflineTimerMs) + " for the siege camp at " + getClaimPos()));
 			}
 
 			lastSeenDefenderCount = defenders.onlinePlayerCount;
@@ -307,7 +260,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 			if (haveDefendersQuit) {
 				incrementOfflineTimer(WarForgeMod.currTickTimestamp - previousTimestamp); // if defenders have quit, tick up the offline timer
 				if (defenderOfflineTimerMs >= WarForgeConfig.LIVE_QUIT_TIMER) {
-					getAttacking().messageAll(new TextComponentString("The defenders have fled from their posts for " + WarForgeMod.formatTime(defenderOfflineTimerMs)));
+					getAttacking().messageAll(new TextComponentString("The defenders have fled from their posts for " + TimeHelper.formatTime(defenderOfflineTimerMs)));
 					defenderOfflineTimerMs = -1; // mark as having live quit for any future increments of this timer and reset if already have quit
 					passSiege(); // end siege as attacker success
 					return; // do not update a concluded siege
@@ -426,12 +379,14 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 	}
 
 	private boolean isPlayerInWarzone(EntityPlayer player) {
+		if(player == null) return false;
 		DimChunkPos playerChunk = new DimChunkPos(player.dimension, player.getPosition());
 		DimChunkPos blockChunk = new DimChunkPos(world.provider.getDimension(), getClaimPos());
 		return !player.isDead && Siege.isPlayerInRadius(blockChunk, playerChunk);
 	}
 
 	private boolean isPlayerInRadius(EntityPlayer player, int radius) {
+		if(player == null) return false;
 		DimChunkPos playerChunk = new DimChunkPos(player.dimension, player.getPosition());
 		DimChunkPos blockChunk = new DimChunkPos(world.provider.getDimension(), getClaimPos());
 		return !player.isDead && Siege.isPlayerInRadius(blockChunk, playerChunk, radius);

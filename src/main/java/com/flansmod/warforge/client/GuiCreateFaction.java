@@ -5,7 +5,7 @@ import java.io.IOException;
 
 import org.lwjgl.input.Mouse;
 
-import com.flansmod.warforge.common.DimBlockPos;
+import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.TileEntityCitadel;
 import com.flansmod.warforge.common.network.PacketCreateFaction;

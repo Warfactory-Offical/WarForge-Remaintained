@@ -271,6 +271,7 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 		registerPacket(PacketRequestNamePlate.class);
 		registerPacket(PacketChunkPosVeinID.class);
 		registerPacket(PacketVeinEntries.class);
+		registerPacket(PacketSyncConfig.class);
 	}
 
 	/**

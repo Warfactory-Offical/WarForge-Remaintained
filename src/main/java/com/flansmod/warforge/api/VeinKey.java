@@ -1,8 +1,7 @@
 package com.flansmod.warforge.api;
 
 import akka.japi.Pair;
-import com.flansmod.warforge.common.DimChunkPos;
-import com.flansmod.warforge.common.VeinConfigHandler;
+import com.flansmod.warforge.common.util.DimChunkPos;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
@@ -202,6 +201,6 @@ public class VeinKey implements Comparable<VeinKey> {
     }
 
     public static Pair<Vein, Quality> getVein(DimChunkPos dimChunkPos, long seed) {
-        return getVein(dimChunkPos.mDim, dimChunkPos.x, dimChunkPos.z, seed);
+        return getVein(dimChunkPos.dim, dimChunkPos.x, dimChunkPos.z, seed);
     }
 }

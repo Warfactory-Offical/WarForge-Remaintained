@@ -3,7 +3,7 @@ package com.flansmod.warforge.server;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.flansmod.warforge.common.DimBlockPos;
+import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
 

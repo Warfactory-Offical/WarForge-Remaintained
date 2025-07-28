@@ -1,4 +1,4 @@
-package com.flansmod.warforge.common;
+package com.flansmod.warforge.common.util;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;

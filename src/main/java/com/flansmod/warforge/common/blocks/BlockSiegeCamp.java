@@ -4,8 +4,8 @@ import akka.japi.Pair;
 import com.flansmod.warforge.api.Quality;
 import com.flansmod.warforge.api.Vein;
 import com.flansmod.warforge.api.VeinKey;
-import com.flansmod.warforge.common.DimBlockPos;
-import com.flansmod.warforge.common.DimChunkPos;
+import com.flansmod.warforge.common.util.DimBlockPos;
+import com.flansmod.warforge.common.util.DimChunkPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketRemoveClaim;
 import com.flansmod.warforge.common.network.PacketSiegeCampInfo;
@@ -135,10 +135,6 @@ public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvi
                 FACTIONS.onNonCitadelClaimPlaced(siegeCamp, placer);
                 siegeCamp.onPlacedBy(placer);
                 super.onBlockPlacedBy(world, pos, state, placer, stack);
-//				if(placer instanceof EntityPlayerMP)
-//				{
-//					FACTIONS.requestPlaceFlag((EntityPlayerMP)placer, new DimBlockPos(world.provider.getDimension(), pos));
-//				}
             }
         }
     }

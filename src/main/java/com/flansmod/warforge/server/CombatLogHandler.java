@@ -1,6 +1,6 @@
 package com.flansmod.warforge.server;
 
-import com.flansmod.warforge.common.DimBlockPos;
+import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeConfig;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.item.EntityItem;
