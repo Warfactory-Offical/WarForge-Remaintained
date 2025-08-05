@@ -1,5 +1,6 @@
 package com.flansmod.warforge.api.vein.init;
 
+import akka.japi.Pair;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketBase;
 import io.netty.buffer.ByteBuf;
@@ -27,7 +28,8 @@ public class VeinConfigHandler {
     public final static Path CONFIG_PATH = Paths.get("config/" + WarForgeMod.MODID + "/veins.cfg");
     public static final List<String> EXAMPLE_YAML = Collections.unmodifiableList(Arrays.asList(
             "# It should be said that it is RECOMMENDED to BACKUP ANY vein config files with significant time invested into them; ",
-            "# trying to update the file when auto-generated veins id's are present may cause data loss if a poorly timed error occurs",
+            "# trying to update the file when auto-generated vein ids are present may cause data loss if a poorly timed error occurs.",
+            "# Additionally, all comments will be removed when auto-generated vein ids are used.",
             "#",
             "# There must be a global iteration id [-32768, 32767] ('iteration'). This is stored alongside the vein id for discovered chunks",
             "# and will cause the saved vein id to be overridden if the iteration id's don't match between the stored and current value.",
@@ -60,8 +62,8 @@ public class VeinConfigHandler {
             "# megachunk_length: 32",
             "# veins:",
             "#  - id: ~",
-            "#  - key: warforge.veins.pure_iron",
-            "#  - dims:",
+            "#    key: warforge.veins.pure_iron",
+            "#    dims:",
             "#      - id: -1",
             "#        weight: 0.5",
             "#        mult: 2",
@@ -69,7 +71,7 @@ public class VeinConfigHandler {
             "#        weight: 0.4215",
             "#      - id: 1",
             "#        weight: 1.0",
-            "#  - components:",
+            "#    components:",
             "#      - item: minecraft:iron_ore",
             "#        yield: 2",
             "#        weights: ",
@@ -80,7 +82,9 @@ public class VeinConfigHandler {
             "#        yield: 1",
             "#        mults: ",
             "#           - -1: 4",
-            "#           [implicit 1.0 multiplier for the remaining dimensions]"
+            "#           [implicit 1.0 multiplier for the remaining dimensions]",
+            "#  - id: ~",
+            "#..."
     ));
 
     public static void writeStubIfEmpty() throws IOException {
@@ -100,8 +104,9 @@ public class VeinConfigHandler {
     public static void loadVeins() throws ConfigurationException {
         // try to get the raw veins and write no veins on failure
         Yaml yaml = new Yaml();
-        List<Map<String, Object>> rawVeins = parseGlobalVeinData();
-        if (rawVeins == null) {
+        var veinData = parseGlobalVeinData();  // we need to keep the global data to write to a file later
+        List<LinkedHashMap<String, Object>> allVeinData = veinData.second();
+        if (allVeinData == null) {
             VEIN_HANDLER.populateVeinMap(null);
             return;
         }
@@ -110,8 +115,8 @@ public class VeinConfigHandler {
         Int2ObjectOpenHashMap<Tuple3<String, Int2ObjectOpenHashMap<DimWeight>, List<Component>>> noIdEntries = new Int2ObjectOpenHashMap<>();
 
         // we need this for further id processing
-        short[] occupiedIds = new short[rawVeins.size()];
-        int numIds = parseVeinEntries(rawVeins, entries, noIdEntries, occupiedIds);
+        short[] occupiedIds = new short[allVeinData.size()];
+        int numIds = parseVeinEntries(allVeinData, entries, noIdEntries, occupiedIds);
 
         // get and order all occupied ids to try and place the new id's between them
         occupiedIds = Arrays.copyOf(occupiedIds, numIds);  // trim array down
@@ -119,6 +124,7 @@ public class VeinConfigHandler {
         if (occupiedIds.length == 0) { occupiedIds = new short[]{NULL_VEIN_ID}; }  // to be compatible with handler below, set to minimum to indicate all id's valid
 
         // setup idSpaces and offset to begin looping over veins without id's
+        // first is the index of the integer to follow, second is number of open ids after this integer
         short[] idSpaces = new short[]{-1, occupiedIds[0]};
         short currIdOffset = 1;
 
@@ -149,13 +155,19 @@ public class VeinConfigHandler {
         if (noIdEntries.size() > 0) {
             try {
                 // for each vein without an id, update its id in the config file
-                var noIDEntriesIndices = noIdEntries.keySet();
+                var noIDEntriesIndices = noIdEntries.keySet();  // it's not saved, so store a copy here
                 for (int noIDVeinIndex : noIDEntriesIndices) {
-                    rawVeins.get(noIDVeinIndex).put("id", posToId.get(noIDVeinIndex));  // update the vein
+                    allVeinData.get(noIDVeinIndex).put("id", posToId.get(noIDVeinIndex));
                 }
 
-                // convert the object back to a string and write it
-                yaml.dump(rawVeins, new FileWriter(CONFIG_PATH.toFile()));
+                // wipe all previous text in the file and write the info string
+                String infoString = String.join("\n", EXAMPLE_YAML) + "\n\n";
+                FileWriter infoWriter = new FileWriter(CONFIG_PATH.toFile());
+                infoWriter.write(infoString);
+                infoWriter.close();
+
+                // write the yaml data to the file
+                yaml.dump(veinData.first(), new FileWriter(CONFIG_PATH.toFile(), true));  // write data
             } catch (Exception exception) {
                 WarForgeMod.LOGGER.atError().log("Could not write back to vein file; id's will not be updated.");
             }
@@ -165,43 +177,45 @@ public class VeinConfigHandler {
     }
 
     // attempts to read the global vein data, falling back to defaults for the VEIN_HANDLER if an error occurs
-    private static List<Map<String, Object>> parseGlobalVeinData() {
-        List<Map<String, Object>> rawVeins;
+    private static Pair<LinkedHashMap<String, Object>, List<LinkedHashMap<String, Object>>> parseGlobalVeinData() {
+        LinkedHashMap<String, Object> globalVeinData;  // used to rewrite to file
+        List<LinkedHashMap<String, Object>> rawVeins;
         try {
             InputStream inputStream = new FileInputStream(CONFIG_PATH.toFile());  // will throw if no file exists
-            Map<String, Object> obj = new Yaml().load(inputStream);  // get a mapping of keys to objects
-            short iterationId = ((Number) obj.get("iteration")).shortValue();
+            globalVeinData = new Yaml().load(inputStream);  // get a mapping of keys to objects
+            short iterationId = ((Number) globalVeinData.get("iteration")).shortValue();
 
-            short megachunkLength = ((Number) obj.get("megachunk_length")).shortValue();
+            short megachunkLength = ((Number) globalVeinData.get("megachunk_length")).shortValue();
             if (megachunkLength < 4 || megachunkLength > 180) {
                 WarForgeMod.LOGGER.atError().log("Invalid megachunk length provided; defaulting to 32");
                 megachunkLength = 32;
             }
 
             VEIN_HANDLER = new VeinUtils(iterationId, megachunkLength);
-            rawVeins = (List<Map<String, Object>>) obj.get("veins");  // we expect the "veins" key to yield an array of string keys mapping to objects
+            rawVeins = (List<LinkedHashMap<String, Object>>) globalVeinData.get("veins");
         } catch (Exception e) {
             WarForgeMod.LOGGER.error("Failed to parse veins: ", e);
             VEIN_HANDLER = new VeinUtils((short) 0, (short) 32);
             return null;
         }
 
-        return rawVeins;
+        return new Pair<>(globalVeinData, rawVeins);
     }
 
     // returns the number of occupiedIds found
-    private static int parseVeinEntries(List<Map<String, Object>> rawVeins, List<VeinEntry> entries,
+    private static int parseVeinEntries(List<LinkedHashMap<String, Object>> rawVeins, List<VeinEntry> entries,
                                         Int2ObjectOpenHashMap<Tuple3<String, Int2ObjectOpenHashMap<DimWeight>, List<Component>>> noIdEntries,
                                         short[] occupiedIds) {
         int numIds = 0;
         int veinIndex = -1;
         // parse all veins
-        for (Map<String, Object> rawVeinData : rawVeins) {
+        for (LinkedHashMap<String, Object> veinData : rawVeins) {
             ++veinIndex;
             try {
+                // try to get the id, or determine if it is invalid
                 short absoluteId = NULL_VEIN_ID;  // start off with the null vein id
                 try {
-                    Number idNum = (Number) rawVeinData.get("id");
+                    Number idNum = (Number) veinData.get("id");
                     short currId = NULL_VEIN_ID;
                     if (idNum != null) { currId = idNum.shortValue(); }
                     if (currId >= 0 && currId < 8192) { absoluteId = currId; }
@@ -209,8 +223,8 @@ public class VeinConfigHandler {
                     // the default state already indicates an error; we don't need to do any handling
                 }
 
-                String translation_key = (String) rawVeinData.get("key");
-                List<Map<String, Object>> dimsRaw = (List<Map<String, Object>>) rawVeinData.get("dims");
+                String translation_key = (String) veinData.get("key");
+                List<Map<String, Object>> dimsRaw = (List<Map<String, Object>>) veinData.get("dims");
 
                 // lack of dash on weight indicates singular id, weight object in .cfg yml file
                 Int2ObjectOpenHashMap<DimWeight> dims = new Int2ObjectOpenHashMap(dimsRaw.stream().map(dim -> {
@@ -223,7 +237,7 @@ public class VeinConfigHandler {
                 }).collect(Collectors.toMap(dimWeight -> dimWeight.id, dimWeight -> dimWeight)) );
 
                 // read the component data
-                List<Map<String, Object>> componentsRaw = (List<Map<String, Object>>) rawVeinData.get("components");
+                List<Map<String, Object>> componentsRaw = (List<Map<String, Object>>) veinData.get("components");
                 List<Component> components = componentsRaw.stream()
                         .map(comp -> new Component(
                             (String) comp.get("item"),
@@ -237,7 +251,7 @@ public class VeinConfigHandler {
                     continue;
                 }
 
-                entries.add(absoluteId, new VeinEntry(absoluteId, translation_key, dims, components));
+                entries.add(new VeinEntry(absoluteId, translation_key, dims, components));
                 occupiedIds[numIds++] = absoluteId;  // we want positive numbers to assign id's
             } catch (ClassCastException e) {
                 WarForgeMod.LOGGER.error("Failed to parse vein: ", e);
@@ -251,6 +265,7 @@ public class VeinConfigHandler {
     // followed by the number of open indices between the two. Will return INT_MAX at the end of the array
     public static short[] locateNextSpace(short[] sparseInts, int currIndex) {
         for (; currIndex < sparseInts.length - 1; ++currIndex) {
+            // if there is space between this int and the next, this is our target
             if (sparseInts[currIndex] < sparseInts[currIndex + 1] - 1) {
                 return new short[]{(short) currIndex, (short) (sparseInts[currIndex + 1] - sparseInts[currIndex] - 1)};
             }

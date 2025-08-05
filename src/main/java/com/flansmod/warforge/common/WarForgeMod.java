@@ -257,15 +257,7 @@ public class WarForgeMod implements ILateMixinLoader {
             }
         }
 
-        // initialize the vein data
-        try {
-            VeinConfigHandler.writeStubIfEmpty();
-            VeinConfigHandler.loadVeins();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-
+        // this checks if the current instance is running on the client or a server
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
             NAMETAG_CACHE = new PlayerNametagCache(60_000, 200);
         }
@@ -695,7 +687,7 @@ public class WarForgeMod implements ILateMixinLoader {
 
     private void readFromNBT(NBTTagCompound tags) {
         FACTIONS.readFromNBT(tags);
-        VEIN_HANDLER.readFromNBT(tags);
+        if (VEIN_HANDLER != null) VEIN_HANDLER.readFromNBT(tags);  // client has a null vein handler
 
         timestampOfFirstDay = tags.getLong("zero-timestamp");
         numberOfSiegeDaysTicked = tags.getLong("num-days-elapsed");
@@ -704,7 +696,7 @@ public class WarForgeMod implements ILateMixinLoader {
 
     private void WriteToNBT(NBTTagCompound tags) {
         FACTIONS.WriteToNBT(tags);
-        VEIN_HANDLER.WriteToNBT(tags);
+        if (VEIN_HANDLER != null) VEIN_HANDLER.WriteToNBT(tags);  // client has a null vein handler
 
         tags.setLong("zero-timestamp", timestampOfFirstDay);
         tags.setLong("num-days-elapsed", numberOfSiegeDaysTicked);
@@ -743,7 +735,18 @@ public class WarForgeMod implements ILateMixinLoader {
             e.printStackTrace();
         }
 
-        currTickTimestamp = System.currentTimeMillis(); // will cause some update time to be registered immediately
+        // because it takes time for the server to start, this will mean anything using this to measure time passed
+        // will always find that the server has some "elapsed time" on server start
+        currTickTimestamp = System.currentTimeMillis();
+
+        // initialize the vein data, but only on the server
+        try {
+            VeinConfigHandler.writeStubIfEmpty();
+            VeinConfigHandler.loadVeins();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
     }
 
     private void save(String event) {

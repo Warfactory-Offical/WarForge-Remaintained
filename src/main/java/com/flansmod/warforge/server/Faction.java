@@ -36,6 +36,8 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 
+import static com.flansmod.warforge.common.WarForgeMod.VEIN_HANDLER;
+
 
 /**
  * Data class for faction, responsible for storing faction info
@@ -423,18 +425,14 @@ public class Faction {
         for (HashMap.Entry<DimBlockPos, Integer> kvp : claims.entrySet()) {
             DimBlockPos pos = kvp.getKey();
             World world = WarForgeMod.MC_SERVER.getWorld(pos.dim);
+            kvp.setValue(kvp.getValue() + 1);  // increment number of yields
 
-            // If It's loaded, process immediately
-            if (world.isBlockLoaded(pos)) {
+            // If It's loaded and the handler is ready, try to process yields
+            if (world.isBlockLoaded(pos) && VEIN_HANDLER != null && VEIN_HANDLER.hasFinishedInit) {
                 TileEntity te = world.getTileEntity(pos.toRegularPos());
                 if (te instanceof TileEntityYieldCollector) {
-                    ((TileEntityYieldCollector) te).processYield(1);
-					kvp.setValue(0);
+                    ((TileEntityYieldCollector) te).processYield(claims);
                 }
-            }
-            // Otherwise, cache the number of times it needs to process when it next loads
-            else {
-                kvp.setValue(kvp.getValue() + 1);
             }
         }
     }
@@ -463,36 +461,9 @@ public class Faction {
         }
     }
 
-
     public void setColour(int colour) {
         this.colour = colour;
     }
-
-	public void AwardYields()
-	{
-		//
-		for(HashMap.Entry<DimBlockPos, Integer> kvp : claims.entrySet())
-		{
-			DimBlockPos pos = kvp.getKey();
-			World world = WarForgeMod.MC_SERVER.getWorld(pos.dim);
-
-			// If It's loaded, process immediately
-			if(world.isBlockLoaded(pos))
-			{
-				TileEntity te = world.getTileEntity(pos.toRegularPos());
-				if(te instanceof TileEntityYieldCollector)
-				{
-					((TileEntityYieldCollector)te).processYield(1);
-					kvp.setValue(0);  // no claims saved
-				}
-			}
-			// Otherwise, cache the number of times it needs to process when it next loads
-			else
-			{
-				kvp.setValue(kvp.getValue() + 1);
-			}
-		}
-	}
 
 	public void Promote(UUID playerID)
 	{

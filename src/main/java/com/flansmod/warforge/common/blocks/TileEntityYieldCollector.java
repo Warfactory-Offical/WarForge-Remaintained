@@ -7,6 +7,7 @@ import akka.japi.Pair;
 import com.flansmod.warforge.api.vein.Quality;
 import com.flansmod.warforge.api.vein.Vein;
 import com.flansmod.warforge.api.vein.init.VeinUtils;
+import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.DimChunkPos;
 import com.flansmod.warforge.common.InventoryHelper;
 import com.flansmod.warforge.common.WarForgeMod;
@@ -40,8 +41,14 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
         Arrays.fill(yieldStacks, ItemStack.EMPTY);
 	}
 
-	public void processYield(int numYields) {
-		if(world.isRemote) { return; }
+	public void processYield(HashMap<DimBlockPos, Integer> claims) {
+		if(world.isRemote) { return; }  // we don't process on the client
+		if (VEIN_HANDLER == null || !VEIN_HANDLER.hasFinishedInit) { return; }
+
+		// check the number of yields to award and handle appropriately
+		int numYields = claims.get(getClaimPos());
+		if (numYields == 0) { return; }
+		claims.replace(this.getClaimPos(), 0);
 
 		DimChunkPos currPos = new DimChunkPos(world.provider.getDimension(), getPos());
 		if (!VEIN_HANDLER.dimHasVeins(currPos.mDim)) { return; }
@@ -109,11 +116,7 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 		if(!world.isRemote) {
 			Faction faction = WarForgeMod.FACTIONS.getFaction(factionUUID);
 			if(faction != null) {
-				int pendingYields = faction.claims.get(this.getClaimPos());
-				if(pendingYields > 0) {
-					processYield(pendingYields);
-				}
-				faction.claims.replace(this.getClaimPos(), 0);
+				processYield(faction.claims);
 			} else if(!factionUUID.equals(Faction.nullUuid)) {
 				WarForgeMod.LOGGER.error("Loaded YieldCollector with invalid faction");
 			}

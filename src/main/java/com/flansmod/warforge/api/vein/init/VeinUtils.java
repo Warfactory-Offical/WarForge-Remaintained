@@ -47,6 +47,8 @@ public class VeinUtils {
     public final short megachunkLength;
     public final short megachunkArea;
 
+    public boolean hasFinishedInit;
+
     protected VeinUtils(short iterationId, short megachunkLength) {
         this.iterationId = iterationId;
         this.megachunkLength = megachunkLength;
@@ -55,6 +57,7 @@ public class VeinUtils {
 
         DIM_VEIN_WEIGHT_MAP = new Int2ObjectOpenHashMap<>();
         MEGA_CHUNK_OCCURRENCE_DATA = new Int2ObjectOpenHashMap<>();
+        hasFinishedInit = false;
     }
 
     public static short percentToShort(double percent) {
@@ -223,14 +226,17 @@ public class VeinUtils {
     // should only be called for dimensions which actually expect to see veins within them
     public void populateMegachunkInfo(int dim, long megachunkKey) {
         // if the dimension has never been initialized, but should have weights, then initialize it
-        var currDimMegachunks = MEGA_CHUNK_OCCURRENCE_DATA.put(dim, new Long2ObjectOpenHashMap<>());
-        var currMegachunk = currDimMegachunks.put(megachunkKey, new Pair<>(
+        MEGA_CHUNK_OCCURRENCE_DATA.put(dim, new Long2ObjectOpenHashMap<>());
+        var currDimMegachunks = MEGA_CHUNK_OCCURRENCE_DATA.get(dim);
+        currDimMegachunks.put(megachunkKey, new Pair<>(
             new Short2ShortOpenHashMap(
                     // dim vein weight map will contain the null vein id if it is present
                     DIM_VEIN_WEIGHT_MAP.get(dim).values().stream().collect(Collectors.toMap(veinId -> veinId, veinId -> (short) 0))
             ),
             new Short2ShortRBTreeMap()
         ));
+
+        var currMegachunk = currDimMegachunks.get(megachunkKey);
 
         // first map stores id -> occurrences map, second stores offset -> id map
         currMegachunk.first().defaultReturnValue(WEIGHT_FRACTION_TENS_POW);  // first has default rv of weight left
@@ -492,6 +498,8 @@ public class VeinUtils {
         for (int dim : DIM_VEIN_WEIGHT_MAP.keySet()) {
             populateDimVeinMap(dim);
         }
+
+        hasFinishedInit = true;
     }
 
     private String getVeinInfoID(short veinId) {
