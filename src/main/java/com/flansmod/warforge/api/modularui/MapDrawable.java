@@ -132,17 +132,8 @@ public class MapDrawable implements IDrawable, Interactable {
             }
         }
         if (campChunk) {
-            Minecraft.getMinecraft().getTextureManager().bindTexture(selfIcon);
-            setGLColor(rgb);
             int xOffset = x + (width - 48) / 2;
             int yOffset = y + (height - 48) / 2;
-            Gui.drawModalRectWithCustomSizedTexture(
-
-                    xOffset, yOffset,
-                    0, 0,             // UV coords
-                    48, 48, // draw size
-                    48, 48            // full texture size
-            );
 
             setGLColor();
             Minecraft.getMinecraft().getTextureManager().bindTexture(selfIconBase);
@@ -153,6 +144,17 @@ public class MapDrawable implements IDrawable, Interactable {
                     48, 48, // draw size
                     48, 48            // full texture size
             );
+
+            Minecraft.getMinecraft().getTextureManager().bindTexture(selfIcon);
+            setGLColor(rgb);
+            Gui.drawModalRectWithCustomSizedTexture(
+
+                    xOffset, yOffset,
+                    0, 0,             // UV coords
+                    48, 48, // draw size
+                    48, 48            // full texture size
+            );
+            setGLColor();
         }
 
         if (chunkState.veinSprite != null) {
