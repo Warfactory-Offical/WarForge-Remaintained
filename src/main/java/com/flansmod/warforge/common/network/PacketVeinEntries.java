@@ -23,7 +23,7 @@ public class PacketVeinEntries extends PacketBase {
     // fills the pass packet as much as possible from the veins array passed beginning at the start index passed
     // guarantees that at least one vein will be put into packet, returning the index of the first vein not included
     public int fillFrom(ArrayList<Vein> veins, int startIndex) {
-        while (tryAddVein(veins.get(startIndex))) { ++startIndex; }  // post increment could be used but intellij complains
+        while (startIndex < veins.size() && tryAddVein(veins.get(startIndex))) { ++startIndex; }  // post increment could be used but intellij complains
         return startIndex;
     }
 
@@ -54,7 +54,7 @@ public class PacketVeinEntries extends PacketBase {
     public void decodeInto(ChannelHandlerContext ctx, ByteBuf data) {
         // continue and try to deserialize the data until it has all been read through
         while (data.readableBytes() > 0) {
-            veinBuffer.add(new Vein(VeinConfigHandler.VeinEntry.deserialize(data)));
+            veinBuffer.add(new Vein(data));
         }
     }
 

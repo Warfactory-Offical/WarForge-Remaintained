@@ -35,8 +35,16 @@ public class Vein {
     public final ByteBuf SERIALIZED_ENTRY;
     private final short id;
 
+    public Vein(final ByteBuf veinEntryBuf) {
+        this(VeinConfigHandler.VeinEntry.deserialize(veinEntryBuf), false);
+    }
+
     public Vein(final VeinConfigHandler.VeinEntry veinEntry) {
-        if (FMLCommonHandler.instance().getSide() == Side.SERVER) { SERIALIZED_ENTRY = veinEntry.serialize(); }  // for transmission over network
+        this(veinEntry, true);
+    }
+
+    public Vein(final VeinConfigHandler.VeinEntry veinEntry, boolean isServer) {
+        if (isServer) { SERIALIZED_ENTRY = veinEntry.serialize(); }  // for transmission over network
         else { SERIALIZED_ENTRY = null; }  // we don't expect the clients to send the vein back over net
 
         // carry over the obvious values
@@ -47,8 +55,8 @@ public class Vein {
 
         // carry over the dimension weight information
         for(VeinConfigHandler.DimWeight dimWeight : veinEntry.dimWeights.values()) {
-            dimWeights.put(dimWeight.id, new short[]{ percentToShort(dimWeight.weight),
-                    (short) (VEIN_HANDLER.megachunkArea * dimWeight.weight)});
+            dimWeights.put(dimWeight.id, new short[]{ dimWeight.weight,
+                    (short) (VEIN_HANDLER.megachunkArea * dimWeight.weight / VeinUtils.WEIGHT_FRACTION_TENS_POW)});
         }
 
         // integrate multipliers into yields
@@ -60,7 +68,7 @@ public class Vein {
             // we want to map each stack comparable component to some list of weights and yields
             // a component's item may be repeated to give different chances to get a range of values
             // for a set of components with equivalent items, the stack comparable of the first is preferred and stored
-            var stackComparable = new StackComparable(component.item);
+            var stackComparable = StackComparable.parseArbitraryResource(component.item);
             if (!compIds.contains(stackComparable)) {
                 // if we haven't seen this item before, then add it to the relevant locations
                 compIds.add(stackComparable);
@@ -80,20 +88,20 @@ public class Vein {
             if (component.multipliers != null) {
                 for (var entry : component.multipliers.int2FloatEntrySet()) {
                     // for some reason cast to int is needed to disambiguate the call to put
-                    yields.put(entry.getIntKey(), component.yield * entry.getFloatValue() / VeinUtils.WEIGHT_FRACTION_TENS_POW);
+                    yields.put(entry.getIntKey(), component.yield * entry.getFloatValue());
                 }
             }
 
             // apply the vein level dim multipliers for any not already present
             for (var entry : veinEntry.dimWeights.int2ObjectEntrySet()) {
                 if (yields.containsKey(entry.getIntKey())) { continue; }
-                yields.put(entry.getIntKey(), component.yield * entry.getValue().multiplier / VeinUtils.WEIGHT_FRACTION_TENS_POW);
+                yields.put(entry.getIntKey(), component.yield * entry.getValue().multiplier);
             }
 
             compYields.get(stackComparable).add(yields);  // store the yields
         }
 
-        VEIN_HANDLER.ID_TO_VEINS.put(id, this);
+        if (isServer) { VEIN_HANDLER.ID_TO_VEINS.put(id, this); }
     }
 
     public short getDimWeight(int dim) { return dimWeights.get(dim)[0]; }

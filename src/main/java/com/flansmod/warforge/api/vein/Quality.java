@@ -8,14 +8,7 @@ public enum Quality {
     POOR;
 
     public static Quality getQuality(int qualityIndex) {
-        switch (qualityIndex) {
-            case 1:
-                return FAIR;
-            case 2:
-                return RICH;
-            default:
-                return POOR;
-        }
+        return Quality.values()[qualityIndex];
     }
 
     public String getTranslationKey() {

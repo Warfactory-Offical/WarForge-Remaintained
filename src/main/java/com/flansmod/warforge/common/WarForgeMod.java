@@ -14,6 +14,7 @@ import com.flansmod.warforge.common.network.*;
 import com.flansmod.warforge.common.potions.PotionsModule;
 import com.flansmod.warforge.server.*;
 import com.flansmod.warforge.server.Faction.Role;
+import mezz.jei.util.Log;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandHandler;
@@ -54,6 +55,7 @@ import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.oredict.OreDictionary;
 import org.apache.logging.log4j.Logger;
 import zone.rong.mixinbooter.ILateMixinLoader;
 
@@ -257,7 +259,7 @@ public class WarForgeMod implements ILateMixinLoader {
             }
         }
 
-        // this checks if the current instance is running on the client or a server
+        // THIS ACTUALLY CHECKS THE PHYSICAL SIDE, NOT THE LOGICAL SERVER/ CLIENT SIDE
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
             NAMETAG_CACHE = new PlayerNametagCache(60_000, 200);
         }
@@ -709,6 +711,15 @@ public class WarForgeMod implements ILateMixinLoader {
         CommandHandler handler = ((CommandHandler) MC_SERVER.getCommandManager());
         handler.registerCommand(new CommandFactions());
 
+        // initialize the vein data, but only on the server; we will only update from nbt after this init step
+        try {
+            VeinConfigHandler.writeStubIfEmpty();
+            VeinConfigHandler.loadVeins();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+
         try {
             // try to read from data or backup, then generates a new file if both fail
             File dataFile = getFactionsFile();
@@ -738,15 +749,6 @@ public class WarForgeMod implements ILateMixinLoader {
         // because it takes time for the server to start, this will mean anything using this to measure time passed
         // will always find that the server has some "elapsed time" on server start
         currTickTimestamp = System.currentTimeMillis();
-
-        // initialize the vein data, but only on the server
-        try {
-            VeinConfigHandler.writeStubIfEmpty();
-            VeinConfigHandler.loadVeins();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
     }
 
     private void save(String event) {

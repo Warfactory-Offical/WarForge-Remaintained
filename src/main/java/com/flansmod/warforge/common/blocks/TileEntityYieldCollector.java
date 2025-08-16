@@ -18,10 +18,12 @@ import it.unimi.dsi.fastutil.ints.Int2FloatOpenHashMap;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.oredict.OreDictionary;
 
 import static com.flansmod.warforge.api.vein.Quality.*;
 import static com.flansmod.warforge.common.CommonProxy.YIELD_QUALITY_MULTIPLIER;
@@ -65,7 +67,7 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 
 		// for each component in the vein, attempt to yield it numYields many times
 		for (StackComparable currComp : currVein.compIds) {
-			short numItems = 0;  // figure out how many items of this component are needed
+			int numItems = 0;  // figure out how many items of this component are needed
 
 			// determine yield amount based on quality and component base yield
 			ArrayList<short[]> subCompYieldInfos = VeinUtils.getYieldInfo(currComp, veinInfo, currPos.mDim);
@@ -100,10 +102,10 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 
 		if (yieldComps.size() == 0) { return; }  // don't go through the process of marking dirty if we won't do anything
 
-		// try to add the items
-		for (ItemStack curr_component_stack : yieldComps) {
-			if(!InventoryHelper.addItemStackToInventory(this, curr_component_stack, false)) {
-				WarForgeMod.LOGGER.atError().log("Failed to add <" + curr_component_stack.toString() + "> to yield " +
+		// try to add the items (THIS WILL CONSUME THE ITEMSTACKS, SO MAKE SURE THEY ARE COPIES)
+		for (ItemStack currCompStack : yieldComps) {
+			if(!InventoryHelper.addItemStackToInventory(this, currCompStack, false)) {
+				WarForgeMod.LOGGER.atError().log("Failed to add <" + currCompStack.toString() + "> to yield " +
 						"collector at " + this.getPos());
 			}
 		}

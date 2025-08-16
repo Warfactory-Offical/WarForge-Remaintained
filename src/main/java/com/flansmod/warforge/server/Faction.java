@@ -421,7 +421,6 @@ public class Faction {
     }
 
     public void awardYields() {
-        //
         for (HashMap.Entry<DimBlockPos, Integer> kvp : claims.entrySet()) {
             DimBlockPos pos = kvp.getKey();
             World world = WarForgeMod.MC_SERVER.getWorld(pos.dim);

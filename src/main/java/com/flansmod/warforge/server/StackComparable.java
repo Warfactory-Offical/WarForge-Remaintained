@@ -7,6 +7,8 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.oredict.OreDictionary;
 
+import java.util.Objects;
+
 public class StackComparable {
     protected String oredict = null;
     protected String registryName = null;
@@ -101,7 +103,8 @@ public class StackComparable {
     public ItemStack toItem(int amount, int oredictIndex) {
         // try to get the oredict of the ore
         if (this.oredict != null && OreDictionary.doesOreNameExist(oredict)) {
-            return OreDictionary.getOres(oredict).get(oredictIndex);
+            var oredictOptions = OreDictionary.getOres(oredict, false);
+            return oredictOptions.get(oredictIndex).copy();  // if we don't copy, trying to use the itemstack can modify/ consume it
         }
 
         // no matching oredict and no registry name means there is no item
@@ -149,9 +152,10 @@ public class StackComparable {
     public boolean equals(Object obj) {
         if (!(obj instanceof StackComparable otherStack)) { return false; }
 
-        return (registryName.equals(otherStack.registryName) && meta == otherStack.meta) ||
-                oredict.equals(otherStack.oredict) ||
-                this.equals(otherStack.toItem());
+        // try to compare registry name and meta, then oredict, then try to compare the item result
+        return (Objects.equals(registryName, otherStack.registryName) && meta == otherStack.meta) ||
+                Objects.equals(oredict, otherStack.oredict) ||
+                this.equals(otherStack.toItem());  // convert to item and check (costly and unlikely to work)
     }
 
     @Override

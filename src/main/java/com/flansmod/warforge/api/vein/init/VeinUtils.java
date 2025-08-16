@@ -60,11 +60,12 @@ public class VeinUtils {
         hasFinishedInit = false;
     }
 
-    public static short percentToShort(double percent) {
-        return (short) (percent * VeinUtils.WEIGHT_FRACTION_TENS_POW);
+    public static short percentToShort(float percent) {
+        percent *= VeinUtils.WEIGHT_FRACTION_TENS_POW;
+        return (short) Math.round(percent);
     }
 
-    // returns a formatted percent string, dropping the decimal part if it is 0; assumes 4 digits of precision
+    // returns a formatted percent string, dropping the decimal part if it is 0; assumes 4 sig figs
     public static String shortToPercentStr(short percent) {
         int whole = percent / 100;
         int decimal = percent - whole * 100;
@@ -77,7 +78,7 @@ public class VeinUtils {
     public static ArrayList<short[]> getYieldInfo(StackComparable comp, Pair<Vein, Quality> veinInfo, int dim) {
         Vein vein = veinInfo.first();
         Quality qual = veinInfo.second();
-        ArrayList<Int2FloatOpenHashMap> yields = vein.compYields.get(comp);
+        ArrayList<Int2FloatOpenHashMap> yields = vein.compYields.get(comp);  // comp -> LIST OF dim : yield
         ArrayList<Int2ShortOpenHashMap> weights = vein.compWeights.get(comp);
         assert yields.size() == weights.size();  // sanity check
         ArrayList<short[]> yieldInfos = new ArrayList<>(yields.size());  // result
@@ -85,17 +86,18 @@ public class VeinUtils {
         // for each sub-component (same item, different stats), store its weight, guaranteed yield, and percent yield
         for (int subCompIndex = 0; subCompIndex < yields.size(); ++subCompIndex) {
             float yield = yields.get(subCompIndex).get(dim);
+
+            // scale the guaranteed yield based on quality
+            if (veinInfo.second() == Quality.POOR) { yield /= YIELD_QUALITY_MULTIPLIER; }
+            else if (veinInfo.second() == Quality.RICH) { yield *= YIELD_QUALITY_MULTIPLIER; }
+
             short[] result = new short[]{
                     weights.get(subCompIndex).get(dim),
                     (short) yield,
                     0
             };
 
-            // scale the guaranteed yield based on quality
-            if (veinInfo.second() == Quality.POOR) { result[1] = (short) (result[1] / YIELD_QUALITY_MULTIPLIER); }
-            else if (veinInfo.second() == Quality.RICH) { result[1] = (short) (result[1] * YIELD_QUALITY_MULTIPLIER); }
-
-            result[2] = percentToShort(yield - ((float) result[1]));
+            result[2] = percentToShort(yield - result[1]);
 
             yieldInfos.add(result);
         }
@@ -229,14 +231,16 @@ public class VeinUtils {
         MEGA_CHUNK_OCCURRENCE_DATA.put(dim, new Long2ObjectOpenHashMap<>());
         var currDimMegachunks = MEGA_CHUNK_OCCURRENCE_DATA.get(dim);
         currDimMegachunks.put(megachunkKey, new Pair<>(
-            new Short2ShortOpenHashMap(
-                    // dim vein weight map will contain the null vein id if it is present
-                    DIM_VEIN_WEIGHT_MAP.get(dim).values().stream().collect(Collectors.toMap(veinId -> veinId, veinId -> (short) 0))
-            ),
+            new Short2ShortOpenHashMap(),
             new Short2ShortRBTreeMap()
         ));
 
+        // get a reference to the current megachunk and intialize it
         var currMegachunk = currDimMegachunks.get(megachunkKey);
+        for (var entry : DIM_VEIN_WEIGHT_MAP.get(dim).object2ShortEntrySet()) {
+            if (entry.getKey() == VeinKey.NULL_KEY) { continue; }  // ignore the null key
+            currMegachunk.first().put(entry.getShortValue(), (short) 0);
+        }
 
         // first map stores id -> occurrences map, second stores offset -> id map
         currMegachunk.first().defaultReturnValue(WEIGHT_FRACTION_TENS_POW);  // first has default rv of weight left
@@ -249,7 +253,7 @@ public class VeinUtils {
         if (veinInfo == NULL_VEIN_ID) { return null; }
 
         short[] decompVeinInfo = splitVeinInfo(veinInfo);
-        if (FMLCommonHandler.instance().getSide() == Side.SERVER) {
+        if (FMLCommonHandler.instance().getEffectiveSide() == Side.SERVER) {
             return new Pair<>(ID_TO_VEINS.get(decompVeinInfo[0]), Quality.getQuality(decompVeinInfo[1]));
         } else {
             Vein targetVein = VEIN_ENTRIES.get(decompVeinInfo[0]);
@@ -260,7 +264,7 @@ public class VeinUtils {
 
     public short[] splitVeinInfo(short veinInfo) {
         if (veinInfo == NULL_VEIN_ID) { return new short[]{NULL_VEIN_ID, (short) 7}; }  // null vein id is also its info
-        return new short[]{(short) (veinInfo & 0x00_00_1F_FF), (short) (veinInfo & 0x00_00_E0_00)};
+        return new short[]{(short) (veinInfo & 0x00_00_1F_FF), (short) ((veinInfo & 0x00_00_E0_00) >> 13)};
     }
 
     public short compressVeinInfo(int veinId, int qualityIndex) {
@@ -278,7 +282,7 @@ public class VeinUtils {
         if (!isMegachunkPopulated(dim, megachunkKey)) { return null; }
 
         var offsetIds = MEGA_CHUNK_OCCURRENCE_DATA.get(dim).get(megachunkKey).second();
-        if (!offsetIds.containsKey(offset)) { return null; }  // does logarithmic search
+        if (!offsetIds.containsKey(offset)) { return null; }  // does logarithmic search; allows drv of null vein
 
         // the null vein does not correspond to any vein or quality, but does actually exist
         short chunkData = offsetIds.get(offset);
@@ -301,7 +305,7 @@ public class VeinUtils {
         // we limit the hash result based on the remaining weight in the megachunk, then skip over veins which exceed
         // their expected value [floor(megachunkLength^2 * weight / 1000)]
         short weightRemaining = currMegachunk.first().defaultReturnValue();
-        if (weightRemaining == 0) { weightRemaining = WEIGHT_FRACTION_TENS_POW; }
+        boolean doRandomRoll = weightRemaining == 0;
 
         // get the vein id from the hash by converting it into a vein key
         short trimmedHash = (short) (chunkHash[0] % weightRemaining);
@@ -313,7 +317,7 @@ public class VeinUtils {
         short dimExpCount = getDimExpCount(currVein, dim);
 
         // if some vein has occurred too many times, we may need to skip over it if we select it
-        if (weightRemaining < WEIGHT_FRACTION_TENS_POW) {
+        if (!doRandomRoll && weightRemaining < WEIGHT_FRACTION_TENS_POW) {
             while (currMegachunk.first().get(currID) >= dimExpCount) {
                 trimmedHash += getDimWeight(currVein, dim);
                 currVeinKey.rebaseKey(trimmedHash);
@@ -322,6 +326,7 @@ public class VeinUtils {
             }
         }
 
+        if (currVein == null) { return null; }  // dont return a pair with null info
         return new Pair<>(currVein, Quality.getQuality(chunkHash[1]));
     }
 
@@ -388,31 +393,23 @@ public class VeinUtils {
         var dimWeightMap = DIM_VEIN_WEIGHT_MAP.get(dim);
 
         // attempt to categorize and store all veins
-        int veinIndex = 0;
         for (Vein currVein : ID_TO_VEINS.values()) {
-            if (currVein.getDimWeight(dim) == 0) { continue; }  // if the vein has no weight in this dim, ignore it
+            short currDimWeight = currVein.getDimWeight(dim);
+            if (currDimWeight == 0) { continue; }  // if the vein has no weight in this dim, ignore it
             // check if we have exceeded the weight provided
-            if (remainingWeight < currVein.getDimWeight(dim)) {
+            if (remainingWeight < currDimWeight) {
                 LOGGER.atError().log("The maximum weight (10000) has been exceeded at vein " + currVein.translationKey
                         + " in dim " + dim + "; ignoring current vein.");
                 continue;
             } else {
-                remainingWeight -= currVein.getDimWeight(dim);
+                remainingWeight -= currDimWeight;
             }
 
             // sort into rough categories based on likelihood
-            if (currVein.getDimWeight(dim) <= 1250) { smallestWeights.add(currVein); }
-            else if (currVein.getDimWeight(dim) <= 2500) { mediumWeights.add(currVein); }
-            else if (currVein.getDimWeight(dim) <= 5000) { largerWeights.add(currVein); }
+            if (currDimWeight <= 1250) { smallestWeights.add(currVein); }
+            else if (currDimWeight <= 2500) { mediumWeights.add(currVein); }
+            else if (currDimWeight <= 5000) { largerWeights.add(currVein); }
             else { largestWeights.add(currVein); }
-
-            ++veinIndex;
-
-            // if there is no more weight to divy up, stop looping
-            if (remainingWeight == 0 && veinIndex < ID_TO_VEINS.size()) {
-                LOGGER.atError().log("More than 100% of the weight in dim " + dim + " assigned; skipping some veins.");
-                break;
-            }
         }
 
         final short nullWeight = remainingWeight;
@@ -505,15 +502,16 @@ public class VeinUtils {
     private String getVeinInfoID(short veinId) {
         return "vinfo_" + veinId;
     }
+    private String getDimInfoID(int dim) { return "dinfo_" + dim; }
 
     public void readFromNBT(NBTTagCompound tags) {
-        if (tags.getShort("vein_it_id") != VEIN_HANDLER.iterationId) { return; }  // don't read data with mismatching iteration id
-        NBTTagList dims = tags.getTagList("vein_dims", 10);  // 10 corresponds to compound tags
+        if (!tags.hasKey("vein_it_id") || tags.getShort("vein_it_id") != VEIN_HANDLER.iterationId) { return; }  // don't read data with mismatching iteration id
+        NBTTagCompound dims = tags.getCompoundTag("vein_dims");
 
-        for (int dimTagIndex = 0; dimTagIndex < dims.tagCount(); ++dimTagIndex) {
-            NBTTagCompound currDim = dims.getCompoundTagAt(dimTagIndex);
-            int dim = currDim.getInteger("dim");
-            if (!DIM_VEIN_WEIGHT_MAP.containsKey(dim)) { continue; }  // if a dim is no longer present, don't read its data
+        var validDims = DIM_VEIN_WEIGHT_MAP.keySet();
+        for (int dim : validDims) {
+            NBTTagCompound currDim = dims.getCompoundTag(getDimInfoID(dim));
+            if (currDim.isEmpty()) { continue; }  // if dim isn't present, we can't read its data
 
             // get all the current vein ID's for the current dimension
             final short[] veinIDs = DIM_VEIN_WEIGHT_MAP.get(dim).values().toShortArray();
@@ -521,11 +519,13 @@ public class VeinUtils {
             for (short veinID : veinIDs) { veinIDStrings.add(getVeinInfoID(veinID)); }
 
             // read over each megachunk
-            NBTTagList megachunks = currDim.getTagList("megachunks", 10);
+            NBTTagList megachunks = currDim.getTagList("megachunks", 10);  // 10 corresponds to compound tags for tag lists
             for (int megachunkTagIndex = 0; megachunkTagIndex < megachunks.tagCount(); ++megachunkTagIndex) {
                 // get megachunk nbt and general data
                 NBTTagCompound currMegachunkNBT = megachunks.getCompoundTagAt(megachunkTagIndex);
                 long megachunkKey = currMegachunkNBT.getLong("key");
+                ensureMegachunkPopulated(dim, megachunkKey);
+
                 var currMegachunk = MEGA_CHUNK_OCCURRENCE_DATA.get(dim).get(megachunkKey);
 
                 // iterate over all veins by known ID's for the current dimension
@@ -551,7 +551,16 @@ public class VeinUtils {
                     }
 
                     // store the number of occurrences for the given vein
-                    currMegachunk.first().put(veinIDs[veinIDIndex], (short) veinData.tagCount());
+                    short numOccurrences = (short) veinData.tagCount();
+                    currMegachunk.first().put(veinIDs[veinIDIndex], numOccurrences);
+
+                    // check if we exceeded the expected weight
+                    Vein currVein = getVein(veinIDs[veinIDIndex]);
+                    if (numOccurrences < getDimExpCount(currVein, dim)) { continue; }
+
+                    // if we exceed the expected weight, we need to indicate that
+                    short weightBeforeVein = currMegachunk.first().defaultReturnValue();
+                    currMegachunk.first().defaultReturnValue((short) (weightBeforeVein - currVein.getDimWeight(dim)));
                 }
             }
         }
@@ -559,23 +568,24 @@ public class VeinUtils {
 
     public void WriteToNBT(NBTTagCompound tags) {
         tags.setShort("vein_it_id", VEIN_HANDLER.iterationId);
-        NBTTagList dims = new NBTTagList();
+        NBTTagCompound dims = new NBTTagCompound();
 
         // iterate over each dimension with occurrence data
-        for (int dim : MEGA_CHUNK_OCCURRENCE_DATA.keySet()) {
+        var writtenDims = MEGA_CHUNK_OCCURRENCE_DATA.keySet();
+        for (int dim : writtenDims) {
             NBTTagCompound currDim = new NBTTagCompound();
-            currDim.setInteger("dim", dim);
 
             NBTTagList megachunks = new NBTTagList();
             currDim.setTag("megachunks", megachunks);
 
             // get every chunk offset and corresponding vein qual+id short to store them (encodes occurrence data by # offsets)
             for (long megachunkKey : MEGA_CHUNK_OCCURRENCE_DATA.get(dim).keySet()) {
-                NBTTagCompound currMegachunk = new NBTTagCompound();
-                currMegachunk.setLong("key", megachunkKey);
+                var currMegachunkData = MEGA_CHUNK_OCCURRENCE_DATA.get(dim).get(megachunkKey);
+                NBTTagCompound currMegachunkNBT = new NBTTagCompound();
+                currMegachunkNBT.setLong("key", megachunkKey);
 
                 NBTTagCompound veins = new NBTTagCompound();
-                currMegachunk.setTag("veins", veins);
+                currMegachunkNBT.setTag("veins", veins);
 
                 // for each occurrence of a vein, store it under the vein id
                 for (var entry : MEGA_CHUNK_OCCURRENCE_DATA.get(dim).get(megachunkKey).second().short2ShortEntrySet()) {
@@ -600,10 +610,10 @@ public class VeinUtils {
                     veinOffsetQualBEBytes.appendTag(new NBTTagByteArray(bytesToStore));
                 }
 
-                megachunks.appendTag(currMegachunk);  // store the curr megachunk in the list of megachunks
+                megachunks.appendTag(currMegachunkNBT);  // store the curr megachunk in the list of megachunks
             }
 
-            dims.appendTag(currDim);  // store the current dim data in the list of dimensions
+            dims.setTag(getDimInfoID(dim), currDim);  // store the current dim data in the compound tag of all vein dims
         }
 
         tags.setTag("vein_dims", dims);

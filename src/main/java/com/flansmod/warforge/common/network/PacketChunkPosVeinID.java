@@ -72,7 +72,7 @@ public class PacketChunkPosVeinID extends PacketBase {
         }
 
         // if the player is within a reasonable sqr radius (1) of the queried chunk, process and send data
-        Pair<Vein, Quality> veinInfo = VEIN_HANDLER.getVein(veinLocation.x, veinLocation.z, veinLocation.mDim, playerEntity.world.provider.getSeed());
+        Pair<Vein, Quality> veinInfo = VEIN_HANDLER.getVein(veinLocation.mDim, veinLocation.x, veinLocation.z, playerEntity.world.provider.getSeed());
         resultInfo = VEIN_HANDLER.compressVeinInfo(veinInfo);
 
         WarForgeMod.NETWORK.sendTo(this, playerEntity);  // 'encode into' handles getting of important data

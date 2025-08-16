@@ -47,7 +47,7 @@ public class VeinConfigHandler {
             "#       mult: A float between 0.0 and 1.0 which scales the yield of a vein based on the dimension; omission => 1.",
             "# - components: A list of ore components for the vein, where:",
             "#     - item: The item ID (e.g. minecraft:iron_ore) to generate in the vein.",
-            "#       yield: How many of this item the vein yields when selected. [short]",
+            "#       yield: How many of this item the vein yields when selected. [float w/ decimal value contributed to bonus chance]",
             "#       weights: A list of chances to appear on any given harvest of this vein for this component in each dim (omitted dimensions assume a weight of 1.0)",
             "#          - id [dimension id as int] : weight [chance to appear as float between 0 and 1]",
             "#       mults: A list of multipliers for this comp in each dim (omitted dimensions use the vein dim multiplier)",
@@ -77,12 +77,12 @@ public class VeinConfigHandler {
             "#        weights: ",
             "#           - -1 : 0.75",
             "#           - 0 : 1.0",
-            "#           [implicit 1.0 weight for dim with id 1]",
+            "#           [implicit 1.0 weight for dim with id not listed (1, 2, etc)]",
             "#      - item: minecraft:coal_ore",
             "#        yield: 1",
             "#        mults: ",
             "#           - -1: 4",
-            "#           [implicit 1.0 multiplier for the remaining dimensions]",
+            "#           [implicit 1.0 multiplier for the remaining dimension(s)]",
             "#  - id: ~",
             "#..."
     ));
@@ -241,7 +241,7 @@ public class VeinConfigHandler {
                 List<Component> components = componentsRaw.stream()
                         .map(comp -> new Component(
                             (String) comp.get("item"),
-                            ((Number) comp.get("yield")).shortValue(),
+                            ((Number) comp.get("yield")).floatValue(),
                             Component.parseMapF2S((List<Map<Object, Object>>) comp.get("weights")),
                             Component.parseFloatMap((List<Map<Object, Object>>) comp.get("mults"))))
                         .collect(Collectors.toList());
@@ -294,7 +294,7 @@ public class VeinConfigHandler {
             ArrayList<ByteBuf> compBufs = new ArrayList<>(components.size());
             components.forEach(comp -> {
                 ByteBuf compSerialized = comp.serialize();
-                compBufBytes[0] += compSerialized.maxCapacity();
+                compBufBytes[0] += compSerialized.readableBytes();
                 compBufs.add(compSerialized);
             });
 
@@ -305,7 +305,7 @@ public class VeinConfigHandler {
             PacketBase.writeUTF(entryByteBuf, translationKey);
 
             entryByteBuf.writeInt(dimWeights.size());
-            dimWeights.forEach((dimId, dimWeight) -> entryByteBuf.writeBytes(dimWeight.serialize()));
+            dimWeights.forEach((dimId, dimWeight) -> entryByteBuf.writeInt(dimId).writeBytes(dimWeight.serialize()));
 
             entryByteBuf.writeInt(components.size());
             compBufs.forEach(entryByteBuf::writeBytes);
@@ -321,14 +321,14 @@ public class VeinConfigHandler {
             int numDims = buf.readInt();
             Int2ObjectOpenHashMap<DimWeight> dimWeights = new Int2ObjectOpenHashMap<>(numDims);
             for (int i = 0; i < numDims; ++i) {
-                DimWeight.deserialize(buf);
+                dimWeights.put(buf.readInt(), DimWeight.deserialize(buf));
             }
 
             // read components
             int numComps = buf.readInt();
             List<Component> comps = new ArrayList<>(numComps);
             for (int i = 0; i < numComps; ++i) {
-                Component.deserialize(buf);
+                comps.add(Component.deserialize(buf));
             }
 
             return new VeinEntry(id, translationKey, dimWeights, comps);
@@ -358,7 +358,7 @@ public class VeinConfigHandler {
     @AllArgsConstructor
     public static class Component {
         final public String item;
-        final public short yield;
+        final public float yield;
         final public Int2ShortOpenHashMap weights;
         final public Int2FloatOpenHashMap multipliers;
 
@@ -381,10 +381,10 @@ public class VeinConfigHandler {
         }
 
         public ByteBuf serialize() {
-            int numBytes = (2 + item.length()) + 2 + (weights.size() * 6) + (multipliers.size() * 8);  // map each member to its size in bytes
+            int numBytes = (2 + item.length()) + 4 + (weights.size() * 6) + (multipliers.size() * 8);  // map each member to its size in bytes
             ByteBuf serialData = Unpooled.directBuffer(numBytes);
             PacketBase.writeUTF(serialData, item);
-            serialData.writeShort(yield);
+            serialData.writeFloat(yield);
 
             serialData.writeInt(weights.size());
             for (var entry : weights.int2ShortEntrySet()) {
@@ -404,7 +404,7 @@ public class VeinConfigHandler {
 
         public static Component deserialize(ByteBuf buf) {
             String item = PacketBase.readUTF(buf);
-            short yield = buf.readShort();
+            float yield = buf.readFloat();
 
             // read weights which are stored first
             int numWeights = buf.readInt();

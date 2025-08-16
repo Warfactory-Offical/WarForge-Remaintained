@@ -40,7 +40,6 @@ import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 
 import static com.flansmod.warforge.client.ClientProxy.CHUNK_VEIN_CACHE;
-import static com.flansmod.warforge.common.CommonProxy.YIELD_QUALITY_MULTIPLIER;
 
 public class ClientTickHandler 
 {
@@ -62,6 +61,7 @@ public class ClientTickHandler
 	private static Object2LongOpenHashMap<DimChunkPos> permitChunkReprobeMs = new Object2LongOpenHashMap<>();
 	private static long lastRenderStartTimeMs = -1;  // (curr time - this) / (display time (ms)) to get index
 	private static Iterator<StackComparable> compIt = null;
+	private static StackComparable currComp = null;
 
 	private final HashMap<ItemStack, ResourceLocation> bannerTextures = new HashMap<ItemStack, ResourceLocation>();
 
@@ -82,6 +82,7 @@ public class ClientTickHandler
 		permitChunkReprobeMs.defaultReturnValue(-1);
 		lastRenderStartTimeMs = -1;
 		compIt = null;
+		currComp = null;
 		cachedCompStrings = null;
 
 		// clear stale data
@@ -293,22 +294,24 @@ public class ClientTickHandler
 		// even though intelliJ thinks veinInfo is never null, it definitely should be able to be
 		// we render either the item, or some waiting icon
 		ItemStack currMemberItemStack = null;
-		boolean hasItemToRender = veinInfo == null || veinInfo.first() == null || veinInfo.first().compIds.size() == 0;
-		if (!hasItemToRender)  {
+		boolean hasItemToRender = veinInfo != null && veinInfo.first() != null && veinInfo.first().compIds.size() > 0;
+		if (hasItemToRender)  {
+
 			// initialize render info
 			if (lastRenderStartTimeMs == -1) {
 				lastRenderStartTimeMs = currTimeMs;
 				compIt = veinInfo.first().compIds.iterator();  // LinkedHashSet should give a consistent ordering
+				currComp = compIt.next();
 			}
 
 			// check if the display time is up
 			else if (currTimeMs - lastRenderStartTimeMs > WarForgeConfig.VEIN_MEMBER_DISPLAY_TIME_MS) {
 				lastRenderStartTimeMs = currTimeMs;  // we are updating the component that we are rendering
 				if (!compIt.hasNext()) { compIt = veinInfo.first().compIds.iterator(); } // restart from beginning
+				currComp = compIt.next();
 			}
 
-			StackComparable compId = compIt.next();
-			currMemberItemStack = compId.toItem();
+			currMemberItemStack = currComp.toItem();
 
 			if (currMemberItemStack == null) {
 				WarForgeMod.LOGGER.atError().log("Got unexpected null stack for vein " + veinInfo.first().toString());
@@ -322,8 +325,9 @@ public class ClientTickHandler
 			compInfoStrings = createVeinInfoStrings(veinInfo, hasData);
 		}
 
-		final int imageSize = hasItemToRender ? 0 : 24;
+		final int imageSize = hasItemToRender ? 24 : 0;
 		final int imageTextOverlap = imageSize / 2;
+		final float halfTextHeight = (3 * mc.fontRenderer.FONT_HEIGHT) >> 2;
 		final int nameWidth =  mc.fontRenderer.getStringWidth(compInfoStrings.get(0));
 		final float titleLeftShift = (float) (imageSize + nameWidth - imageTextOverlap) / 2;
 
@@ -338,7 +342,7 @@ public class ClientTickHandler
 			GlStateManager.enableDepth();
 
 			// render the item
-			GlStateManager.translate(xTextCenter - titleLeftShift, yText + 4, 0);
+			GlStateManager.translate(xTextCenter - titleLeftShift, yText + 4 - halfTextHeight, 0);
 			GlStateManager.scale(imageSize, imageSize, 1);
 			GlStateManager.rotate(180, 0, 1, 0);
 			GlStateManager.rotate(180, 0, 0, 1);
@@ -399,8 +403,13 @@ public class ClientTickHandler
 				continue;
 			}
 
+			// janky work around for weird default minecraft items which sometimes decide to append .name to the key
+			// without updating the translation key the item itself returns
+			String translationKey = currStack.getItem().getTranslationKey();
+			if (!I18n.hasKey(translationKey) && I18n.hasKey(translationKey + ".name")) { translationKey += ".name"; }
+
 			// if we got an item stack, translate it and display information about it
-			StringBuilder compInfo = new StringBuilder(I18n.format(currStack.getTranslationKey()));
+			StringBuilder compInfo = new StringBuilder(I18n.format(translationKey));
 			parseCompInfo(compInfo, currComp, veinInfo, dim);
 			result.add(compInfo.toString());
 		}
@@ -415,9 +424,9 @@ public class ClientTickHandler
 		// format each subComp in the form <guaranteedYield# - %comp; +%extra> to show yield distribution for item
 		for (short[] subCompInfo : yieldInfos) {
 			// show the guaranteed yield info and component weight
-			compInfoStr.append(" <");
+			compInfoStr.append(" <[");
 			compInfoStr.append(subCompInfo[1]);
-			compInfoStr.append("-");
+			compInfoStr.append("]-");
 			compInfoStr.append(VeinUtils.shortToPercentStr(subCompInfo[0]));
 
 			// if there is a chance for an extra yield, display as much
