@@ -5,6 +5,7 @@ import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.oredict.RecipeSorter;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -80,6 +81,7 @@ public class WarForgeConfig {
     public static int NOTORIETY_PER_SIEGE_DEFEND_SUCCESS = 10;
     public static int LEGACY_PER_DAY = 3;
     public static boolean LEGACY_USES_YIELD_TIMER = true;
+    public static boolean MODERN_WARFARE_MODELS = false;
     // Wealth - Vault blocks
     public static String[] VAULT_BLOCK_IDS = new String[]{"minecraft:gold_block"};
     public static ArrayList<Block> VAULT_BLOCKS = new ArrayList<Block>();
@@ -255,6 +257,7 @@ public class WarForgeConfig {
         SHOW_ALLY_BORDERS = configFile.getBoolean("Show Ally Chunk Borders", Configuration.CATEGORY_GENERAL, SHOW_ALLY_BORDERS, "Turns the in-world border rendering on/off for ally chunks");
         SHOW_YIELD_TIMERS = configFile.getBoolean("Show yield timers", CATEGORY_CLIENT, SHOW_YIELD_TIMERS, "Whether to show a readout of the time until the next yield / siege in top left of your screen");
         VEIN_MEMBER_DISPLAY_TIME_MS = configFile.getInt("Vein Member Display Time", CATEGORY_CLIENT, (int) VEIN_MEMBER_DISPLAY_TIME_MS, 100, Integer.MAX_VALUE, "The time in milliseconds for which each member of a vein will be displayed when it is being cycled through, to the precision allowed by the client tick system.");
+        MODERN_WARFARE_MODELS = configFile.getBoolean("Enable modern warfare models", Configuration.CATEGORY_CLIENT, MODERN_WARFARE_MODELS, "Enable modern warfare models, instead of medival more vanilla-friendly models");
 
         POS_TIMERS = ScreenPos.fromString(configFile.getString( "Yield timer position", CATEGORY_CLIENT, "BOTTOM_RIGHT", "Position of the yield timers" ));
         POS_SIEGE = ScreenPos.fromString(configFile.getString( "Siege status position", CATEGORY_CLIENT, "TOP", "Position of the siege status" ));

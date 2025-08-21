@@ -1,0 +1,11 @@
+
+{
+  "parent": "warforge:block/base/statue_combined",
+  "textures": {
+    "0": "minecraft:missing",
+    "1": "warforge:blocks/statues/classic/flagpole_basicclaim_bottom",
+    "2": "warforge:blocks/statues/classic/flagpole_middle",
+    "particle": "warforge:blocks/statues/classic/flagpole_basicclaim_bottom"
+  }
+}
+

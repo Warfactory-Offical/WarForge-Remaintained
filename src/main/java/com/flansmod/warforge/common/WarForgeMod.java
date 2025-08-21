@@ -12,12 +12,15 @@ import com.flansmod.warforge.common.network.*;
 import com.flansmod.warforge.common.potions.PotionsModule;
 import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.util.DimChunkPos;
+import com.flansmod.warforge.common.util.IDynamicModels;
 import com.flansmod.warforge.common.util.TimeHelper;
 import com.flansmod.warforge.server.*;
 import com.flansmod.warforge.server.Faction.Role;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.command.CommandHandler;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.item.EntityItem;
@@ -37,6 +40,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraftforge.client.event.ColorHandlerEvent;
+import net.minecraftforge.client.event.ModelBakeEvent;
+import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -56,6 +62,8 @@ import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.logging.log4j.Logger;
+import org.yaml.snakeyaml.events.Event;
+import org.yaml.snakeyaml.tokens.Token;
 import zone.rong.mixinbooter.ILateMixinLoader;
 
 import java.io.File;
@@ -82,6 +90,7 @@ public class WarForgeMod implements ILateMixinLoader {
     public static final TeleportsModule TELEPORTS = new TeleportsModule();
     public static final PotionsModule POTIONS = new PotionsModule();
     public static final UpgradeHandler UPGRADE_HANDLER = new UpgradeHandler();
+    public static final ModelEventHandler MODEL_EVENT_HANDLER = new ModelEventHandler();
     // Discord integration
     private static final String DISCORD_MODID = "discordintegration";
     private static final HashMap<String, UUID> discordUserIdMap = new HashMap<String, UUID>();
@@ -173,6 +182,7 @@ public class WarForgeMod implements ILateMixinLoader {
         Sounds.register(event.getRegistry());
     }
 
+
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         LOGGER = event.getModLog();
@@ -189,6 +199,7 @@ public class WarForgeMod implements ILateMixinLoader {
         MinecraftForge.EVENT_BUS.register(new ServerTickHandler());
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(PROTECTIONS);
+        MinecraftForge.EVENT_BUS.register(MODEL_EVENT_HANDLER);
         proxy.preInit(event);
         EffectRegistry.init();
     }

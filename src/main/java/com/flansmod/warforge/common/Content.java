@@ -1,6 +1,7 @@
 package com.flansmod.warforge.common;
 
 import com.flansmod.warforge.common.blocks.*;
+import com.flansmod.warforge.common.blocks.models.ClaimModels;
 import com.flansmod.warforge.server.Leaderboard.FactionStat;
 
 import net.minecraft.block.Block;
@@ -28,6 +29,7 @@ public class Content
 	
 	public void preInit()
 	{
+        var models = new ClaimModels();
         citadelBlock = new BlockCitadel(Material.ROCK).setRegistryName("citadelblock").setTranslationKey("citadelblock");
         citadelBlockItem = new ItemBlock(citadelBlock).setRegistryName("citadelblock").setTranslationKey("citadelblock");
         GameRegistry.registerTileEntity(TileEntityCitadel.class, new ResourceLocation(WarForgeMod.MODID, "citadel"));

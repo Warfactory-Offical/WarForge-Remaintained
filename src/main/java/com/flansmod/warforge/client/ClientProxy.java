@@ -3,6 +3,7 @@ package com.flansmod.warforge.client;
 import com.flansmod.warforge.api.Vein;
 import com.flansmod.warforge.common.CommonProxy;
 import com.flansmod.warforge.common.Content;
+import com.flansmod.warforge.common.blocks.models.ClaimModels;
 import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.*;
@@ -65,8 +66,8 @@ public class ClientProxy extends CommonProxy
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityDummy.class, new RenderTileEntityDummy());
 
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityLeaderboard.class, new TileEntityLeaderboardRenderer());
-		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityCitadel.class, new RenderTileEntityClaim(BlockDummy.modelEnum.KING));
-		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityBasicClaim.class, new RenderTileEntityClaim(BlockDummy.modelEnum.KNIGHT));
+		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityCitadel.class, new RenderTileEntityClaim(ClaimModels.ModelType.CITADEL));
+		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityBasicClaim.class, new RenderTileEntityClaim(ClaimModels.ModelType.BASIC_CLAIM));
 	}
 	
 	@Override

@@ -1,50 +1,52 @@
 package com.flansmod.warforge.client;
 
-import com.flansmod.warforge.common.Content;
-import com.flansmod.warforge.common.blocks.BlockDummy;
 import com.flansmod.warforge.common.blocks.TileEntityClaim;
+import com.flansmod.warforge.common.blocks.models.ClaimModels;
 import com.flansmod.warforge.server.Faction;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.texture.TextureMap;
-import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.init.Blocks;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.client.model.animation.FastTESR;
 
-public class RenderTileEntityClaim extends TileEntitySpecialRenderer<TileEntityClaim> {
-    public RenderTileEntityClaim(BlockDummy.modelEnum anEnum) {
-        this.anEnum = anEnum;
+public class RenderTileEntityClaim extends FastTESR<TileEntityClaim> {
+
+    public final ClaimModels.ModelType model ;
+    private IBakedModel[] bakedModels;
+
+    public RenderTileEntityClaim(ClaimModels.ModelType model) {
+        this.model = model;
+        bakedModels = ClaimModels.MODEL_MAP_CLASSIC.get(model);
     }
 
-    private BlockDummy.modelEnum anEnum;
-    private  IBlockState blockState;
-    private  IBakedModel model;
-    public void init()
-    {
-        blockState = Content.statue.getDefaultState().withProperty(BlockDummy.MODEL, anEnum);
-        model = Minecraft.getMinecraft().getBlockRendererDispatcher().getModelForState(blockState);
-    }
-    @Override
-    public void render(TileEntityClaim te, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
-        if(blockState == null) init(); //Jank nation
-        if(te.getFaction().equals(Faction.nullUuid)) return;
-        GlStateManager.pushMatrix();
-        this.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-
-        GlStateManager.shadeModel(GL11.GL_SMOOTH);
-
-        GlStateManager.translate(x, y + 1, z + 1);
-        GlStateManager.translate(+0.5, 0, -0.5);
-        GlStateManager.rotate(te.rotation, 0, 1, 0);
-        GlStateManager.translate(-0.5, 0, +0.5);
-        Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelRenderer().renderModelBrightness(model, blockState, 1, false);
-
-        GlStateManager.popMatrix();
-    }
 
     @Override
-    public boolean isGlobalRenderer(TileEntityClaim cita) {
+    public void renderTileEntityFast(TileEntityClaim te, double x, double y, double z,
+                                     float partialTicks, int destroyStage, float alpha,
+                                     BufferBuilder buffer) {
+        if (te.getFaction().equals(Faction.nullUuid)) return;
+
+        int index = Math.floorMod((int) Math.round(te.rotation / 45.0), 8);
+        IBakedModel bakedModel = bakedModels[index];
+        BlockPos pos = te.getPos();
+
+        buffer.setTranslation(x - pos.getX(), y - pos.getY(), z - pos.getZ());
+
+
+        IBlockState dummyState = Blocks.STONE.getDefaultState();
+        Minecraft.getMinecraft().getBlockRendererDispatcher()
+                .getBlockModelRenderer().
+                renderModel(te.getWorld(), bakedModel, dummyState, pos.offset(EnumFacing.UP), buffer, false, 0);
+
+        buffer.setTranslation(0, 0, 0);
+    }
+
+    @Override
+    public boolean isGlobalRenderer(TileEntityClaim te) {
         return true;
     }
 }
+
