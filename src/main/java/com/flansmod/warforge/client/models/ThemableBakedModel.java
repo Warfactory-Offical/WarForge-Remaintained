@@ -5,6 +5,7 @@ import com.flansmod.warforge.common.blocks.models.ClaimModels;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.block.model.ItemOverrideList;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.EnumFacing;
@@ -53,5 +54,12 @@ public class ThemableBakedModel implements IBakedModel {
     public ItemOverrideList getOverrides() {
         return ItemOverrideList.NONE;
     }
+
+    public org.apache.commons.lang3.tuple.Pair<? extends IBakedModel, javax.vecmath.Matrix4f> handlePerspective(ItemCameraTransforms.TransformType cameraTransformType) {
+        return getActiveModel().handlePerspective(cameraTransformType);
+
+    }
+
+   public ItemCameraTransforms getItemCameraTransforms() { return getActiveModel().getItemCameraTransforms(); }
 
 }

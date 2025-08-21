@@ -16,38 +16,19 @@ import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.common.model.TRSRTransformation;
 
-import java.util.*;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class ClaimModels implements IDynamicModels {
 
-    public static final String classicPath = "textures/blocks/statues/classic";
-    public static final String modernPath = "textures/blocks/statues/modern";
+    public static final String texturePath = "textures/blocks/statues/";
     public static final Map<ModelType, IBakedModel[]> MODEL_MAP = new EnumMap<>(ModelType.class);
-    public static List<ResourceLocation> spriteListClassic = new ArrayList<>();
-    public static List<ResourceLocation> spriteListModern = new ArrayList<>();
     public static ResourceLocation BASE_STATUE = new ResourceLocation(WarForgeMod.MODID, "block/dummy/statue_base");
 
     public ClaimModels() {
         INSTANCES.add(this);
-    }
-
-    private static IBakedModel[] bakeRotations(IModel model, int steps) {
-        IBakedModel[] models = new IBakedModel[steps];
-        for (int i = 0; i < steps; i++) {
-            float angle = i * (360f / steps);
-            TRSRTransformation rotation = TRSRTransformation.blockCenterToCorner(
-                    new TRSRTransformation(
-                            null,
-                            TRSRTransformation.quatFromXYZ(0, (float) Math.toRadians(angle), 0),
-                            null,
-                            null
-                    )
-            );
-
-            models[i] = model.bake(rotation, DefaultVertexFormats.BLOCK, ModelLoader.defaultTextureGetter());
-        }
-        return models;
     }
 
     private static ThemableBakedModel[] bakeTheamableModels(Map<THEME, IModel> modelMap) {
@@ -80,10 +61,6 @@ public class ClaimModels implements IDynamicModels {
         return array;
     }
 
-    private static IBakedModel[] bakeRotations(IModel model) {
-        return bakeRotations(model, 8);
-    }
-
     @Override
     public StateMapperBase getStateMapper(ResourceLocation loc) {
         return IDynamicModels.super.getStateMapper(loc);
@@ -93,38 +70,34 @@ public class ClaimModels implements IDynamicModels {
     @Override
     public void bakeModel(ModelBakeEvent event) {
         IModel baseStatueModel = ModelLoaderRegistry.getModel(BASE_STATUE);
-        String prefix = "blocks/statues/classic";
-        // Utility method for creating retextured models
+        String classicTexturePath = "blocks/statues/classic";
+        String modernModelPath = "block/statues/modern";
+
         Map<THEME, IModel> citadelModels = ImmutableMap.of(
                 THEME.MEDIVAL, baseStatueModel.retexture(
-                        ImmutableMap.of("0", new ResourceLocation(WarForgeMod.MODID, prefix + "/statue_king").toString())
+                        ImmutableMap.of("0", new ResourceLocation(WarForgeMod.MODID, classicTexturePath + "/statue_king").toString())
                 ),
-                THEME.MODERN, baseStatueModel.retexture(
-                        ImmutableMap.of("0", new ResourceLocation(WarForgeMod.MODID, prefix + "/statue_king").toString())
-                )
+                THEME.MODERN, ModelLoaderRegistry.getModelOrMissing(new ResourceLocation(WarForgeMod.MODID, modernModelPath + "/flag_pole"))
         );
 
         // Use your themable baking for CITADEL
         MODEL_MAP.put(ModelType.CITADEL, bakeTheamableModels(citadelModels));
 
-        // BASIC_CLAIM using same placeholder models
         Map<THEME, IModel> basicClaimModels = ImmutableMap.of(
                 THEME.MEDIVAL, baseStatueModel.retexture(
-                        ImmutableMap.of("0", new ResourceLocation(WarForgeMod.MODID, prefix + "/statue_knight").toString())
+                        ImmutableMap.of("0", new ResourceLocation(WarForgeMod.MODID, classicTexturePath + "/statue_knight").toString())
                 ),
-                THEME.MODERN, baseStatueModel.retexture(
-                        ImmutableMap.of("0", new ResourceLocation(WarForgeMod.MODID, prefix + "/statue_knight").toString())
-                )
+                THEME.MODERN, ModelLoaderRegistry.getModelOrMissing(new ResourceLocation(WarForgeMod.MODID, modernModelPath + "/radio"))
         );
         MODEL_MAP.put(ModelType.BASIC_CLAIM, bakeTheamableModels(basicClaimModels));
 
         // SIEGE using same placeholder models
         Map<THEME, IModel> siegeModels = ImmutableMap.of(
                 THEME.MEDIVAL, baseStatueModel.retexture(
-                        ImmutableMap.of("0", new ResourceLocation(WarForgeMod.MODID, prefix + "/statue_berserker").toString())
+                        ImmutableMap.of("0", new ResourceLocation(WarForgeMod.MODID, classicTexturePath + "/statue_berserker").toString())
                 ),
                 THEME.MODERN, baseStatueModel.retexture(
-                        ImmutableMap.of("0", new ResourceLocation(WarForgeMod.MODID, prefix + "/statue_berserker").toString())
+                        ImmutableMap.of("0", new ResourceLocation(WarForgeMod.MODID, classicTexturePath + "/statue_berserker").toString())
                 )
         );
         MODEL_MAP.put(ModelType.SIEGE, bakeTheamableModels(siegeModels));
@@ -137,10 +110,8 @@ public class ClaimModels implements IDynamicModels {
 
     @Override
     public void registerSprite(TextureMap map) {
-        spriteListClassic = DataRetrivalUtil.getResourcesFromPath(classicPath);
-        spriteListModern = DataRetrivalUtil.getResourcesFromPath(modernPath);
-        spriteListClassic.forEach(map::registerSprite);
-        spriteListModern.forEach(map::registerSprite);
+        var spriteList = DataRetrivalUtil.getResourcesFromPath(texturePath);
+        spriteList.forEach(map::registerSprite);
     }
 
     public enum ModelType {
