@@ -19,7 +19,7 @@ public class RenderTileEntityClaim extends FastTESR<TileEntityClaim> {
 
     public RenderTileEntityClaim(ClaimModels.ModelType model) {
         this.model = model;
-        bakedModels = ClaimModels.MODEL_MAP_CLASSIC.get(model);
+        bakedModels = ClaimModels.MODEL_MAP.get(model);
     }
 
 
