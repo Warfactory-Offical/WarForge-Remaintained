@@ -24,14 +24,16 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class SkinUtil {
     private static final Map<UUID, ResourceLocation> parsedSkinCache = new ConcurrentHashMap<>();
+    private static final ResourceLocation DEFAULT_FACE = new ResourceLocation(WarForgeMod.MODID, "textures/gui/default_face.png");
     static Minecraft mc = Minecraft.getMinecraft();
     static SkinManager mcSkinManager = mc.getSkinManager();
 
+
     public static ResourceLocation getPlayerFace(UUID uuid) {
-        return parsedSkinCache.computeIfAbsent(uuid, (id) -> {
-            generatePlayerFace(id);
-            return null;
-        });
+        ResourceLocation loc = parsedSkinCache.get(uuid);
+        if (loc != null) return loc;
+        generatePlayerFace(uuid);
+        return DEFAULT_FACE; // temporary placeholder
     }
 
     private static void generatePlayerFace(UUID uuid) {
@@ -44,12 +46,15 @@ public class SkinUtil {
             ITextureObject texture = mc.getTextureManager().getTexture(location);
             if (texture instanceof ThreadDownloadImageData imageData) {
                 var skinImage = imageData.bufferedImage;
+                if (skinImage == null) return;
                 var face = skinImage.getSubimage(8, 8, 8, 8); // front face
                 var faceOverlay = skinImage.getSubimage(40, 8, 8, 8); // hat layer
                 BufferedImage combined = overlayImages(face, faceOverlay);
                 var loc = new ResourceLocation(WarForgeMod.MODID, "player_face_" + uuid);
-                mc.getTextureManager().loadTexture(loc, new DynamicTexture(combined));
-                parsedSkinCache.put(uuid, loc);
+                mc.addScheduledTask(() -> {
+                    mc.getTextureManager().loadTexture(loc, new DynamicTexture(combined));
+                    parsedSkinCache.put(uuid, loc);
+                });
             }
         }
 
@@ -58,19 +63,12 @@ public class SkinUtil {
     public static BufferedImage overlayImages(BufferedImage base, BufferedImage overlay) {
         int width = Math.max(base.getWidth(), overlay.getWidth());
         int height = Math.max(base.getHeight(), overlay.getHeight());
-
         BufferedImage combined = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-
         Graphics2D g = combined.createGraphics();
-
         g.drawImage(base, 0, 0, null);
-
         g.drawImage(overlay, 0, 0, null);
-
         g.dispose();
         return combined;
     }
-
-
 }
 
