@@ -1,16 +1,12 @@
 package com.flansmod.warforge.common.blocks;
 
-import com.flansmod.warforge.client.models.DefaultTransform;
-import com.flansmod.warforge.client.models.ThemableBakedModel;
 import com.flansmod.warforge.common.CommonProxy;
 import com.flansmod.warforge.common.Content;
 import com.flansmod.warforge.common.WarForgeMod;
-import com.flansmod.warforge.common.blocks.models.ClaimModels;
 import com.flansmod.warforge.common.network.PacketFactionInfo;
 import com.flansmod.warforge.common.util.DimChunkPos;
 import com.flansmod.warforge.common.util.IDynamicModels;
 import com.flansmod.warforge.server.Faction;
-import com.google.common.collect.ImmutableMap;
 import lombok.SneakyThrows;
 import net.minecraft.block.BlockHorizontal;
 import net.minecraft.block.ITileEntityProvider;
@@ -18,12 +14,9 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
-import net.minecraft.client.renderer.block.model.ModelRotation;
 import net.minecraft.client.renderer.block.statemap.StateMapperBase;
 import net.minecraft.client.renderer.texture.TextureMap;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -46,12 +39,13 @@ import net.minecraftforge.client.event.ModelBakeEvent;
 import net.minecraftforge.client.model.IModel;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
-import net.minecraftforge.client.model.PerspectiveMapWrapper;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.UUID;
 
+import static com.flansmod.warforge.client.models.BakingUtil.registerFacingModels;
 import static com.flansmod.warforge.common.Content.dummyTranslusent;
 import static com.flansmod.warforge.common.Content.statue;
 import static com.flansmod.warforge.common.blocks.BlockDummy.MODEL;
@@ -204,54 +198,12 @@ public class BlockBasicClaim extends MultiBlockColumn implements ITileEntityProv
 
     @Override
     @SneakyThrows
-    //TODO:Streamline this
     public void bakeModel(ModelBakeEvent event) {
-        IModel medivalModel = ModelLoaderRegistry.getModelOrMissing(
+        IModel medieval = ModelLoaderRegistry.getModelOrMissing(
                 new ResourceLocation(WarForgeMod.MODID, "block/citadelblock"));
-        IModel modernModel = ModelLoaderRegistry.getModelOrMissing(
+        IModel modern = ModelLoaderRegistry.getModelOrMissing(
                 new ResourceLocation(WarForgeMod.MODID, "block/statues/modern/onlytable"));
-
-        // Bake each cardinal facing
-        for (EnumFacing facing : new EnumFacing[]{EnumFacing.NORTH, EnumFacing.SOUTH, EnumFacing.EAST, EnumFacing.WEST}) {
-            ModelRotation rotation = switch (facing) {
-                case SOUTH -> ModelRotation.X0_Y180;
-                case WEST -> ModelRotation.X0_Y270;
-                case EAST -> ModelRotation.X0_Y90;
-                default -> ModelRotation.X0_Y0;
-            };
-
-            IBakedModel themedModel = new ThemableBakedModel(ImmutableMap.of(
-                    ClaimModels.THEME.MEDIVAL, medivalModel.bake(rotation, DefaultVertexFormats.BLOCK, ModelLoader.defaultTextureGetter()),
-                    ClaimModels.THEME.MODERN, modernModel.bake(rotation, DefaultVertexFormats.BLOCK, ModelLoader.defaultTextureGetter())
-            ));
-
-            ModelResourceLocation modelLoc = new ModelResourceLocation(
-                    getRegistryName(), "facing=" + facing.getName().toLowerCase()
-            );
-            event.getModelRegistry().putObject(modelLoc, themedModel);
-        }
-
-        IBakedModel bakedMedival = new PerspectiveMapWrapper(
-                medivalModel.bake(ModelRotation.X0_Y0, DefaultVertexFormats.BLOCK, ModelLoader.defaultTextureGetter()),
-                DefaultTransform.BLOCK_TRANSFORMS
-        );
-
-        IBakedModel bakedModern = new PerspectiveMapWrapper(
-                modernModel.bake(ModelRotation.X0_Y0, DefaultVertexFormats.BLOCK, ModelLoader.defaultTextureGetter()),
-                DefaultTransform.BLOCK_TRANSFORMS
-        );
-
-
-        IBakedModel themedModel = new ThemableBakedModel(ImmutableMap.of(
-                ClaimModels.THEME.MEDIVAL, bakedMedival,
-                ClaimModels.THEME.MODERN, bakedModern
-        ));
-        ModelResourceLocation modelLoc = new ModelResourceLocation(
-                getRegistryName(), "inventory"
-        );
-
-        event.getModelRegistry().putObject(modelLoc, themedModel);
-
+        registerFacingModels(medieval, modern, event.getModelRegistry(), getRegistryName());
     }
 
     @Override
@@ -259,7 +211,7 @@ public class BlockBasicClaim extends MultiBlockColumn implements ITileEntityProv
         ModelLoader.setCustomModelResourceLocation(
                 Item.getItemFromBlock(this),
                 0,
-                new ModelResourceLocation(this.getRegistryName(), "inventory")
+                new ModelResourceLocation(Objects.requireNonNull(getRegistryName()), "inventory")
         );
     }
 
