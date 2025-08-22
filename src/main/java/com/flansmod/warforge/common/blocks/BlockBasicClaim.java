@@ -1,5 +1,6 @@
 package com.flansmod.warforge.common.blocks;
 
+import com.flansmod.warforge.client.models.RotatableStateMapper;
 import com.flansmod.warforge.common.CommonProxy;
 import com.flansmod.warforge.common.Content;
 import com.flansmod.warforge.common.WarForgeMod;
@@ -193,7 +194,7 @@ public class BlockBasicClaim extends MultiBlockColumn implements ITileEntityProv
 
     @Override
     public StateMapperBase getStateMapper(ResourceLocation loc) {
-        return IDynamicModels.super.getStateMapper(loc);
+       return new RotatableStateMapper(getRegistryName());
     }
 
     @Override
