@@ -61,10 +61,6 @@ public class ClaimModels implements IDynamicModels {
         return array;
     }
 
-    @Override
-    public StateMapperBase getStateMapper(ResourceLocation loc) {
-        return IDynamicModels.super.getStateMapper(loc);
-    }
 
     @SneakyThrows
     @Override

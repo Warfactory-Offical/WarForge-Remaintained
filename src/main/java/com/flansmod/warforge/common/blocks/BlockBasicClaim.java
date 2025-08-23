@@ -1,6 +1,6 @@
 package com.flansmod.warforge.common.blocks;
 
-import com.flansmod.warforge.client.models.RotatableStateMapper;
+import com.flansmod.warforge.common.blocks.models.RotatableStateMapper;
 import com.flansmod.warforge.common.CommonProxy;
 import com.flansmod.warforge.common.Content;
 import com.flansmod.warforge.common.WarForgeMod;
@@ -40,6 +40,8 @@ import net.minecraftforge.client.event.ModelBakeEvent;
 import net.minecraftforge.client.model.IModel;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -193,6 +195,7 @@ public class BlockBasicClaim extends MultiBlockColumn implements ITileEntityProv
     }
 
     @Override
+    @SideOnly(Side.CLIENT)
     public StateMapperBase getStateMapper(ResourceLocation loc) {
        return new RotatableStateMapper(getRegistryName());
     }

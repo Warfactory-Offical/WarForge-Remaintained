@@ -1,4 +1,4 @@
-package com.flansmod.warforge.client.models;
+package com.flansmod.warforge.common.blocks.models;
 
 import net.minecraft.block.BlockHorizontal;
 import net.minecraft.block.properties.PropertyDirection;
