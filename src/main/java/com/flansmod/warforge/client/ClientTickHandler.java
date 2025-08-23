@@ -72,6 +72,7 @@ public class ClientTickHandler {
     public static long veinRenderStartTime = -1;  // (curr time - this) / (display time (ms)) to get index
     public static boolean CLAIMS_DIRTY = false;
     public static boolean UI_DEBUG = false;
+    public static boolean TIMER_DEBUG = false;
     // -1 indicates the chunk has never been probed
     private static ArrayList<String> cachedVeinStrings = null;
     private final Tessellator tess;
@@ -481,7 +482,13 @@ public class ClientTickHandler {
     private void renderSiegeTimer(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText){
         String siegeText = formatPaddedTimer( infoToRender.endTimestamp - System.currentTimeMillis() );
         int textWidth = mc.fontRenderer.getStringWidth(siegeText);
-        mc.fontRenderer.drawStringWithShadow(siegeText, xText-textWidth, yText + 6, 0xFFFFFF);
+        int color =  infoToRender.endTimestamp - System.currentTimeMillis() < 60000 ? 0xFF0000 : 0xFFFFFF;
+
+        mc.fontRenderer.drawStringWithShadow(siegeText, xText+(128-textWidth/2), yText + 28, color);
+        if(TIMER_DEBUG){
+            mc.fontRenderer.drawStringWithShadow( "End timestamp :"+ infoToRender.endTimestamp, xText-textWidth, yText + 30, 0xFFFFFF);
+            mc.fontRenderer.drawStringWithShadow("Raw timestamp difference: "+ (infoToRender.endTimestamp - System.currentTimeMillis()), xText-textWidth, yText + 40, 0xFFFFFF);
+        }
     }
 
     private void renderSiegeProgressBar(Minecraft mc, SiegeCampProgressInfo infoToRender, int xText, int yText, float attackR, float attackG, float attackB, float defendR, float defendG, float defendB, float scroll) {
