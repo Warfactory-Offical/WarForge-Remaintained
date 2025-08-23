@@ -76,6 +76,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 		defenders = getDefenders(this.siegeTarget);
 		largestSeenDefenderCount = defenders.onlinePlayerCount;
 		siegeStatus = SiegeStatus.ACTIVE;
+		markDirty();
 	}
 
 	private Faction getDefenders(DimBlockPos siegeTarget) {
@@ -167,7 +168,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 				e.printStackTrace();
 			}
 
-			for (DimBlockPos siegeCampPos : siege.attackingCamp) {
+			for (DimBlockPos siegeCampPos : siege.attackingCamps) {
 				if (siegeCampPos == null || getClaimPos().equals(siegeCampPos.toRegularPos())) continue;
 
 				TileEntity siegeCamp = world.getTileEntity(siegeCampPos);
@@ -211,6 +212,12 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 	public void update() {
 		// do not do logic on client
 		if (world.isRemote) return;
+
+		// clear out ghost sieges for debugging
+		if (!(world.getBlockState(pos).getBlock() instanceof BlockSiegeCamp)) {
+			onDestroyed();
+			return;
+		}
 
 		// do not do logic with invalid values
 		if (placer == Faction.nullUuid || siegeTarget == null || defenders == null) return;
@@ -353,7 +360,8 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 			else passSiege();
 			return true;
 		} else {
-			if (currentTickTimer / 20 == WarForgeConfig.ATTACKER_DESERTION_TIMER >>> 4) {
+			// assuming a tick rate of 20tps, see if the current abandon timer is a 4th of the time to abandon
+			if (currentTickTimer / 20 == abandonTimer >>> 2) {
 				if (isAttackingSide) messageAllAttackers("warforge.notification.siege_abandon_" + (isAttackingSide ? "current" : "opposing"), abandonRadius, currentTickTimer / 20, abandonTimer);
 				else messageAllDefenders("warforge.notification.siege_abandon_" + (isAttackingSide ? "current" : "opposing"), abandonRadius, currentTickTimer / 20, abandonTimer);
 			}

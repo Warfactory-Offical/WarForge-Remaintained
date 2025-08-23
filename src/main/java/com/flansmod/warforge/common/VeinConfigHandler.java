@@ -97,7 +97,7 @@ public class VeinConfigHandler {
                                 ((Number) comp.get("weight")).doubleValue()))
                         .collect(Collectors.toList());
                 entries.add(new VeinEntry(name, dims, components));
-            } catch (ClassCastException e) {
+            } catch (Exception e) {
                 WarForgeMod.LOGGER.error("Failed to parse vein: ", e);
                 continue;
             }

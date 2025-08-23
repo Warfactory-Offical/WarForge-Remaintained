@@ -27,7 +27,7 @@ import java.util.UUID;
 public class Siege {
     public UUID attackingFaction;
     public UUID defendingFaction;
-    public ArrayList<DimBlockPos> attackingCamp;
+    public ArrayList<DimBlockPos> attackingCamps;
     public DimBlockPos defendingClaim;
     public long timeElapsed;
     public long siegeEndTimeStamp = 999L;
@@ -58,11 +58,11 @@ public class Siege {
     private int mAttackProgress = 0;
 
     public Siege() {
-        attackingCamp = new ArrayList<>(4);
+        attackingCamps = new ArrayList<>(4);
     }
 
     public Siege(UUID attacker, UUID defender, DimBlockPos defending, long time) {
-        attackingCamp = new ArrayList<>(4);
+        attackingCamps = new ArrayList<>(4);
         attackingFaction = attacker;
         defendingFaction = defender;
         defendingClaim = defending;
@@ -123,30 +123,52 @@ public class Siege {
     }
 
     public boolean isCompleted() {
-        if (!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER)
-            return !hasAbandonedSieges() && GetAttackProgress() >= GetAttackSuccessThreshold() || GetDefenceProgress() >= 5;
-        else
-            return !hasAbandonedSieges() && GetAttackProgress() >= GetAttackSuccessThreshold() || GetDefenceProgress() >= 5 || timeElapsed == 0;
+        boolean endByAttack = GetAttackProgress() >= GetAttackSuccessThreshold();
+        boolean endByDef = GetDefenceProgress() >= 5;
+
+        if (WarForgeConfig.SIEGE_ENABLE_NEW_TIMER) { endByAttack = endByAttack || timeElapsed == 0; }
+        TileEntitySiegeCamp abandonedCamp = hasAbandonedSieges();
+
+        // if a siege could complete, but an abandoned camp is stopping it from happening, notify the attackers
+        if (!endByDef && endByAttack && abandonedCamp != null && (WarForgeMod.currTickTimestamp % 60000 > 30000)) {
+            Faction attacking = WarForgeMod.FACTIONS.getFaction(attackingFaction);
+            attacking.messageAll(new TextComponentString(
+                    "Passing of siege delayed due to abandon timer greater than 0 [" +
+                            abandonedCamp.getAttackerAbandonTickTimer() + " ticks @ " + abandonedCamp.getPos() +
+                            "]; ensure abandon timer is 0 to complete siege."));
+        }
+
+        return endByDef || (abandonedCamp == null && endByAttack);
     }
 
     // ensures attackers are within warzone before siege completes
-    public boolean hasAbandonedSieges() {
+    public TileEntitySiegeCamp hasAbandonedSieges() {
         Faction attacking = WarForgeMod.FACTIONS.getFaction(attackingFaction);
+        ArrayList<TileEntitySiegeCamp> abandonedCamps = new ArrayList<>();
 
-        for (DimBlockPos siegeCampPos : attackingCamp) {
+        for (DimBlockPos siegeCampPos : attackingCamps) {
             if (siegeCampPos == null) continue;
             // YOU WILL GET INCOMPREHENSIBLE ERRORS IF YOU DO NOT FOLLOW THE BELOW CONVERSION TO REGULAR POS
             TileEntity siegeCamp = WarForgeMod.MC_SERVER.getWorld(siegeCampPos.dim).getTileEntity(siegeCampPos.toRegularPos());
             if (siegeCamp instanceof TileEntitySiegeCamp) {
                 int attackerAbandonTimer = ((TileEntitySiegeCamp) siegeCamp).getAttackerAbandonTickTimer();
-                if (attackerAbandonTimer > 0) {
-                    attacking.messageAll(new TextComponentString("Passing of siege delayed due to abandon timer greater than 0 [" + attackerAbandonTimer + " ticks]; ensure abandon timer is 0 to complete siege."));
-                    return true;
-                }
+                if (attackerAbandonTimer > 0) { abandonedCamps.add((TileEntitySiegeCamp) siegeCamp); }
             }
         }
 
-        return false;
+        if (abandonedCamps.size() == 0) { return null; }
+
+        int largestAbandonTimer = 0;
+        var largestAbandonTE = abandonedCamps.get(0);
+        for (var TE : abandonedCamps) {
+            int currTimer = TE.getAttackerAbandonTickTimer();
+            if (currTimer > largestAbandonTimer) {
+                largestAbandonTimer = currTimer;
+                largestAbandonTE = TE;
+            }
+        }
+
+        return largestAbandonTE;
     }
 
     public boolean WasSuccessful() {
@@ -163,7 +185,7 @@ public class Siege {
         }
 
         SiegeCampProgressInfo info = new SiegeCampProgressInfo();
-        info.attackingPos = attackingCamp.get(0);
+        info.attackingPos = attackingCamps.get(0);
         info.attackingName = attackers.name;
         info.attackingColour = attackers.colour;
         info.defendingPos = defendingClaim;
@@ -287,7 +309,7 @@ public class Siege {
     public void onCompleted(boolean successful) {
         // for every attacking siege camp attempt to locate it, and if an actual siege camp handle appropriately
         finished = true;
-        for (DimBlockPos siegeCampPos : attackingCamp) {
+        for (DimBlockPos siegeCampPos : attackingCamps) {
             TileEntity siegeCamp = WarForgeMod.MC_SERVER.getWorld(siegeCampPos.dim).getTileEntity(siegeCampPos.toRegularPos());
             if (siegeCamp != null) {
                 if (siegeCamp instanceof TileEntitySiegeCamp) {
@@ -321,7 +343,7 @@ public class Siege {
         boolean defendValid = false;
 
         // there may be multiple siege camps per siege, so ensure kill occurred in radius of any
-        for (DimBlockPos siegeCamp : attackingCamp) {
+        for (DimBlockPos siegeCamp : attackingCamps) {
             if (isPlayerInWarzone(siegeCamp, killer)) {
                 // First case, an attacker killed a defender
                 if (killerFaction == attackers && killedFaction == defenders) {
@@ -351,7 +373,7 @@ public class Siege {
     }
 
     public void ReadFromNBT(NBTTagCompound tags) {
-        attackingCamp.clear();
+        attackingCamps.clear();
 
         // Get the attacker and defender
         attackingFaction = tags.getUniqueId("attacker");
@@ -363,7 +385,7 @@ public class Siege {
             for (NBTBase base : claimList) {
                 NBTTagIntArray claimInfo = (NBTTagIntArray) base;
                 DimBlockPos pos = DimBlockPos.readFromNBT(claimInfo);
-                attackingCamp.add(pos);
+                attackingCamps.add(pos);
             }
         }
 
@@ -385,7 +407,7 @@ public class Siege {
 
         // Set important locations
         NBTTagList claimsList = new NBTTagList();
-        for (DimBlockPos pos : attackingCamp) {
+        for (DimBlockPos pos : attackingCamps) {
             claimsList.appendTag(pos.writeToNBT());
         }
 

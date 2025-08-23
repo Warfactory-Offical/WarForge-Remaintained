@@ -367,7 +367,7 @@ public class FactionStorage {
             case WIN -> {
                 if (WarForgeConfig.ATTACKER_CONQUERED_CHUNK_PERIOD > 0) {
                     conqueredChunks.put(chunkPos, new ObjectIntPair<>(copyUUID(attackers.uuid), WarForgeConfig.ATTACKER_CONQUERED_CHUNK_PERIOD));
-                    for (DimBlockPos siegeCampPos : siege.attackingCamp) {
+                    for (DimBlockPos siegeCampPos : siege.attackingCamps) {
                         if (siegeCampPos != null)
                             conqueredChunks.put(siegeCampPos.toChunkPos(), new ObjectIntPair<>(copyUUID(attackers.uuid), WarForgeConfig.ATTACKER_CONQUERED_CHUNK_PERIOD));
                     }
@@ -399,7 +399,7 @@ public class FactionStorage {
             case LOSE -> {
                 if (WarForgeConfig.DEFENDER_CONQUERED_CHUNK_PERIOD > 0) {
                     conqueredChunks.put(chunkPos, new ObjectIntPair<>(copyUUID(defenders.uuid), WarForgeConfig.DEFENDER_CONQUERED_CHUNK_PERIOD));
-                    for (DimBlockPos siegeCampPos : siege.attackingCamp) {
+                    for (DimBlockPos siegeCampPos : siege.attackingCamps) {
                         if (siegeCampPos != null)
                             conqueredChunks.put(siegeCampPos.toChunkPos(), new ObjectIntPair<>(copyUUID(defenders.uuid), WarForgeConfig.DEFENDER_CONQUERED_CHUNK_PERIOD));
                     }
@@ -442,7 +442,7 @@ public class FactionStorage {
         if (successful) {
             if (WarForgeConfig.ATTACKER_CONQUERED_CHUNK_PERIOD > 0) {
                 conqueredChunks.put(chunkPos, new ObjectIntPair<>(copyUUID(attackers.uuid), WarForgeConfig.ATTACKER_CONQUERED_CHUNK_PERIOD));
-                for (DimBlockPos siegeCampPos : siege.attackingCamp)
+                for (DimBlockPos siegeCampPos : siege.attackingCamps)
                     if (siegeCampPos != null)
                         conqueredChunks.put(siegeCampPos.toChunkPos(), new ObjectIntPair<>(copyUUID(attackers.uuid), WarForgeConfig.ATTACKER_CONQUERED_CHUNK_PERIOD));
             }
@@ -461,7 +461,7 @@ public class FactionStorage {
         } else {
             if (WarForgeConfig.DEFENDER_CONQUERED_CHUNK_PERIOD > 0) {
                 conqueredChunks.put(chunkPos, new ObjectIntPair<>(copyUUID(defenders.uuid), WarForgeConfig.DEFENDER_CONQUERED_CHUNK_PERIOD)); // defenders get won claims defended
-                for (DimBlockPos siegeCampPos : siege.attackingCamp)
+                for (DimBlockPos siegeCampPos : siege.attackingCamps)
                     if (siegeCampPos != null)
                         conqueredChunks.put(siegeCampPos.toChunkPos(), new ObjectIntPair<>(copyUUID(defenders.uuid), WarForgeConfig.DEFENDER_CONQUERED_CHUNK_PERIOD));
             }
@@ -832,7 +832,7 @@ public class FactionStorage {
             if (kvp.getKey().equals(chunkPos))
                 return true;
 
-            for (DimBlockPos attackerPos : kvp.getValue().attackingCamp) {
+            for (DimBlockPos attackerPos : kvp.getValue().attackingCamps) {
                 if (attackerPos.toChunkPos().equals(chunkPos))
                     return true;
             }
@@ -840,6 +840,7 @@ public class FactionStorage {
         return false;
     }
 
+    // runs on the server only
     public void requestStartSiege(EntityPlayer factionOfficer, DimBlockPos siegeCampPos, Vec3i direction) {
         Faction attacking = getFactionOfPlayer(factionOfficer.getUniqueID());
         long currentTimeStamp = System.currentTimeMillis();
@@ -866,11 +867,12 @@ public class FactionStorage {
             return;
         }
 
-        TileEntitySiegeCamp siegeTE = (TileEntitySiegeCamp) proxy.GetTile(siegeCampPos);
+        TileEntitySiegeCamp siegeTE = (TileEntitySiegeCamp) MC_SERVER.getWorld(siegeCampPos.dim).getTileEntity(siegeCampPos.toRegularPos());
         if (!attacking.uuid.equals(siegeTE.getFaction())) {
             factionOfficer.sendMessage(new TextComponentString("Your faction doesn't own this block!"));
             return;
         }
+
         DimChunkPos defendingChunk = siegeCampPos.toChunkPos().Offset(direction);
         UUID defendingFactionID = mClaims.get(defendingChunk);
         Faction defending = getFaction(defendingFactionID);
@@ -892,6 +894,7 @@ public class FactionStorage {
                     defending.name, TimeHelper.formatTime(conqueredChunks.get(defendingPos.toChunkPos()).getRight())));
             return;
         }
+
         //TODO: Make it all configurable
         final long SIEGE_BASE_TIME = 30 * 60 * 1000;//30 min
         long maxTime;
@@ -908,14 +911,13 @@ public class FactionStorage {
 
 
         Siege siege = new Siege(attacking.uuid, defendingFactionID, defendingPos, maxTime);
-        siege.attackingCamp.add(siegeCampPos);
+        siege.attackingCamps.add(siegeCampPos);
 
         sieges.put(defendingChunk, siege);
         siegeTE.setSiegeTarget(defendingPos);
         siege.start();
 
         attacking.lastSiegeTimestamp = serverTick;
-
     }
 
     public void endSiege(DimBlockPos getPos) {
@@ -1074,7 +1076,7 @@ public class FactionStorage {
                 return false;
             }
 
-            if (siege.getValue().attackingCamp.contains(pos)) {
+            if (siege.getValue().attackingCamps.contains(pos)) {
                 player.sendMessage(new TextComponentString("This siege camp is currently in a siege"));
                 return false;
             }

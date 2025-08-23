@@ -39,7 +39,10 @@ public class PacketSiegeCampInfo extends PacketBase {
             data.writeByte(info.mOffset.getZ());
             data.writeInt(info.mFactionColour);
             data.writeInt(info.mWarforgeVein != null ? info.mWarforgeVein.getID() : -1);
-            data.writeByte((byte) info.mOreQuality.ordinal());
+
+            byte oreQualOrd = 0;
+            if (info.mOreQuality != null) { oreQualOrd = (byte) info.mOreQuality.ordinal(); }
+            data.writeByte(oreQualOrd);
         }
     }
 

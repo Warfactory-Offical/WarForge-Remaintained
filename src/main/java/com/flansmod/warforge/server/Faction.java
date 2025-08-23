@@ -250,7 +250,7 @@ public class Faction {
         world.setBlockToAir(citadelPos.toRegularPos());
 
 
-        String message = getMemberCount() > 0 ? name + " was disbanded." : name + "was abandoned and disbanded";
+        String message = getMemberCount() > 0 ? name + " was disbanded." : name + " was abandoned and disbanded";
         messageAll(new TextComponentString(message));
         members.clear();
         claims.clear();
