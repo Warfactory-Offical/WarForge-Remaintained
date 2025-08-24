@@ -36,7 +36,8 @@ import java.util.*;
 
 import static com.flansmod.warforge.common.Content.dummyTranslusent;
 import static com.flansmod.warforge.common.Content.statue;
-import static com.flansmod.warforge.common.WarForgeMod.*;
+import static com.flansmod.warforge.common.WarForgeMod.FACTIONS;
+import static com.flansmod.warforge.common.WarForgeMod.isOp;
 import static com.flansmod.warforge.common.blocks.BlockDummy.MODEL;
 import static com.flansmod.warforge.common.blocks.BlockDummy.modelEnum.BERSERKER;
 import static com.flansmod.warforge.common.blocks.BlockDummy.modelEnum.TRANSLUCENT;
@@ -133,10 +134,6 @@ public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvi
                 FACTIONS.onNonCitadelClaimPlaced(siegeCamp, placer);
                 siegeCamp.onPlacedBy(placer);
                 super.onBlockPlacedBy(world, pos, state, placer, stack);
-//				if(placer instanceof EntityPlayerMP)
-//				{
-//					FACTIONS.requestPlaceFlag((EntityPlayerMP)placer, new DimBlockPos(world.provider.getDimension(), pos));
-//				}
             }
         }
     }
@@ -170,6 +167,7 @@ public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvi
             PacketSiegeCampInfo info = new PacketSiegeCampInfo();
             info.mPossibleAttacks = CalculatePossibleAttackDirections(world, pos, player);
             info.mSiegeCampPos = new DimBlockPos(world.provider.getDimension(), pos);
+            info.momentum = faction.getSiegeMomentum();
             WarForgeMod.NETWORK.sendTo(info, (EntityPlayerMP) player);
         }
 

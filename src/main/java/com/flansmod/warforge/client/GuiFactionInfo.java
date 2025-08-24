@@ -1,5 +1,9 @@
 package com.flansmod.warforge.client;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.FactionDisplayInfo;
@@ -10,6 +14,7 @@ import com.flansmod.warforge.server.Faction.Role;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture.Type;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
@@ -18,10 +23,6 @@ import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntitySkull;
 import net.minecraft.util.ResourceLocation;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 public class GuiFactionInfo extends GuiScreen
 {

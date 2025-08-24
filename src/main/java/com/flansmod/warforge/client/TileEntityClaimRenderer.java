@@ -1,10 +1,16 @@
 package com.flansmod.warforge.client;
 
+import java.util.List;
+
 import com.flansmod.warforge.common.blocks.TileEntityClaim;
+
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.util.ResourceLocation;
 
 public class TileEntityClaimRenderer extends TileEntitySpecialRenderer<TileEntityClaim>
 {

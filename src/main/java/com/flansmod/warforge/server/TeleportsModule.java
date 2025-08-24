@@ -1,15 +1,16 @@
 package com.flansmod.warforge.server;
 
-import com.flansmod.warforge.common.DimBlockPos;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
+
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class TeleportsModule 
 {

@@ -1,7 +1,8 @@
 package com.flansmod.warforge.common.network;
 
-import com.flansmod.warforge.common.DimBlockPos;
+import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import net.minecraft.entity.player.EntityPlayer;
@@ -33,6 +34,11 @@ public class PacketSiegeCampProgressUpdate extends PacketBase
 		data.writeInt(info.progress);
 		data.writeInt(info.mPreviousProgress);
 		data.writeInt(info.completionPoint);
+
+		//Common
+		data.writeLong(info.timeProgress);
+		data.writeLong(info.endTimestamp);
+		data.writeBoolean(info.finished);
 	}
 
 	@Override
@@ -61,6 +67,11 @@ public class PacketSiegeCampProgressUpdate extends PacketBase
 		info.progress = data.readInt();
 		info.mPreviousProgress = data.readInt();
 		info.completionPoint = data.readInt();
+
+		//Common
+		info.timeProgress = data.readLong();
+        info.endTimestamp = data.readLong();
+		info.finished = data.readBoolean();
 	}
 
 	@Override

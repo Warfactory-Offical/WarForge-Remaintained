@@ -1,10 +1,10 @@
 package com.flansmod.warforge.common.network;
 
 import com.cleanroommc.modularui.factory.ClientGUI;
-import com.flansmod.warforge.api.vein.Quality;
+import com.flansmod.warforge.api.Quality;
 import com.flansmod.warforge.client.ClientProxy;
 import com.flansmod.warforge.client.GuiSiegeCamp;
-import com.flansmod.warforge.common.DimBlockPos;
+import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -20,6 +20,7 @@ import java.util.List;
 public class PacketSiegeCampInfo extends PacketBase {
     public DimBlockPos mSiegeCampPos;
     public List<SiegeCampAttackInfo> mPossibleAttacks = new ArrayList<>();
+    public byte momentum;
 
 
     @Override
@@ -38,9 +39,13 @@ public class PacketSiegeCampInfo extends PacketBase {
             data.writeByte(info.mOffset.getX());
             data.writeByte(info.mOffset.getZ());
             data.writeInt(info.mFactionColour);
-            data.writeInt(info.mWarforgeVein != null ? info.mWarforgeVein.getId() : -1);
-            data.writeByte((byte) info.mOreQuality.ordinal());
+            data.writeInt(info.mWarforgeVein != null ? info.mWarforgeVein.getID() : -1);
+
+            byte oreQualOrd = 0;
+            if (info.mOreQuality != null) { oreQualOrd = (byte) info.mOreQuality.ordinal(); }
+            data.writeByte(oreQualOrd);
         }
+        data.writeByte(momentum);
     }
 
     @Override
@@ -69,6 +74,7 @@ public class PacketSiegeCampInfo extends PacketBase {
 
             mPossibleAttacks.add(info);
         }
+        momentum = data.readByte();
 
     }
 
@@ -87,7 +93,7 @@ public class PacketSiegeCampInfo extends PacketBase {
         //Minecraft.getMinecraft().displayGuiScreen(new GuiSiegeCamp(mSiegeCampPos, mPossibleAttacks));
 
         ClientGUI.open(GuiSiegeCamp.makeGUI(
-                mSiegeCampPos, mPossibleAttacks
+                mSiegeCampPos, mPossibleAttacks, momentum
         ));
     }
 

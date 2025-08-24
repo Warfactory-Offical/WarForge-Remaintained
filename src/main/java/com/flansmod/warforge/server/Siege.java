@@ -1,12 +1,13 @@
 package com.flansmod.warforge.server;
 
-import com.flansmod.warforge.common.DimBlockPos;
-import com.flansmod.warforge.common.DimChunkPos;
 import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.IClaim;
 import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
+import com.flansmod.warforge.common.network.PacketSiegeCampProgressUpdate;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
+import com.flansmod.warforge.common.util.DimBlockPos;
+import com.flansmod.warforge.common.util.DimChunkPos;
 import com.flansmod.warforge.server.Faction.PlayerData;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTBase;
@@ -26,8 +27,12 @@ import java.util.UUID;
 public class Siege {
     public UUID attackingFaction;
     public UUID defendingFaction;
-    public ArrayList<DimBlockPos> attackingCamp;
+    public ArrayList<DimBlockPos> attackingCamps;
     public DimBlockPos defendingClaim;
+    public long timeElapsed;
+    public long siegeEndTimeStamp = 999L;
+    public boolean finished = false; //Used for controlling whenever siege has been concluded, Does not require saving
+
     //TODO: New Kill requirement math: players in team * type of claim (2 - basic, 3 - reinforced)
     // This is defined by the chunk we are attacking and what type it is
     public int mBaseDifficulty = 5;
@@ -53,14 +58,15 @@ public class Siege {
     private int mAttackProgress = 0;
 
     public Siege() {
-        attackingCamp = new ArrayList<>(4);
+        attackingCamps = new ArrayList<>(4);
     }
 
-    public Siege(UUID attacker, UUID defender, DimBlockPos defending) {
-        attackingCamp = new ArrayList<>(4);
+    public Siege(UUID attacker, UUID defender, DimBlockPos defending, long time) {
+        attackingCamps = new ArrayList<>(4);
         attackingFaction = attacker;
         defendingFaction = defender;
         defendingClaim = defending;
+        this.timeElapsed = time;
 
         TileEntity te = WarForgeMod.MC_SERVER.getWorld(defending.dim).getTileEntity(defending.toRegularPos());
         if (te instanceof IClaim) {
@@ -73,7 +79,7 @@ public class Siege {
     }
 
     public static boolean isPlayerInRadius(DimChunkPos centerChunkPos, DimChunkPos playerChunkPos, int radius) {
-        if (playerChunkPos.mDim != centerChunkPos.mDim) return false;
+        if (playerChunkPos.dim != centerChunkPos.dim) return false;
 
         // Check if the player's chunk coordinates are within a 3x3 chunk area
         int minChunkX = centerChunkPos.x - radius;
@@ -84,6 +90,19 @@ public class Siege {
         // Check if the player's chunk coordinates are within the 3x3 area
         return (playerChunkPos.x >= minChunkX && playerChunkPos.x <= maxChunkX)
                 && (playerChunkPos.z >= minChunkZ && playerChunkPos.z <= maxChunkZ);
+    }
+
+    // sends packet to client which clears all previously remembered sieges; identical attacking and def names = clear packet
+    public static PacketSiegeCampProgressUpdate clearSiegeData() {
+        PacketSiegeCampProgressUpdate clearSiegesPacket = new PacketSiegeCampProgressUpdate();
+        clearSiegesPacket.info = new SiegeCampProgressInfo();
+        clearSiegesPacket.info.expiredTicks = 0;
+        clearSiegesPacket.info.attackingName = "c"; // normally attacking and def names cannot be identical
+        clearSiegesPacket.info.defendingName = "c";
+        clearSiegesPacket.info.attackingPos = DimBlockPos.ZERO;
+        clearSiegesPacket.info.defendingPos = DimBlockPos.ZERO;
+
+        return clearSiegesPacket;
     }
 
     // Attack progress starts at 0 and can be moved to -5 or mAttackSuccessThreshold
@@ -103,28 +122,53 @@ public class Siege {
         return mBaseDifficulty + mExtraDifficulty;
     }
 
-    public boolean IsCompleted() {
-        return !hasAbandonedSieges() && GetAttackProgress() >= GetAttackSuccessThreshold() || GetDefenceProgress() >= 5;
+    public boolean isCompleted() {
+        boolean endByAttack = GetAttackProgress() >= GetAttackSuccessThreshold();
+        boolean endByDef = GetDefenceProgress() >= 5;
+
+        if (WarForgeConfig.SIEGE_ENABLE_NEW_TIMER) { endByAttack = endByAttack || timeElapsed == 0; }
+        TileEntitySiegeCamp abandonedCamp = hasAbandonedSieges();
+
+        // if a siege could complete, but an abandoned camp is stopping it from happening, notify the attackers
+        if (!endByDef && endByAttack && abandonedCamp != null && (WarForgeMod.currTickTimestamp % 60000 > 30000)) {
+            Faction attacking = WarForgeMod.FACTIONS.getFaction(attackingFaction);
+            attacking.messageAll(new TextComponentString(
+                    "Passing of siege delayed due to abandon timer greater than 0 [" +
+                            abandonedCamp.getAttackerAbandonTickTimer() + " ticks @ " + abandonedCamp.getPos() +
+                            "]; ensure abandon timer is 0 to complete siege."));
+        }
+
+        return endByDef || (abandonedCamp == null && endByAttack);
     }
 
     // ensures attackers are within warzone before siege completes
-    public boolean hasAbandonedSieges() {
+    public TileEntitySiegeCamp hasAbandonedSieges() {
         Faction attacking = WarForgeMod.FACTIONS.getFaction(attackingFaction);
+        ArrayList<TileEntitySiegeCamp> abandonedCamps = new ArrayList<>();
 
-        for (DimBlockPos siegeCampPos : attackingCamp) {
+        for (DimBlockPos siegeCampPos : attackingCamps) {
             if (siegeCampPos == null) continue;
             // YOU WILL GET INCOMPREHENSIBLE ERRORS IF YOU DO NOT FOLLOW THE BELOW CONVERSION TO REGULAR POS
             TileEntity siegeCamp = WarForgeMod.MC_SERVER.getWorld(siegeCampPos.dim).getTileEntity(siegeCampPos.toRegularPos());
             if (siegeCamp instanceof TileEntitySiegeCamp) {
                 int attackerAbandonTimer = ((TileEntitySiegeCamp) siegeCamp).getAttackerAbandonTickTimer();
-                if (attackerAbandonTimer > 0) {
-                    attacking.messageAll(new TextComponentString("Passing of siege delayed due to abandon timer greater than 0 [" + attackerAbandonTimer + " ticks]; ensure abandon timer is 0 to complete siege."));
-                    return true;
-                }
+                if (attackerAbandonTimer > 0) { abandonedCamps.add((TileEntitySiegeCamp) siegeCamp); }
             }
         }
 
-        return false;
+        if (abandonedCamps.size() == 0) { return null; }
+
+        int largestAbandonTimer = 0;
+        var largestAbandonTE = abandonedCamps.get(0);
+        for (var TE : abandonedCamps) {
+            int currTimer = TE.getAttackerAbandonTickTimer();
+            if (currTimer > largestAbandonTimer) {
+                largestAbandonTimer = currTimer;
+                largestAbandonTE = TE;
+            }
+        }
+
+        return largestAbandonTE;
     }
 
     public boolean WasSuccessful() {
@@ -141,7 +185,7 @@ public class Siege {
         }
 
         SiegeCampProgressInfo info = new SiegeCampProgressInfo();
-        info.attackingPos = attackingCamp.get(0);
+        info.attackingPos = attackingCamps.get(0);
         info.attackingName = attackers.name;
         info.attackingColour = attackers.colour;
         info.defendingPos = defendingClaim;
@@ -149,23 +193,31 @@ public class Siege {
         info.defendingColour = defenders.colour;
         info.progress = GetAttackProgress();
         info.completionPoint = GetAttackSuccessThreshold();
+        info.timeProgress = timeElapsed;
+        info.endTimestamp = siegeEndTimeStamp;
+        info.finished = finished;
 
         return info;
     }
 
-    public boolean Start() {
+    public boolean start() {
         Faction attackers = WarForgeMod.FACTIONS.getFaction(attackingFaction);
         Faction defenders = WarForgeMod.FACTIONS.getFaction(defendingFaction);
+        siegeEndTimeStamp = System.currentTimeMillis() + timeElapsed;
 
         if (attackers == null || defenders == null) {
             WarForgeMod.LOGGER.error("Invalid factions in siege. Cannot start");
             return false;
         }
 
-        CalculateBasePower();
+        calculateBasePower();
         WarForgeMod.INSTANCE.messageAll(new TextComponentString(attackers.name + " started a siege against " + defenders.name), true);
-        WarForgeMod.FACTIONS.SendSiegeInfoToNearby(defendingClaim.toChunkPos());
+        WarForgeMod.FACTIONS.sendSiegeInfoToNearby(defendingClaim.toChunkPos());
         return true;
+    }
+
+    public void updateSiegeTimer() {
+        timeElapsed = timeElapsed - 20L;//One tick
     }
 
     public void AdvanceDay() {
@@ -177,7 +229,7 @@ public class Siege {
             return;
         }
 
-        CalculateBasePower();
+        calculateBasePower();
         float totalSwing = 0.0f;
         totalSwing += WarForgeConfig.SIEGE_SWING_PER_DAY_ELAPSED_BASE;
         if (!defenders.loggedInToday)
@@ -198,10 +250,10 @@ public class Siege {
             attackers.messageAll(new TextComponentString("Your siege on " + defenders.name + " at " + defendingClaim.toFancyString() + " did not shift today. The progress is at " + GetAttackProgress() + "/" + mBaseDifficulty));
         }
 
-        WarForgeMod.FACTIONS.SendSiegeInfoToNearby(defendingClaim.toChunkPos());
+        WarForgeMod.FACTIONS.sendSiegeInfoToNearby(defendingClaim.toChunkPos());
     }
 
-    public void CalculateBasePower() {
+    public void calculateBasePower() {
         Faction attackers = WarForgeMod.FACTIONS.getFaction(attackingFaction);
         Faction defenders = WarForgeMod.FACTIONS.getFaction(defendingFaction);
 
@@ -256,7 +308,8 @@ public class Siege {
     // called when natural conclusion of siege occurs, not called from TE itself
     public void onCompleted(boolean successful) {
         // for every attacking siege camp attempt to locate it, and if an actual siege camp handle appropriately
-        for (DimBlockPos siegeCampPos : attackingCamp) {
+        finished = true;
+        for (DimBlockPos siegeCampPos : attackingCamps) {
             TileEntity siegeCamp = WarForgeMod.MC_SERVER.getWorld(siegeCampPos.dim).getTileEntity(siegeCampPos.toRegularPos());
             if (siegeCamp != null) {
                 if (siegeCamp instanceof TileEntitySiegeCamp) {
@@ -290,7 +343,7 @@ public class Siege {
         boolean defendValid = false;
 
         // there may be multiple siege camps per siege, so ensure kill occurred in radius of any
-        for (DimBlockPos siegeCamp : attackingCamp) {
+        for (DimBlockPos siegeCamp : attackingCamps) {
             if (isPlayerInWarzone(siegeCamp, killer)) {
                 // First case, an attacker killed a defender
                 if (killerFaction == attackers && killedFaction == defenders) {
@@ -307,7 +360,7 @@ public class Siege {
 
         // update progress appropriately; either valid attack, or def by this point, so state of one bool implies the state of the other
         mAttackProgress += attackValid ? WarForgeConfig.SIEGE_SWING_PER_DEFENDER_DEATH : -WarForgeConfig.SIEGE_SWING_PER_ATTACKER_DEATH;
-        WarForgeMod.FACTIONS.SendSiegeInfoToNearby(defendingClaim.toChunkPos());
+        WarForgeMod.FACTIONS.sendSiegeInfoToNearby(defendingClaim.toChunkPos());
 
         // build notification
         ITextComponent notification = new TextComponentTranslation("warforge.notification.siege_death",
@@ -320,7 +373,7 @@ public class Siege {
     }
 
     public void ReadFromNBT(NBTTagCompound tags) {
-        attackingCamp.clear();
+        attackingCamps.clear();
 
         // Get the attacker and defender
         attackingFaction = tags.getUniqueId("attacker");
@@ -332,7 +385,7 @@ public class Siege {
             for (NBTBase base : claimList) {
                 NBTTagIntArray claimInfo = (NBTTagIntArray) base;
                 DimBlockPos pos = DimBlockPos.readFromNBT(claimInfo);
-                attackingCamp.add(pos);
+                attackingCamps.add(pos);
             }
         }
 
@@ -340,6 +393,11 @@ public class Siege {
         mAttackProgress = tags.getInteger("progress");
         mBaseDifficulty = tags.getInteger("baseDifficulty");
         mExtraDifficulty = tags.getInteger("extraDifficulty");
+        if (WarForgeConfig.SIEGE_ENABLE_NEW_TIMER) {
+
+            timeElapsed = tags.getInteger("timeElapsed");
+            siegeEndTimeStamp = System.currentTimeMillis() + timeElapsed;
+        }
     }
 
     public void WriteToNBT(NBTTagCompound tags) {
@@ -349,7 +407,7 @@ public class Siege {
 
         // Set important locations
         NBTTagList claimsList = new NBTTagList();
-        for (DimBlockPos pos : attackingCamp) {
+        for (DimBlockPos pos : attackingCamps) {
             claimsList.appendTag(pos.writeToNBT());
         }
 
@@ -358,5 +416,6 @@ public class Siege {
         tags.setInteger("progress", mAttackProgress);
         tags.setInteger("baseDifficulty", mBaseDifficulty);
         tags.setInteger("extraDifficulty", mExtraDifficulty);
+        tags.setLong("timeElapsed", timeElapsed);
     }
 }

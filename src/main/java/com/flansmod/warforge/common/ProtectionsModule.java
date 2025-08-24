@@ -1,6 +1,8 @@
 package com.flansmod.warforge.common;
 
 import com.flansmod.warforge.common.WarForgeConfig.ProtectionConfig;
+import com.flansmod.warforge.common.util.DimBlockPos;
+import com.flansmod.warforge.common.util.DimChunkPos;
 import com.flansmod.warforge.server.Faction;
 import com.flansmod.warforge.server.FactionStorage;
 import net.minecraft.block.Block;

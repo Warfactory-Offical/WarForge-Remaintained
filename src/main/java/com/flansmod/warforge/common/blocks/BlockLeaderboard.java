@@ -1,8 +1,11 @@
 package com.flansmod.warforge.common.blocks;
 
+import java.util.UUID;
+
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketLeaderboardInfo;
 import com.flansmod.warforge.server.Leaderboard.FactionStat;
+
 import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
@@ -18,8 +21,6 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-
-import java.util.UUID;
 
 public class BlockLeaderboard extends Block implements ITileEntityProvider
 {

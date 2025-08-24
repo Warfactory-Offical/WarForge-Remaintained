@@ -1,12 +1,13 @@
 package com.flansmod.warforge.common.blocks;
 
+import java.util.ArrayList;
+
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.server.Faction;
+
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
-
-import java.util.ArrayList;
 
 public class TileEntityLeaderboard extends TileEntity
 {

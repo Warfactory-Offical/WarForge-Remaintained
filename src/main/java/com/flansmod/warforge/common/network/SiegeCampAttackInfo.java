@@ -1,7 +1,7 @@
 package com.flansmod.warforge.common.network;
 
-import com.flansmod.warforge.api.vein.Quality;
-import com.flansmod.warforge.api.vein.Vein;
+import com.flansmod.warforge.api.Quality;
+import com.flansmod.warforge.api.Vein;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import net.minecraft.util.math.Vec3i;
@@ -19,6 +19,7 @@ public class SiegeCampAttackInfo
 	public int mFactionColour;
 	public Vein mWarforgeVein;
 	public Quality mOreQuality;
+    public byte momentum;
    //Bruh
     public SiegeCampAttackInfo(SiegeCampAttackInfo info) {
         this(
@@ -28,7 +29,8 @@ public class SiegeCampAttackInfo
                 info.mFactionName,
                 info.mFactionColour,
                 info.mWarforgeVein,
-                info.mOreQuality
+                info.mOreQuality,
+                info.momentum
         );
     }
 }

@@ -3,6 +3,8 @@ package com.flansmod.warforge.common;
 import com.flansmod.warforge.common.blocks.TileEntityBasicClaim;
 import com.flansmod.warforge.common.blocks.TileEntityCitadel;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
+
+import com.flansmod.warforge.common.util.DimBlockPos;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.tileentity.TileEntity;
@@ -29,7 +31,7 @@ public class CommonProxy implements IGuiHandler
 	// determines the bonus multiplier or reduction multiplier (reciprocal) for veins of
 	// increasing or decreasing quality, respectively; not configurable for now, but would need sync packets if it were
 	public static float YIELD_QUALITY_MULTIPLIER = 2;
-	
+
 	public void preInit(FMLPreInitializationEvent event)
 	{
 		
@@ -62,10 +64,10 @@ public class CommonProxy implements IGuiHandler
 	
 	public TileEntity GetTile(DimBlockPos pos)
 	{
-		if(FMLCommonHandler.instance().getSide() == Side.SERVER)
+		if(FMLCommonHandler.instance().getEffectiveSide() == Side.SERVER)
 			return WarForgeMod.MC_SERVER.getWorld(pos.dim).getTileEntity(pos.toRegularPos());
 		
-		WarForgeMod.LOGGER.error("GetTile failed");
+		WarForgeMod.LOGGER.error("GetTile failed due to being on logical client");
 		return null;
 	}
 

@@ -136,6 +136,7 @@ public class BlockDummy extends Block implements ITileEntityProvider {
         return FULL_BLOCK_AABB;
     }
 
+    @Deprecated
     public enum modelEnum implements IStringSerializable {
         TRANSLUCENT,
         KING,

@@ -1,10 +1,11 @@
 package com.flansmod.warforge.common.blocks;
 
 import com.flansmod.warforge.common.CommonProxy;
-import com.flansmod.warforge.common.DimBlockPos;
-import com.flansmod.warforge.common.DimChunkPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketFactionInfo;
+import com.flansmod.warforge.common.util.DimBlockPos;
+import com.flansmod.warforge.common.util.DimChunkPos;
+import com.flansmod.warforge.common.util.IDynamicModels;
 import com.flansmod.warforge.server.Faction;
 import com.flansmod.warforge.server.FactionStorage;
 import net.minecraft.block.BlockHorizontal;
@@ -130,13 +131,12 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
         if (player.isSneaking()) {
             TileEntityClaim citadel = (TileEntityClaim) world.getTileEntity(pos);
             assert citadel != null;
-            if(!citadel.getFaction().equals(Faction.nullUuid))
+            if (!citadel.getFaction().equals(Faction.nullUuid))
                 citadel.increaseRotation(45f);
-            else
-                if(!world.isRemote) {
-                    breakBlock(world, pos, state);
-                    world.destroyBlock(pos, true);
-                }
+            else if (!world.isRemote) {
+                breakBlock(world, pos, state);
+                world.destroyBlock(pos, true);
+            }
             return true;
         }
         if (!world.isRemote) {
@@ -176,7 +176,7 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
 
     @Override
     public boolean canEntityDestroy(IBlockState state, IBlockAccess world, BlockPos pos, Entity entity) {
-        if(world.getTileEntity(pos) instanceof TileEntityClaim te && te.getFaction().equals(Faction.nullUuid))
+        if (world.getTileEntity(pos) instanceof TileEntityClaim te && te.getFaction().equals(Faction.nullUuid))
             return true;
         return false;
     }
@@ -185,4 +185,5 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
         super.breakBlock(worldIn, pos, state);
     }
+
 }

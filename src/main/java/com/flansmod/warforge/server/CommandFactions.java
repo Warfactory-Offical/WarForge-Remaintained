@@ -1,13 +1,13 @@
 package com.flansmod.warforge.server;
 
-import com.flansmod.warforge.common.DimBlockPos;
-import com.flansmod.warforge.common.DimChunkPos;
 import com.flansmod.warforge.common.ProtectionsModule;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.FactionDisplayInfo;
 import com.flansmod.warforge.common.network.LeaderboardInfo;
 import com.flansmod.warforge.common.network.PacketFactionInfo;
 import com.flansmod.warforge.common.network.PacketLeaderboardInfo;
+import com.flansmod.warforge.common.util.DimBlockPos;
+import com.flansmod.warforge.common.util.DimChunkPos;
 import com.flansmod.warforge.server.Faction.PlayerData;
 import com.flansmod.warforge.server.Leaderboard.FactionStat;
 import com.mojang.authlib.GameProfile;
@@ -30,11 +30,11 @@ public class CommandFactions extends CommandBase {
     private static final List<String> ALIASES;
     private static final String[] tabCompletions = new String[]{
             "invite", "accept", "disband", "expel", "leave", "time", "info", "top", "notoriety", "wealth", "legacy",
-            "promote", "demote", "msg", "setleader",
+            "promote", "demote", "msg", "setleader", "borders",
     };
     private static final String[] tabCompletionsOp = new String[]{
             "invite", "accept", "disband", "expel", "leave", "time", "info", "top", "notoriety", "wealth", "legacy",
-            "promote", "demote", "msg", "setleader",
+            "promote", "demote", "msg", "setleader, siege", "borders",
             "safe", "war", "protection", "resetflagcooldowns",
     };
 
@@ -85,6 +85,7 @@ public class CommandFactions extends CommandBase {
     }
 
     @Override
+    //TODO: Holy fucking shit, this needs a total fucking redo
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         if (args.length == 0) {
             sender.sendMessage(new TextComponentString("Try /f help"));
@@ -110,6 +111,7 @@ public class CommandFactions extends CommandBase {
                 sender.sendMessage(new TextComponentString("/f wealth"));
                 sender.sendMessage(new TextComponentString("/f legacy"));
                 sender.sendMessage(new TextComponentString("/f notoriety"));
+                sender.sendMessage(new TextComponentString("/f borders"));
 
                 if (WarForgeMod.isOp(sender)) {
                     sender.sendMessage(new TextComponentString("/f safezone"));
@@ -149,7 +151,7 @@ public class CommandFactions extends CommandBase {
 
                 // Any other case, we assume players can only invite to their own faction
                 if (sender instanceof EntityPlayer) {
-                    WarForgeMod.FACTIONS.RequestInvitePlayerToMyFaction((EntityPlayer) sender, invitee.getUniqueID());
+                    WarForgeMod.FACTIONS.requestInvitePlayerToMyFaction((EntityPlayer) sender, invitee.getUniqueID());
                 }
 
                 break;
@@ -400,7 +402,7 @@ public class CommandFactions extends CommandBase {
                     if (sender instanceof EntityPlayer) {
                         EntityPlayer player = (EntityPlayer) sender;
                         DimChunkPos pos = new DimBlockPos(player.dimension, player.getPosition()).toChunkPos();
-                        WarForgeMod.FACTIONS.RequestOpClaim(player, pos, FactionStorage.SAFE_ZONE_ID);
+                        WarForgeMod.FACTIONS.requestOpClaim(player, pos, FactionStorage.SAFE_ZONE_ID);
                     } else {
                         sender.sendMessage(new TextComponentString("Use an in-game operator account."));
                     }
@@ -416,7 +418,7 @@ public class CommandFactions extends CommandBase {
                     if (sender instanceof EntityPlayer) {
                         EntityPlayer player = (EntityPlayer) sender;
                         DimChunkPos pos = new DimBlockPos(player.dimension, player.getPosition()).toChunkPos();
-                        WarForgeMod.FACTIONS.RequestOpClaim(player, pos, FactionStorage.WAR_ZONE_ID);
+                        WarForgeMod.FACTIONS.requestOpClaim(player, pos, FactionStorage.WAR_ZONE_ID);
                     } else {
                         sender.sendMessage(new TextComponentString("Use an in-game operator account."));
                     }
@@ -437,6 +439,64 @@ public class CommandFactions extends CommandBase {
                 } else {
                     sender.sendMessage(new TextComponentString("You are not op."));
                 }
+                break;
+            }
+            case "siege":
+            case "sieges": {
+                if (!WarForgeMod.isOp(sender)) {
+                    sender.sendMessage(new TextComponentString("You are not op."));
+                    break;
+                }
+                if (args.length < 2) {
+                    sender.sendMessage(new TextComponentString("More arguments required. Possible arguments: list, terminate"));
+                    break;
+                }
+                switch (args[1]) {
+                    case "list", "l" -> {
+                        var STORAGE = WarForgeMod.FACTIONS;
+                        var sieges = STORAGE.getSieges();
+                        sender.sendMessage(new TextComponentString("List of current sieges.\nFormat: <ChunkX>, <ChunkY>, <DimID>; <Attacker>-<Defender>"));
+
+
+                        sieges.forEach((dpos, siege) -> {
+                            TextComponentString line = new TextComponentString("§7" + dpos.x + ", " + dpos.z + ", " + dpos.dim + "§r;  " + STORAGE.getFaction(siege.attackingFaction).name + "-" + STORAGE.getFaction(siege.defendingFaction).name);
+                            sender.sendMessage(line);
+                        });
+                    }
+                    case "terminate", "t" -> {
+                        if (args.length < 4) {
+                            sender.sendMessage(new TextComponentString("Not enough arguments. Required: ChunkX, ChunkZ, Dim, <Conclusion type>"));
+                            sender.sendMessage(new TextComponentString("Conclusion types WIN, LOSS, NEUTRAL (counting from attacker perspective) Default: NEUTRAL"));
+                        }
+                        DimChunkPos dimPos;
+                        try {
+                            int cX = Integer.parseInt(args[2]);
+                            int cZ = Integer.parseInt(args[3]);
+                            int dim = Integer.parseInt(args[4]);
+
+                            dimPos = new DimChunkPos(dim, cX, cZ);
+                        } catch (NumberFormatException e) {
+                            sender.sendMessage(new TextComponentString("Incorrect arguments. Required: ChunkX, ChunkZ, Dim, <Conclusion type>"));
+                            sender.sendMessage(new TextComponentString("Conclusion types WIN, LOSS, NEUTRAL (counting from attacker perspective) Default: NEUTRAL"));
+                            break;
+                        }
+                        FactionStorage.siegeTermination termType;
+                        try {
+                            termType = FactionStorage.siegeTermination.valueOf(args[5]);
+                        } catch (Exception e) {
+                            termType = FactionStorage.siegeTermination.NEUTRAL;
+                        }
+
+                        var STORAGE = WarForgeMod.FACTIONS;
+                        var sieges = STORAGE.getSieges();
+                        if (!sieges.keySet().contains(dimPos)) {
+                            sender.sendMessage(new TextComponentString("Provided siege does not exist."));
+                        }
+                        STORAGE.handleCompletedSiege(dimPos, termType);
+                        sender.sendMessage(new TextComponentString("Terminated siege at: " + dimPos.x + ", " + dimPos.z + ", " + dimPos.dim + " with termination type: " + termType.name()));
+                    }
+                }
+
                 break;
             }
             case "home": {
@@ -523,6 +583,15 @@ public class CommandFactions extends CommandBase {
             case "tp":
             case "tprequest": {
                 sender.sendMessage(new TextComponentString("Try brewing a potion of Teleportation / Telereception"));
+                break;
+            }
+
+            case "borders": {
+                if (sender instanceof EntityPlayer) {
+                    WarForgeMod.showBorders = !WarForgeMod.showBorders;
+                    sender.sendMessage(new TextComponentString("Borders Toggled"));
+                } else
+                    sender.sendMessage(new TextComponentString("Only valid for players"));
                 break;
             }
 

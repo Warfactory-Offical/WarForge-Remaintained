@@ -13,6 +13,8 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -26,17 +28,20 @@ public class SiegeCampAttackInfoRender extends SiegeCampAttackInfo {
 
     public SiegeCampAttackInfoRender(SiegeCampAttackInfo info) {
         super(info);
-        retrieveVeinSprite();
+        retriveVeinSprite();
     }
 
-    public void retrieveVeinSprite() {
+    public void retriveVeinSprite() {
         if (mWarforgeVein == null) return ;
         TextureAtlasSprite sprite = null;
 
-        ItemStack firstCompStack = mWarforgeVein.compIds.iterator().next().toItem();
+        ResourceLocation resLoc = mWarforgeVein.component_ids[0];
+        Item item = ForgeRegistries.ITEMS.getValue(resLoc);
 
-        if (firstCompStack != null) {
-            Item item = firstCompStack.getItem();
+        if (item != null) {
+            ItemStack stack = new ItemStack(item);
+
+
             if (item instanceof ItemBlock) {
                 Block block = ((ItemBlock) item).getBlock();
                 IBlockState state = block.getDefaultState();
@@ -51,7 +56,7 @@ public class SiegeCampAttackInfoRender extends SiegeCampAttackInfo {
                     sprite = quads.get(0).getSprite();
                 }
             } else {
-                IBakedModel model = Minecraft.getMinecraft().getRenderItem().getItemModelWithOverrides(firstCompStack, null, null);
+                IBakedModel model = Minecraft.getMinecraft().getRenderItem().getItemModelWithOverrides(stack, null, null);
                 List<BakedQuad> quads = model.getQuads(null, null, 0);
 
                 if (!quads.isEmpty()) {

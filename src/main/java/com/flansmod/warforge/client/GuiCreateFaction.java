@@ -1,19 +1,21 @@
 package com.flansmod.warforge.client;
 
-import com.flansmod.warforge.common.DimBlockPos;
+import java.awt.Color;
+import java.io.IOException;
+
+import org.lwjgl.input.Mouse;
+
+import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.TileEntityCitadel;
 import com.flansmod.warforge.common.network.PacketCreateFaction;
 import com.flansmod.warforge.common.network.PacketSetFactionColour;
+
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
-import org.lwjgl.input.Mouse;
-
-import java.awt.*;
-import java.io.IOException;
 
 public class GuiCreateFaction extends GuiScreen
 {

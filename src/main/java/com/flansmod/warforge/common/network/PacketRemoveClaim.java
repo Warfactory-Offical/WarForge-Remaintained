@@ -1,6 +1,6 @@
 package com.flansmod.warforge.common.network;
 
-import com.flansmod.warforge.common.DimBlockPos;
+import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -33,7 +33,7 @@ public class PacketRemoveClaim extends PacketBase
 	@Override
 	public void handleServerSide(EntityPlayerMP playerEntity) 
 	{
-		WarForgeMod.FACTIONS.RequestRemoveClaim(playerEntity, pos);
+		WarForgeMod.FACTIONS.requestRemoveClaim(playerEntity, pos);
 	}
 
 	@Override

@@ -3,7 +3,8 @@ package com.flansmod.warforge.client;
 import com.flansmod.warforge.api.vein.Vein;
 import com.flansmod.warforge.common.CommonProxy;
 import com.flansmod.warforge.common.Content;
-import com.flansmod.warforge.common.DimBlockPos;
+import com.flansmod.warforge.common.blocks.models.ClaimModels;
+import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.*;
 import com.flansmod.warforge.common.effect.AnimatedEffectHandler;
@@ -51,7 +52,7 @@ public class ClientProxy extends CommonProxy
 		MinecraftForge.EVENT_BUS.register(this);
 		MinecraftForge.EVENT_BUS.register(new ClientTickHandler());
 		MinecraftForge.EVENT_BUS.register(new AnimatedEffectHandler());
-		ClientRegistry.registerKeyBinding(factionChatKey);	
+		ClientRegistry.registerKeyBinding(factionChatKey);
 	}
 	
 	@Override
@@ -65,8 +66,8 @@ public class ClientProxy extends CommonProxy
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityDummy.class, new RenderTileEntityDummy());
 
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityLeaderboard.class, new TileEntityLeaderboardRenderer());
-		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityCitadel.class, new RenderTileEntityClaim(BlockDummy.modelEnum.KING));
-		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityBasicClaim.class, new RenderTileEntityClaim(BlockDummy.modelEnum.KNIGHT));
+		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityCitadel.class, new RenderTileEntityClaim(ClaimModels.ModelType.CITADEL));
+		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityBasicClaim.class, new RenderTileEntityClaim(ClaimModels.ModelType.BASIC_CLAIM));
 	}
 	
 	@Override

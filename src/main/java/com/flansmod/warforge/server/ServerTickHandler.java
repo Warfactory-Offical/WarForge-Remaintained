@@ -1,6 +1,7 @@
 package com.flansmod.warforge.server;
 
 import com.flansmod.warforge.common.WarForgeMod;
+
 import com.flansmod.warforge.common.network.SyncQueueHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;

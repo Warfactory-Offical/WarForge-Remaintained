@@ -3,6 +3,8 @@ package com.flansmod.warforge.server;
 import com.flansmod.warforge.common.WarForgeMod;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,6 +38,13 @@ public class UpgradeHandler {
             "item:modid:custom_item:3"
     );
     protected HashMap<StackComparable, Integer>[] LEVELS;
+    protected int[] LIMITS;
+
+    public UpgradeHandler() {
+        LEVELS = new HashMap[0];
+        LIMITS = new int[0];
+    }
+
 
     public int[] getLIMITS() {
         return LIMITS;
@@ -45,7 +54,6 @@ public class UpgradeHandler {
         return LEVELS;
     }
 
-    protected int[] LIMITS;
 
     public void setLevelAndLimits(int level, HashMap<StackComparable, Integer> requrements, int limit) {
         //Only ran once on clientside per join, so whatever

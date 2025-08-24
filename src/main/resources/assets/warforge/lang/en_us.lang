@@ -24,6 +24,8 @@ warforge.info.vein.null=This chunk has no vein.
 warforge.info.vein.unrecognized=Unrecognized vein in current chunk; wait for sync to finish or relog if the issue persists.
 
 warforge.veins.gold= %s Gold Vein
+warforge.veins.gold= %s Gold-Diamond Vein
+warforge.veins.iron= %s Coal-Iron Vein
 
 warforge.info.too_many_siege_blocks=Your faction has reached the maximum number of sieges.
 warforge.info.siege_count=Your faction's current number of sieges: %d.

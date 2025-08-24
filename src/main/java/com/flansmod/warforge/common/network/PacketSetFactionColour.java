@@ -25,7 +25,7 @@ public class PacketSetFactionColour extends PacketBase
 	@Override
 	public void handleServerSide(EntityPlayerMP playerEntity) 
 	{
-		WarForgeMod.FACTIONS.RequestSetFactionColour(playerEntity, mColour);
+		WarForgeMod.FACTIONS.requestSetFactionColour(playerEntity, mColour);
 	}
 
 	@Override

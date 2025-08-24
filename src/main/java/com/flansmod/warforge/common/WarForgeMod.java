@@ -7,12 +7,19 @@ import com.flansmod.warforge.api.vein.init.VeinUtils;
 import com.flansmod.warforge.client.PlayerNametagCache;
 import com.flansmod.warforge.common.blocks.IMultiBlockInit;
 import com.flansmod.warforge.common.blocks.TileEntityClaim;
+import com.flansmod.warforge.client.PlayerNametagCache;
+import com.flansmod.warforge.common.blocks.IMultiBlockInit;
+import com.flansmod.warforge.common.blocks.TileEntityClaim;
 import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
 import com.flansmod.warforge.common.effect.EffectRegistry;
 import com.flansmod.warforge.common.network.*;
 import com.flansmod.warforge.common.potions.PotionsModule;
+import com.flansmod.warforge.common.util.DimBlockPos;
+import com.flansmod.warforge.common.util.DimChunkPos;
+import com.flansmod.warforge.common.util.TimeHelper;
 import com.flansmod.warforge.server.*;
 import com.flansmod.warforge.server.Faction.Role;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandHandler;
@@ -79,30 +86,40 @@ public class WarForgeMod implements ILateMixinLoader {
     public static final TeleportsModule TELEPORTS = new TeleportsModule();
     public static final PotionsModule POTIONS = new PotionsModule();
     public static final UpgradeHandler UPGRADE_HANDLER = new UpgradeHandler();
-    // Discord integration
-    private static final String DISCORD_MODID = "discordintegration";
-    private static final HashMap<String, UUID> discordUserIdMap = new HashMap<>();
+	public static VeinUtils VEIN_HANDLER = null;
+	public static final ModelEventHandler MODEL_EVENT_HANDLER = new ModelEventHandler();
 
-    public static VeinUtils VEIN_HANDLER = null;
+	// Discord integration
+    private static final String DISCORD_MODID = "discordintegration";
+    private static final HashMap<String, UUID> discordUserIdMap = new HashMap<String, UUID>();
 
     @SideOnly(Side.CLIENT)
     public static PlayerNametagCache NAMETAG_CACHE;
     @Instance(MODID)
+
     public static WarForgeMod INSTANCE;
     @SidedProxy(clientSide = "com.flansmod.warforge.client.ClientProxy", serverSide = "com.flansmod.warforge.common.CommonProxy")
     public static CommonProxy proxy;
-    // Instances of component parts of the mod
+
+	// Instances of component parts of the mod
     public static Logger LOGGER;
     public static MinecraftServer MC_SERVER = null;
-    //public static CombatLogHandler COMBAT_LOG = new CombatLogHandler();
+
+	//public static CombatLogHandler COMBAT_LOG = new CombatLogHandler();
     public static Random rand = new Random();
     public static long numberOfSiegeDaysTicked = 0L;
     public static long numberOfYieldDaysTicked = 0L;
     public static long timestampOfFirstDay = 0L;
     public static long previousUpdateTimestamp = 0L;
-    // Timers
+
+	// Timers
     public static long serverTick = 0L;
     public static long currTickTimestamp = 0L;
+    public static long serverStopTimestamp = 0L;
+
+	// Border toggle
+    public static boolean showBorders = true;
+    public static TimeHelper timeHelper = new TimeHelper();
 
     public static boolean containsInt(final int[] base, int compare) {
         return Arrays.stream(base).anyMatch(i -> i == compare);
@@ -132,28 +149,6 @@ public class WarForgeMod implements ILateMixinLoader {
                 || block.equals(Content.siegeCampBlock)
                 || block.equals(Content.statue)
                 || block.equals(Content.dummyTranslusent));
-    }
-
-    public static String formatTime(long ms) {
-        long seconds = ms / 1000;
-        long minutes = seconds / 60;
-        int hours = ((int) minutes) / 60;
-        int days = hours / 24;
-
-        // ensure entire time left is not represented in each format, but rather only leftover amounts for that unit
-
-        seconds -= minutes * 60;
-        minutes -= hours * 60;
-        hours -= days * 24;
-
-        StringBuilder timeBuilder = new StringBuilder();
-        if (days > 0) timeBuilder.append(days).append("d ");
-        if (hours > 0) timeBuilder.append(hours).append("h ");
-        if (minutes > 0) timeBuilder.append(minutes).append("min ");
-        if (seconds > 0) timeBuilder.append(seconds).append("s ");
-        timeBuilder.append(ms % 1000).append("ms");
-
-        return timeBuilder.toString();
     }
 
     private static File getFactionsFile() {
@@ -190,22 +185,24 @@ public class WarForgeMod implements ILateMixinLoader {
         Sounds.register(event.getRegistry());
     }
 
+
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         LOGGER = event.getModLog();
-        //Load config
-        WarForgeConfig.syncConfig(event.getSuggestedConfigurationFile());
-
-        timestampOfFirstDay = System.currentTimeMillis();
-        numberOfSiegeDaysTicked = 0L;
-        numberOfYieldDaysTicked = 0L;
-
-        CONTENT.preInit();
-        POTIONS.preInit();
-
+		//Load config
+        WarForgeConfig.SyncConfig(event.getSuggestedConfigurationFile());
+		
+		timestampOfFirstDay = System.currentTimeMillis();
+		numberOfSiegeDaysTicked = 0L;
+		numberOfYieldDaysTicked = 0L;
+        
+		CONTENT.preInit();
+		POTIONS.preInit();
+        
         MinecraftForge.EVENT_BUS.register(new ServerTickHandler());
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(PROTECTIONS);
+        MinecraftForge.EVENT_BUS.register(MODEL_EVENT_HANDLER);
         proxy.preInit(event);
         EffectRegistry.init();
     }
@@ -255,121 +252,84 @@ public class WarForgeMod implements ILateMixinLoader {
             }
         }
 
-        // THIS ACTUALLY CHECKS THE PHYSICAL SIDE, NOT THE LOGICAL SERVER/ CLIENT SIDE
+		// THIS ACTUALLY CHECKS THE PHYSICAL SIDE, NOT THE LOGICAL SERVER/ CLIENT SIDE
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
             NAMETAG_CACHE = new PlayerNametagCache(60_000, 200);
         }
-    }
 
-    public long getSiegeDayLengthMS() {
-        return (long) (
-                WarForgeConfig.SIEGE_DAY_LENGTH // In hours
-                        * 60f // In minutes
-                        * 60f // In seconds
-                        * 1000f); // In milliseconds
-    }
 
-    public long getYieldDayLengthMs() {
-        return (long) (
-                WarForgeConfig.YIELD_DAY_LENGTH // In hours
-                        * 60f // In minutes
-                        * 60f // In seconds
-                        * 1000f); // In milliseconds
-    }
-
-    public long getCooldownIntoTicks(float cooldown) {
-        // From Minutes
-        return (long) (
-                cooldown
-                        * 60L // Minutes -> Seconds
-                        * 20L // Seconds -> Ticks
-        );
     }
 
     public long getCooldownRemainingSeconds(float cooldown, long startOfCooldown) {
-        long ticks = (long) cooldown; // why did you convert it into ticks if its already in ticks
-        long elapsed = startOfCooldown - ticks;
 
-        return (serverTick - elapsed) * 20;
+        return timeHelper.getCooldownRemainingSeconds(cooldown, startOfCooldown);
     }
 
     public int getCooldownRemainingMinutes(float cooldown, long startOfCooldown) {
-        long ticks = (long) cooldown;
-        long elapsed = startOfCooldown - ticks;
 
-        return (int) (
-                (serverTick - elapsed) * 20 / 60
-        );
+        return timeHelper.getCooldownRemainingMinutes(cooldown, startOfCooldown);
     }
 
     public int getCooldownRemainingHours(float cooldown, long startOfCooldown) {
-        long ticks = (long) cooldown;
-        long elapsed = startOfCooldown - ticks;
 
-        return (int) (
-                (serverTick - elapsed) * 20 / 60 / 60
-        );
+        return timeHelper.getCooldownRemainingHours(cooldown, startOfCooldown);
     }
 
     public long getTimeToNextSiegeAdvanceMs() {
-        long elapsedMS = System.currentTimeMillis() - timestampOfFirstDay;
-        long todayElapsedMS = elapsedMS % getSiegeDayLengthMS();
 
-        return getSiegeDayLengthMS() - todayElapsedMS;
+        return timeHelper.getTimeToNextSiegeAdvanceMs();
     }
 
     public long getTimeToNextYieldMs() {
-        long elapsedMS = System.currentTimeMillis() - timestampOfFirstDay;
-        long todayElapsedMS = elapsedMS % getYieldDayLengthMs();
 
-        return getYieldDayLengthMs() - todayElapsedMS;
+        return timeHelper.getTimeToNextYieldMs();
     }
 
     public void updateServer() {
-        boolean shouldUpdate = false;
-        previousUpdateTimestamp = currTickTimestamp;
         currTickTimestamp = System.currentTimeMillis();
-        long dayLength = getSiegeDayLengthMS();
+        previousUpdateTimestamp = currTickTimestamp;
 
         FACTIONS.updateConqueredChunks(currTickTimestamp);
 
-        long dayNumber = (currTickTimestamp - timestampOfFirstDay) / dayLength;
-
         ++serverTick;
 
-        if (dayNumber > numberOfSiegeDaysTicked) {
-            // Time to tick a new day
-            numberOfSiegeDaysTicked = dayNumber;
+        boolean shouldUpdate = false;
 
-            messageAll(new TextComponentString("Battle takes its toll, all sieges have advanced."), true);
+        if (!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER) {
+            long siegeDayLength = TimeHelper.getSiegeDayLengthMS();
+            long siegeDayNumber = (currTickTimestamp - timestampOfFirstDay) / siegeDayLength;
 
-            FACTIONS.advanceSiegeDay();
+            if (siegeDayNumber > numberOfSiegeDaysTicked) {
+                numberOfSiegeDaysTicked = siegeDayNumber;
+                messageAll(new TextComponentString("Battle takes its toll, all sieges have advanced."), true);
+                FACTIONS.advanceSiegeDay();
+                shouldUpdate = true;
+            }
+        } else if(MinecraftServer.getCurrentTimeMillis() % 20 == 0) {
+            FACTIONS.updateSiegeTimers();
             shouldUpdate = true;
         }
 
-        dayLength = getYieldDayLengthMs();
-        dayNumber = (currTickTimestamp - timestampOfFirstDay) / dayLength;
+        //Yield timer
+        long yieldDayLength = TimeHelper.getYieldDayLengthMs();
+        long yieldDayNumber = (currTickTimestamp - timestampOfFirstDay) / yieldDayLength;
 
-        if (dayNumber > numberOfYieldDaysTicked) {
-            // Time to tick a new day
-            numberOfYieldDaysTicked = dayNumber;
-
+        if (yieldDayNumber > numberOfYieldDaysTicked) {
+            numberOfYieldDaysTicked = yieldDayNumber;
             messageAll(new TextComponentString("All passive yields have been awarded."), true);
-
             FACTIONS.advanceYieldDay();
             shouldUpdate = true;
         }
 
-        //COMBAT_LOG.doEnforcements(System.currentTimeMillis());
-
         if (shouldUpdate) {
             PacketTimeUpdates packet = new PacketTimeUpdates();
 
-            packet.msTimeOfNextSiegeDay = System.currentTimeMillis() + getTimeToNextSiegeAdvanceMs();
-            packet.msTimeOfNextYieldDay = System.currentTimeMillis() + getTimeToNextYieldMs();
+            if (!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER)
+                packet.msTimeOfNextSiegeDay = System.currentTimeMillis() + timeHelper.getTimeToNextSiegeAdvanceMs();
+
+            packet.msTimeOfNextYieldDay = System.currentTimeMillis() + timeHelper.getTimeToNextYieldMs();
 
             NETWORK.sendToAll(packet);
-
         }
     }
 
@@ -425,8 +385,9 @@ public class WarForgeMod implements ILateMixinLoader {
     @SubscribeEvent
     public void blockRemoved(BlockEvent.BreakEvent event) {
         IBlockState state = event.getState();
-        if (isClaim(state.getBlock(), Content.siegeCampBlock) )  {
-            if(event.getWorld().getTileEntity(event.getPos()) instanceof  TileEntityClaim te && te.getFaction().equals(Faction.nullUuid)) return;
+        if (isClaim(state.getBlock(), Content.siegeCampBlock)) {
+            if (event.getWorld().getTileEntity(event.getPos()) instanceof TileEntityClaim te && te.getFaction().equals(Faction.nullUuid))
+                return;
             event.setCanceled(true);
             return;
         }
@@ -490,19 +451,19 @@ public class WarForgeMod implements ILateMixinLoader {
         ObjectIntPair<UUID> conqueredChunkInfo = FACTIONS.conqueredChunks.get(pos);
         if (conqueredChunkInfo != null) {
             // remove invalid entries if necessary, and if not then do actual comparison
-            if (conqueredChunkInfo.getObj() == null || conqueredChunkInfo.getObj().equals(Faction.nullUuid) || FACTIONS.getFaction(conqueredChunkInfo.getObj()) == null) {
+            if (conqueredChunkInfo.getLeft() == null || conqueredChunkInfo.getLeft().equals(Faction.nullUuid) || FACTIONS.getFaction(conqueredChunkInfo.getLeft()) == null) {
                 WarForgeMod.LOGGER.atError().log("Found invalid conquered chunk at " + pos + "; removing and permitting placement.");
                 FACTIONS.conqueredChunks.remove(pos);
-            } else if (!conqueredChunkInfo.getObj().equals(playerFaction.uuid)) {
+            } else if (!conqueredChunkInfo.getLeft().equals(playerFaction.uuid)) {
                 player.sendMessage(new TextComponentTranslation("warforge.info.chunk_is_conquered",
-                        WarForgeMod.FACTIONS.getFaction(FACTIONS.conqueredChunks.get(pos).getObj()).name,
-                        formatTime(FACTIONS.conqueredChunks.get(pos).getInteger())));
+                        WarForgeMod.FACTIONS.getFaction(FACTIONS.conqueredChunks.get(pos).getLeft()).name,
+                        TimeHelper.formatTime(FACTIONS.conqueredChunks.get(pos).getRight())));
                 event.setCanceled(true);
                 return;
             }
         }
 
-        if (!containsInt(WarForgeConfig.CLAIM_DIM_WHITELIST, pos.mDim)) {
+        if (!containsInt(WarForgeConfig.CLAIM_DIM_WHITELIST, pos.dim)) {
             player.sendMessage(new TextComponentString("You cannot claim chunks in this dimension"));
             event.setCanceled(true);
             return;
@@ -549,15 +510,6 @@ public class WarForgeMod implements ILateMixinLoader {
                 return;
             }
 
-/*
-    		if(!playerFaction.CanPlayerMoveFlag(player.getUniqueID()))
-    		{
-    			player.sendMessage(new TextComponentString("You have already moved your flag today. Check /f time"));
-    			event.setCanceled(true);
-    			return;
-    		}
- */
-
             if (playerFaction.calcNumSieges() > 2) {
                 player.sendMessage(new TextComponentTranslation("warforge.info.too_many_siege_blocks"));
                 event.setCanceled(true);
@@ -565,7 +517,7 @@ public class WarForgeMod implements ILateMixinLoader {
             }
 
             ArrayList<DimChunkPos> validTargets = new ArrayList<>(Arrays.asList(new DimChunkPos[4]));
-            int numTargets = FACTIONS.GetAdjacentClaims(playerFaction.uuid, new DimBlockPos(event.getWorld().provider.getDimension(), event.getPos()), validTargets);
+            int numTargets = FACTIONS.getAdjacentClaims(playerFaction.uuid, new DimBlockPos(event.getWorld().provider.getDimension(), event.getPos()), validTargets);
             if (numTargets == 0) {
                 player.sendMessage(new TextComponentString("There are no adjacent claims to siege; Siege camp Y level must be w/in " + WarForgeConfig.VERTICAL_SIEGE_DIST + " of target."));
                 event.setCanceled(true);
@@ -575,19 +527,6 @@ public class WarForgeMod implements ILateMixinLoader {
         }
 
     }
-    
-/*
-    @EventHandler
-    public void IMCEvent(FMLInterModComms.IMCEvent event)
-    {
-        for (final FMLInterModComms.IMCMessage imc : event.getMessages())
-        {
-        	//JSON.parseRaw(imc.getStringValue()).;
-        	//Gson gson = new Gson();
-        	//gson.
-        }
-    }
-*/
 
     @SubscribeEvent
     public void playerLeftGame(PlayerEvent.PlayerLoggedOutEvent event) {
@@ -601,6 +540,8 @@ public class WarForgeMod implements ILateMixinLoader {
 
     @SubscribeEvent
     public void playerJoinedGame(PlayerLoggedInEvent event) {
+
+        NETWORK.sendTo(WarForgeConfig.createConfigSyncPacket(), (EntityPlayerMP) event.player);
         if (!event.player.world.isRemote) {
             if (Double.isNaN(event.player.posX) || Double.isInfinite(event.player.posX)
                     || Double.isNaN(event.player.posY) || Double.isInfinite(event.player.posY)
@@ -621,25 +562,19 @@ public class WarForgeMod implements ILateMixinLoader {
 
             PacketTimeUpdates packet = new PacketTimeUpdates();
 
-            packet.msTimeOfNextSiegeDay = System.currentTimeMillis() + getTimeToNextSiegeAdvanceMs();
-            packet.msTimeOfNextYieldDay = System.currentTimeMillis() + getTimeToNextYieldMs();
+            packet.msTimeOfNextSiegeDay = System.currentTimeMillis() + timeHelper.getTimeToNextSiegeAdvanceMs();
+            packet.msTimeOfNextYieldDay = System.currentTimeMillis() + timeHelper.getTimeToNextYieldMs();
 
             NETWORK.sendTo(packet, (EntityPlayerMP) event.player);
 
             // sends packet to client which clears all previously remembered sieges; identical attacking and def names = clear packet
-            PacketSiegeCampProgressUpdate clearSiegesPacket = new PacketSiegeCampProgressUpdate();
-            clearSiegesPacket.info = new SiegeCampProgressInfo();
-            clearSiegesPacket.info.expiredTicks = 0;
-            clearSiegesPacket.info.attackingName = "c"; // normally attacking and def names cannot be identical
-            clearSiegesPacket.info.defendingName = "c";
-            clearSiegesPacket.info.attackingPos = DimBlockPos.ZERO;
-            clearSiegesPacket.info.defendingPos = DimBlockPos.ZERO;
-            NETWORK.sendTo(clearSiegesPacket, (EntityPlayerMP) event.player);
+
+            NETWORK.sendTo(Siege.clearSiegeData(), (EntityPlayerMP) event.player);
             FACTIONS.sendAllSiegeInfoToNearby();
 
             // begin queued sync info
             // don't sync if the upgrade info doesn't exist
-            if (UPGRADE_HANDLER != null && UPGRADE_HANDLER.getLEVELS() != null) {
+            if (UPGRADE_HANDLER.getLEVELS() != null) {
 
                 for (int i = 0; i < UPGRADE_HANDLER.getLEVELS().length; i++) {
                     final int level = i;
@@ -652,14 +587,14 @@ public class WarForgeMod implements ILateMixinLoader {
                 }
             }
 
-            // go over all ordered veins that the server has and send them to the client
-            int veinIndex = 0;
-            ArrayList<Vein> veins = new ArrayList<>(VEIN_HANDLER.ID_TO_VEINS.values());
-            while (veinIndex < veins.size()) {
-                PacketVeinEntries currPacket = new PacketVeinEntries();
-                veinIndex = currPacket.fillFrom(veins, veinIndex);
-                SyncQueueHandler.enqueue(() -> NETWORK.sendTo(currPacket, (EntityPlayerMP) event.player));
-            }
+			// go over all ordered veins that the server has and send them to the client
+			int veinIndex = 0;
+			ArrayList<Vein> veins = new ArrayList<>(VEIN_HANDLER.ID_TO_VEINS.values());
+			while (veinIndex < veins.size()) {
+				PacketVeinEntries currPacket = new PacketVeinEntries();
+				veinIndex = currPacket.fillFrom(veins, veinIndex);
+				SyncQueueHandler.enqueue(() -> NETWORK.sendTo(currPacket, (EntityPlayerMP) event.player));
+			}
         }
     }
 
@@ -685,20 +620,22 @@ public class WarForgeMod implements ILateMixinLoader {
 
     private void readFromNBT(NBTTagCompound tags) {
         FACTIONS.readFromNBT(tags);
-        if (VEIN_HANDLER != null) VEIN_HANDLER.readFromNBT(tags);  // client has a null vein handler
+		if (VEIN_HANDLER != null) VEIN_HANDLER.readFromNBT(tags);
 
         timestampOfFirstDay = tags.getLong("zero-timestamp");
         numberOfSiegeDaysTicked = tags.getLong("num-days-elapsed");
         numberOfYieldDaysTicked = tags.getLong("num-yields-awarded");
+        serverStopTimestamp = tags.getLong("shutdown-timestamp");
     }
 
     private void WriteToNBT(NBTTagCompound tags) {
         FACTIONS.WriteToNBT(tags);
-        if (VEIN_HANDLER != null) VEIN_HANDLER.WriteToNBT(tags);  // client has a null vein handler
+		if (VEIN_HANDLER != null) VEIN_HANDLER.WriteToNBT(tags);
 
         tags.setLong("zero-timestamp", timestampOfFirstDay);
         tags.setLong("num-days-elapsed", numberOfSiegeDaysTicked);
         tags.setLong("num-yields-awarded", numberOfYieldDaysTicked);
+        tags.setLong("shutdown-timestamp", serverStopTimestamp);
     }
 
     @EventHandler
@@ -707,14 +644,14 @@ public class WarForgeMod implements ILateMixinLoader {
         CommandHandler handler = ((CommandHandler) MC_SERVER.getCommandManager());
         handler.registerCommand(new CommandFactions());
 
-        // initialize the vein data, but only on the server; we will only update from nbt after this init step
-        try {
-            VeinConfigHandler.writeStubIfEmpty();
-            VeinConfigHandler.loadVeins();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
+		// initialize the vein data, but only on the server; we will only update from nbt after this init step
+		try {
+			VeinConfigHandler.writeStubIfEmpty();
+			VeinConfigHandler.loadVeins();
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
 
         try {
             // try to read from data or backup, then generates a new file if both fail
@@ -742,9 +679,7 @@ public class WarForgeMod implements ILateMixinLoader {
             e.printStackTrace();
         }
 
-        // because it takes time for the server to start, this will mean anything using this to measure time passed
-        // will always find that the server has some "elapsed time" on server start
-        currTickTimestamp = System.currentTimeMillis();
+        currTickTimestamp = System.currentTimeMillis(); // will cause some update time to be registered immediately
     }
 
     private void save(String event) {
