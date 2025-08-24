@@ -1,7 +1,5 @@
 package com.flansmod.warforge.client;
 
-import java.util.*;
-
 import akka.japi.Pair;
 import com.flansmod.warforge.api.vein.Quality;
 import com.flansmod.warforge.api.vein.Vein;
@@ -10,7 +8,6 @@ import com.flansmod.warforge.common.*;
 import com.flansmod.warforge.common.blocks.IClaim;
 import com.flansmod.warforge.common.network.PacketChunkPosVeinID;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
-
 import com.flansmod.warforge.server.Faction;
 import com.flansmod.warforge.server.StackComparable;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
@@ -24,7 +21,9 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.*;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemBlock;
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
@@ -38,6 +37,11 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 
 import static com.flansmod.warforge.client.ClientProxy.CHUNK_VEIN_CACHE;
 

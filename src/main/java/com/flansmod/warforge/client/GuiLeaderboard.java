@@ -6,7 +6,6 @@ import com.flansmod.warforge.common.network.LeaderboardInfo;
 import com.flansmod.warforge.common.network.PacketLeaderboardInfo;
 import com.flansmod.warforge.common.network.PacketRequestLeaderboardInfo;
 import com.flansmod.warforge.server.Leaderboard.FactionStat;
-
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;

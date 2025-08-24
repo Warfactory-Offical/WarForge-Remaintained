@@ -1,8 +1,5 @@
 package com.flansmod.warforge.common.blocks;
 
-import java.util.Objects;
-import java.util.UUID;
-
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.DimChunkPos;
 import com.flansmod.warforge.common.WarForgeConfig;
@@ -10,7 +7,6 @@ import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketSiegeCampProgressUpdate;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
 import com.flansmod.warforge.server.Faction;
-
 import com.flansmod.warforge.server.Siege;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
@@ -26,6 +22,9 @@ import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
+
+import java.util.Objects;
+import java.util.UUID;
 
 public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 {

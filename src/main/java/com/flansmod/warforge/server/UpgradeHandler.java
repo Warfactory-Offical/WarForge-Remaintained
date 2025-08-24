@@ -3,8 +3,6 @@ package com.flansmod.warforge.server;
 import com.flansmod.warforge.common.WarForgeMod;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.io.IOException;
 import java.nio.file.Files;

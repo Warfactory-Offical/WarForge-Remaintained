@@ -3,7 +3,6 @@ package com.flansmod.warforge.common.network;
 import com.flansmod.warforge.common.CommonProxy;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.server.Leaderboard.FactionStat;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import net.minecraft.entity.player.EntityPlayer;

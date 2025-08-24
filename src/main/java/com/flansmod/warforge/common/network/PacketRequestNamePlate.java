@@ -3,7 +3,6 @@ package com.flansmod.warforge.common.network;
 import com.flansmod.warforge.common.WarForgeMod;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import lombok.AllArgsConstructor;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 

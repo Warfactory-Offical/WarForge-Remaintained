@@ -1,12 +1,12 @@
 package com.flansmod.warforge.server;
 
+import com.flansmod.warforge.common.WarForgeMod;
+import com.flansmod.warforge.common.network.LeaderboardInfo;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
-
-import com.flansmod.warforge.common.WarForgeMod;
-import com.flansmod.warforge.common.network.LeaderboardInfo;
 
 /* Legacy code that errors
 import scala.actors.threadpool.Arrays;

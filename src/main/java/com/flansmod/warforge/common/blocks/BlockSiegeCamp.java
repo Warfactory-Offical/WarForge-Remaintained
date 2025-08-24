@@ -3,7 +3,6 @@ package com.flansmod.warforge.common.blocks;
 import akka.japi.Pair;
 import com.flansmod.warforge.api.vein.Quality;
 import com.flansmod.warforge.api.vein.Vein;
-import com.flansmod.warforge.api.vein.VeinKey;
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.DimChunkPos;
 import com.flansmod.warforge.common.WarForgeMod;

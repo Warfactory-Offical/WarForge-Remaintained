@@ -1,7 +1,6 @@
 package com.flansmod.warforge.common.potions;
 
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.init.MobEffects;
 import net.minecraft.potion.Potion;
 
 public class PotionTpAccept extends Potion 

@@ -2,12 +2,10 @@ package com.flansmod.warforge.client;
 
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.TileEntityLeaderboard;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-import net.minecraft.tileentity.TileEntity;
 
 public class TileEntityLeaderboardRenderer extends TileEntitySpecialRenderer<TileEntityLeaderboard>
 {

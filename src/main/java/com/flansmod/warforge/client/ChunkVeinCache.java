@@ -1,9 +1,9 @@
 package com.flansmod.warforge.client;
 
 import akka.japi.Pair;
+import com.flansmod.warforge.api.WarforgeCache;
 import com.flansmod.warforge.api.vein.Quality;
 import com.flansmod.warforge.api.vein.Vein;
-import com.flansmod.warforge.api.WarforgeCache;
 import com.flansmod.warforge.common.DimChunkPos;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;

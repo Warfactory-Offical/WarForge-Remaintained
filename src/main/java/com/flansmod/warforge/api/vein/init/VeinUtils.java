@@ -4,33 +4,30 @@ import akka.japi.Pair;
 import com.flansmod.warforge.api.vein.Quality;
 import com.flansmod.warforge.api.vein.Vein;
 import com.flansmod.warforge.api.vein.VeinKey;
-import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.server.StackComparable;
 import it.unimi.dsi.fastutil.ints.Int2FloatOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ShortOpenHashMap;
-import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ShortAVLTreeMap;
-import it.unimi.dsi.fastutil.shorts.*;
+import it.unimi.dsi.fastutil.shorts.Short2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.shorts.Short2ShortOpenHashMap;
+import it.unimi.dsi.fastutil.shorts.Short2ShortRBTreeMap;
 import net.minecraft.nbt.NBTTagByteArray;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraftforge.common.util.Constants;
-import net.minecraftforge.event.world.ChunkDataEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.flansmod.warforge.client.ClientProxy.VEIN_ENTRIES;
 import static com.flansmod.warforge.common.CommonProxy.YIELD_QUALITY_MULTIPLIER;
-import static com.flansmod.warforge.common.WarForgeMod.*;
+import static com.flansmod.warforge.common.WarForgeMod.LOGGER;
+import static com.flansmod.warforge.common.WarForgeMod.VEIN_HANDLER;
 
 public class VeinUtils {
     public static final short WEIGHT_FRACTION_TENS_POW = 10000;  // should stay 10,000 so that it fits within a short

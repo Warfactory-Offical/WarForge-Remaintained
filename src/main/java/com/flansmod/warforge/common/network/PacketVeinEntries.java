@@ -1,7 +1,6 @@
 package com.flansmod.warforge.common.network;
 
 import com.flansmod.warforge.api.vein.Vein;
-import com.flansmod.warforge.api.vein.init.VeinConfigHandler;
 import com.flansmod.warforge.common.WarForgeMod;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

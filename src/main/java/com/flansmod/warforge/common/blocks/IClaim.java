@@ -1,12 +1,10 @@
 package com.flansmod.warforge.common.blocks;
 
-import java.util.List;
-import java.util.UUID;
-
 import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.server.Faction;
-
 import net.minecraft.tileentity.TileEntity;
+
+import java.util.UUID;
 
 public interface IClaim 
 {

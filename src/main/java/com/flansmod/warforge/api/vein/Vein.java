@@ -3,21 +3,19 @@ package com.flansmod.warforge.api.vein;
 
 import com.flansmod.warforge.api.vein.init.VeinConfigHandler;
 import com.flansmod.warforge.api.vein.init.VeinUtils;
-import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.server.StackComparable;
 import io.netty.buffer.ByteBuf;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.Int2FloatOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ShortOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.relauncher.Side;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 
-import static com.flansmod.warforge.api.vein.init.VeinUtils.percentToShort;
 import static com.flansmod.warforge.common.WarForgeMod.VEIN_HANDLER;
 
 public class Vein {

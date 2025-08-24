@@ -1,8 +1,8 @@
 package com.flansmod.warforge.common.network;
 
-import java.util.UUID;
-
 import com.flansmod.warforge.server.Faction;
+
+import java.util.UUID;
 
 public class PlayerDisplayInfo
 {

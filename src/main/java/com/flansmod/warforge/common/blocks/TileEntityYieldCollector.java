@@ -1,8 +1,5 @@
 package com.flansmod.warforge.common.blocks;
 
-import java.util.*;
-import java.util.Arrays;
-
 import akka.japi.Pair;
 import com.flansmod.warforge.api.vein.Quality;
 import com.flansmod.warforge.api.vein.Vein;
@@ -12,21 +9,17 @@ import com.flansmod.warforge.common.DimChunkPos;
 import com.flansmod.warforge.common.InventoryHelper;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.server.Faction;
-
 import com.flansmod.warforge.server.StackComparable;
-import it.unimi.dsi.fastutil.ints.Int2FloatOpenHashMap;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
-import net.minecraftforge.oredict.OreDictionary;
 
-import static com.flansmod.warforge.api.vein.Quality.*;
-import static com.flansmod.warforge.common.CommonProxy.YIELD_QUALITY_MULTIPLIER;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Random;
+
 import static com.flansmod.warforge.common.WarForgeMod.VEIN_HANDLER;
 
 public abstract class TileEntityYieldCollector extends TileEntityClaim implements IInventory
