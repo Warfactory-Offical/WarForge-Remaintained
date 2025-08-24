@@ -1,54 +1,5 @@
 package com.flansmod.warforge.common;
 
-import net.minecraft.block.Block;
-import net.minecraft.item.Item;
-import net.minecraftforge.common.config.Configuration;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static com.flansmod.warforge.client.util.ScreenSpaceUtil.ScreenPos;
-import static com.flansmod.warforge.common.CommonProxy.YIELD_QUALITY_MULTIPLIER;
-
-public class WarForgeConfig {
-    public static final String CATEGORY_CLAIMS = "Claims";
-    // Yields
-    public static final String CATEGORY_YIELDS = "Yields";
-    public static final String CATEGORY_SIEGES = "Sieges";
-    // Notoriety
-    public static final String CATEGORY_NOTORIETY = "Notoriety";
-    // Legacy
-    public static final String CATEGORY_LEGACY = "Legacy";
-    public static final String CATEGORY_CLIENT = "Client";
-    // Warps
-    public static final String CATEGORY_WARPS = "Warps";
-    // Config
-    public static Configuration configFile;
-    // Claims
-    public static boolean ENABLE_CITADEL_UPGRADES = false;
-    public static int[] CLAIM_DIM_WHITELIST = new int[]{0};
-    public static int CLAIM_STRENGTH_CITADEL = 15;
-    public static int CLAIM_STRENGTH_REINFORCED = 10;
-    public static int CLAIM_STRENGTH_BASIC = 5;
-    public static int SUPPORT_STRENGTH_CITADEL = 3;
-    // Yield - veins:
-    // maps each dimension id to a map of vein keys to veins for quick access
-    public static int SUPPORT_STRENGTH_REINFORCED = 2;
-    public static int SUPPORT_STRENGTH_BASIC = 1;
-    public static int ATTACK_STRENGTH_SIEGE_CAMP = 1;
-    public static float LEECH_PROPORTION_SIEGE_CAMP = 0.25f;
-    public static float YIELD_DAY_LENGTH = 1.0f; // In real-world hours
-    // Sieges
-    public static boolean SIEGE_ENABLE_NEW_TIMER = true;
-    public static byte SIEGE_MOMENTUM_MAX = 4;
-    public static int SIEGE_MOMENTUM_DURATION = 60;//Minutes
-    public static long SIEGE_BASE_TIME = 30;//Minutes;
-    public static Map<Integer, Float> SIEGE_MOMENTUM_MULTI = new HashMap<>();
-
-import static com.flansmod.warforge.common.CommonProxy.YIELD_QUALITY_MULTIPLIER;
 import com.flansmod.warforge.common.network.PacketSyncConfig;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
