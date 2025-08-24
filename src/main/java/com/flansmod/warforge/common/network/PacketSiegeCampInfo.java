@@ -30,6 +30,7 @@ public class PacketSiegeCampInfo extends PacketBase {
         data.writeInt(mSiegeCampPos.getZ());
 
         data.writeByte(mPossibleAttacks.size());
+      
         for (SiegeCampAttackInfo info : mPossibleAttacks) {
             data.writeBoolean(info.canAttack);
             writeUUID(data, info.mFactionUUID);
@@ -67,6 +68,7 @@ public class PacketSiegeCampInfo extends PacketBase {
             int dz = data.readByte();
             info.mOffset = new Vec3i(dx, 0, dz);
             info.mFactionColour = data.readInt();
+
             short possibleVein = data.readShort();
             info.mWarforgeVein = possibleVein < 0 ? null : ClientProxy.VEIN_ENTRIES.get(possibleVein);
             info.mOreQuality = Quality.values()[data.readByte()];

@@ -54,7 +54,6 @@ public class StackComparable {
         return new StackComparable(resource);
     }
 
-
     public static String[] getOreDictNames(ItemStack stack) {
         int[] ids = OreDictionary.getOreIDs(stack);
         String[] names = new String[ids.length];

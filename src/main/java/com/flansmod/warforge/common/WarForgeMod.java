@@ -86,8 +86,8 @@ public class WarForgeMod implements ILateMixinLoader {
     public static final TeleportsModule TELEPORTS = new TeleportsModule();
     public static final PotionsModule POTIONS = new PotionsModule();
     public static final UpgradeHandler UPGRADE_HANDLER = new UpgradeHandler();
-	public static VeinUtils VEIN_HANDLER = null;
-	public static final ModelEventHandler MODEL_EVENT_HANDLER = new ModelEventHandler();
+	  public static VeinUtils VEIN_HANDLER = null;
+	  public static final ModelEventHandler MODEL_EVENT_HANDLER = new ModelEventHandler();
 
 	// Discord integration
     private static final String DISCORD_MODID = "discordintegration";
@@ -332,6 +332,135 @@ public class WarForgeMod implements ILateMixinLoader {
             NETWORK.sendToAll(packet);
         }
     }
+
+    @EventHandler
+    public void postInit(FMLPostInitializationEvent event) {
+        NETWORK.postInitialise();
+        proxy.PostInit(event);
+
+        WarForgeConfig.VAULT_BLOCKS.clear();
+        for (String blockID : WarForgeConfig.VAULT_BLOCK_IDS) {
+            Block block = Block.getBlockFromName(blockID);
+            if (block != null) {
+                WarForgeConfig.VAULT_BLOCKS.add(block);
+                LOGGER.info("Found block with ID " + blockID + " as a valuable block for the vault");
+            } else
+                LOGGER.error("Could not find block with ID " + blockID + " as a valuable block for the vault");
+
+        }
+
+        FMLInterModComms.sendRuntimeMessage(this, DISCORD_MODID, "registerListener", "");
+
+        WarForgeConfig.UNCLAIMED.findBlocks();
+        WarForgeConfig.SAFE_ZONE.findBlocks();
+        WarForgeConfig.WAR_ZONE.findBlocks();
+        WarForgeConfig.CITADEL_FRIEND.findBlocks();
+        WarForgeConfig.CITADEL_FOE.findBlocks();
+        WarForgeConfig.CLAIM_FRIEND.findBlocks();
+        WarForgeConfig.CLAIM_FOE.findBlocks();
+        WarForgeConfig.SIEGECAMP_SIEGER.findBlocks();
+        WarForgeConfig.SIEGECAMP_OTHER.findBlocks();
+        IMultiBlockInit.registerMaps();
+        if (WarForgeConfig.ENABLE_CITADEL_UPGRADES) {
+            Path configFile = Paths.get("config/" + WarForgeMod.MODID + "/upgrade_levels.cfg");
+            try {
+                UpgradeHandler.writeStubIfEmpty(configFile);
+                UpgradeHandler.parseConfig(configFile);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        List<VeinConfigHandler.VeinEntry> veinList = new ArrayList<>();
+        try {
+            VeinConfigHandler.writeStubIfEmpty();
+            veinList = VeinConfigHandler.loadVeins();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        if (!veinList.isEmpty() && veinList != null)
+            VeinKey.populateVeinMap(WarForgeMod.VEIN_MAP, veinList);
+
+        if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
+            NAMETAG_CACHE = new PlayerNametagCache(60_000, 200);
+        }
+
+
+    }
+
+    public long getCooldownRemainingSeconds(float cooldown, long startOfCooldown) {
+
+        return timeHelper.getCooldownRemainingSeconds(cooldown, startOfCooldown);
+    }
+
+    public int getCooldownRemainingMinutes(float cooldown, long startOfCooldown) {
+
+        return timeHelper.getCooldownRemainingMinutes(cooldown, startOfCooldown);
+    }
+
+    public int getCooldownRemainingHours(float cooldown, long startOfCooldown) {
+
+        return timeHelper.getCooldownRemainingHours(cooldown, startOfCooldown);
+    }
+
+    public long getTimeToNextSiegeAdvanceMs() {
+
+        return timeHelper.getTimeToNextSiegeAdvanceMs();
+    }
+
+    public long getTimeToNextYieldMs() {
+
+        return timeHelper.getTimeToNextYieldMs();
+    }
+
+    public void updateServer() {
+        currTickTimestamp = System.currentTimeMillis();
+        previousUpdateTimestamp = currTickTimestamp;
+
+        FACTIONS.updateConqueredChunks(currTickTimestamp);
+
+        ++serverTick;
+
+        boolean shouldUpdate = false;
+
+        if (!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER) {
+            long siegeDayLength = TimeHelper.getSiegeDayLengthMS();
+            long siegeDayNumber = (currTickTimestamp - timestampOfFirstDay) / siegeDayLength;
+
+            if (siegeDayNumber > numberOfSiegeDaysTicked) {
+                numberOfSiegeDaysTicked = siegeDayNumber;
+                messageAll(new TextComponentString("Battle takes its toll, all sieges have advanced."), true);
+                FACTIONS.advanceSiegeDay();
+                shouldUpdate = true;
+            }
+        } else if(MinecraftServer.getCurrentTimeMillis() % 20 == 0) {
+            FACTIONS.updateSiegeTimers();
+            shouldUpdate = true;
+        }
+
+        //Yield timer
+        long yieldDayLength = TimeHelper.getYieldDayLengthMs();
+        long yieldDayNumber = (currTickTimestamp - timestampOfFirstDay) / yieldDayLength;
+
+        if (yieldDayNumber > numberOfYieldDaysTicked) {
+            numberOfYieldDaysTicked = yieldDayNumber;
+            messageAll(new TextComponentString("All passive yields have been awarded."), true);
+            FACTIONS.advanceYieldDay();
+            shouldUpdate = true;
+        }
+
+        if (shouldUpdate) {
+            PacketTimeUpdates packet = new PacketTimeUpdates();
+
+            if (!WarForgeConfig.SIEGE_ENABLE_NEW_TIMER)
+                packet.msTimeOfNextSiegeDay = System.currentTimeMillis() + timeHelper.getTimeToNextSiegeAdvanceMs();
+
+            packet.msTimeOfNextYieldDay = System.currentTimeMillis() + timeHelper.getTimeToNextYieldMs();
+
+            NETWORK.sendToAll(packet);
+        }
+    }
+
 
     @SubscribeEvent
     public void playerInteractBlock(RightClickBlock event) {

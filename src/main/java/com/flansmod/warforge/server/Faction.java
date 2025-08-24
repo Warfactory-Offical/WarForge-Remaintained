@@ -38,7 +38,6 @@ import java.util.function.Predicate;
 
 import static com.flansmod.warforge.common.WarForgeMod.VEIN_HANDLER;
 
-
 /**
  * Data class for faction, responsible for storing faction info
  */

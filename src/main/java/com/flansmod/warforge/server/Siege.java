@@ -49,7 +49,6 @@ public class Siege {
      * - Defender's flags on the defended claim
      */
     private int mExtraDifficulty = 0;
-
     /**
      * The attack progress is accumulated over time based on active actions in the area of the siege
      * Sources for the attackers are:

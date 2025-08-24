@@ -61,7 +61,10 @@ public class PacketChunkPosVeinID extends PacketBase {
     // always called on packet after decodeInto has been called
     @Override
     public void handleServerSide(EntityPlayerMP playerEntity) {
-        if (veinLocation == null) { return; }
+        if (veinLocation == null) {
+            WarForgeMod.LOGGER.atError().log("Decoded ChunkPosVeinID packet without position; ignoring packet.");
+            return;
+        }
 
         // check if the player should even receive data about this chunk
         DimChunkPos playerPos = new DimChunkPos(playerEntity.dimension, playerEntity.getPosition());
@@ -74,7 +77,6 @@ public class PacketChunkPosVeinID extends PacketBase {
         // if the player is within a reasonable sqr radius (1) of the queried chunk, process and send data
         Pair<Vein, Quality> veinInfo = VEIN_HANDLER.getVein(veinLocation.dim, veinLocation.x, veinLocation.z, playerEntity.world.provider.getSeed());
         resultInfo = VEIN_HANDLER.compressVeinInfo(veinInfo);
-
         WarForgeMod.NETWORK.sendTo(this, playerEntity);  // 'encode into' handles getting of important data
     }
 
