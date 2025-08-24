@@ -249,7 +249,7 @@ public class GuiSiegeCamp {
                                 richTooltip.addLine(IKey.str("No ores in this chunk"));
                             }
                             if (chunkInfo.canAttack) {
-                                richTooltip.addLine(IKey.str("Attack time: " + WarForgeConfig.SIEGE_BASE_TIME * WarForgeConfig.SIEGE_MOMENTUM_MULTI.getOrDefault(momentum, 0f) + "minutes").style(IKey.BOLD, IKey.RED));
+                                richTooltip.addLine(IKey.str("Attack time: " + WarForgeConfig.SIEGE_BASE_TIME * WarForgeConfig.SIEGE_MOMENTUM_MULTI.getOrDefault(momentum, 1f) + "minutes").style( IKey.RED));
                                 richTooltip.addLine(IKey.str("Click to attack now!").style(IKey.BOLD, IKey.RED));
                             }
                         })
