@@ -5,11 +5,12 @@ import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.oredict.RecipeSorter;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.flansmod.warforge.client.util.ScreenSpaceUtil.ScreenPos;
 import static com.flansmod.warforge.common.CommonProxy.YIELD_QUALITY_MULTIPLIER;
@@ -46,6 +47,8 @@ public class WarForgeConfig {
     public static boolean SIEGE_ENABLE_NEW_TIMER = true;
     public static byte SIEGE_MOMENTUM_MAX = 4;
     public static int SIEGE_MOMENTUM_DURATION = 60;//Minutes
+    public static long SIEGE_BASE_TIME = 30;//Minutes;
+    public static Map<Integer, Float> SIEGE_MOMENTUM_MULTI = new HashMap<>();
 
 
     public static int SIEGE_SWING_PER_DEFENDER_DEATH = 1;
@@ -232,6 +235,33 @@ public class WarForgeConfig {
         SIEGE_CAPTURE = configFile.getBoolean("Siege Captures", CATEGORY_SIEGES, SIEGE_CAPTURE, "Does a successful siege convert the claim");
         SIEGE_ENABLE_NEW_TIMER = configFile.getBoolean("Enable Per-Siege timer", CATEGORY_SIEGES, SIEGE_ENABLE_NEW_TIMER, "Enable new per siege time system, instead of a central siege day, each siege has its own timer, starting with the siege");
 
+        //New siege stuff
+        SIEGE_MOMENTUM_DURATION = configFile.getInt("Siege momentum duration", "siege", 60, 1, Integer.MAX_VALUE, "Time the momentum lasts");
+        SIEGE_BASE_TIME = configFile.getInt("SiegeBaseTimeMinutes", "siege", 30, 1, Integer.MAX_VALUE,
+                "Base siege duration in minutes.");
+        // Momentum multipliers (define per momentum level)
+        String[] defaults = new String[]{
+                "1=0.9",
+                "2=0.8",
+                "3=0.75",
+                "4=0.5"
+        };
+        String[] values = configFile.getStringList("SiegeMomentumMultipliers", "siege", defaults,
+                "List of momentum multipliers in the form level=multiplier");
+
+        SIEGE_MOMENTUM_MULTI.clear();
+        for (String s : values) {
+            String[] split = s.split("=");
+            if (split.length == 2) {
+                try {
+                    int level = Integer.parseInt(split[0].trim());
+                    float mult = Float.parseFloat(split[1].trim());
+                    SIEGE_MOMENTUM_MULTI.put(level, mult);
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+
         // Vault parameters
         VAULT_BLOCK_IDS = configFile.getStringList("Valuable Blocks", Configuration.CATEGORY_GENERAL, VAULT_BLOCK_IDS, "The block IDs that count towards the value of your citadel's vault");
 
@@ -259,10 +289,10 @@ public class WarForgeConfig {
         VEIN_MEMBER_DISPLAY_TIME_MS = configFile.getInt("Vein Member Display Time", CATEGORY_CLIENT, (int) VEIN_MEMBER_DISPLAY_TIME_MS, 100, Integer.MAX_VALUE, "The time in milliseconds for which each member of a vein will be displayed when it is being cycled through, to the precision allowed by the client tick system.");
         MODERN_WARFARE_MODELS = configFile.getBoolean("Enable modern warfare models", Configuration.CATEGORY_CLIENT, MODERN_WARFARE_MODELS, "Enable modern warfare models, instead of medival more vanilla-friendly models");
 
-        POS_TIMERS = ScreenPos.fromString(configFile.getString( "Yield timer position", CATEGORY_CLIENT, "BOTTOM_RIGHT", "Position of the yield timers" ));
-        POS_SIEGE = ScreenPos.fromString(configFile.getString( "Siege status position", CATEGORY_CLIENT, "TOP", "Position of the siege status" ));
-        POS_TOAST_INDICATOR = ScreenPos.fromString(configFile.getString( "Toast indicator position", CATEGORY_CLIENT, "TOP", "Position of the  toast indicator" ));
-        POS_VEIN_INDICATOR = ScreenPos.fromString(configFile.getString( "Chunk vein indicator position", CATEGORY_CLIENT, "BOTTOM", "Position of the  chunk vein indicator" ));
+        POS_TIMERS = ScreenPos.fromString(configFile.getString("Yield timer position", CATEGORY_CLIENT, "BOTTOM_RIGHT", "Position of the yield timers"));
+        POS_SIEGE = ScreenPos.fromString(configFile.getString("Siege status position", CATEGORY_CLIENT, "TOP", "Position of the siege status"));
+        POS_TOAST_INDICATOR = ScreenPos.fromString(configFile.getString("Toast indicator position", CATEGORY_CLIENT, "TOP", "Position of the  toast indicator"));
+        POS_VEIN_INDICATOR = ScreenPos.fromString(configFile.getString("Chunk vein indicator position", CATEGORY_CLIENT, "BOTTOM", "Position of the  chunk vein indicator"));
 
         // Other permissions
         BLOCK_ENDER_CHEST = configFile.getBoolean("Disable Ender Chest", Configuration.CATEGORY_GENERAL, BLOCK_ENDER_CHEST, "Prevent players from opening ender chests");
@@ -282,7 +312,6 @@ public class WarForgeConfig {
         RANDOM_BORDER_REDRAW_DENOMINATOR = configFile.getInt("Random Border Redraw Denominator", CATEGORY_CLIENT, RANDOM_BORDER_REDRAW_DENOMINATOR, 1, Integer.MAX_VALUE, "Sets the bound on a random number generated, which when equal to 0 calls the border redraw. Effectively 1/this chance to redraw every frame");
 
 
-
         String botChannelString = configFile.getString("Discord Bot Channel ID", Configuration.CATEGORY_GENERAL, "" + FACTIONS_BOT_CHANNEL_ID, "https://github.com/Chikachi/DiscordIntegration/wiki/IMC-Feature");
         FACTIONS_BOT_CHANNEL_ID = Long.parseLong(botChannelString);
 
@@ -296,6 +325,10 @@ public class WarForgeConfig {
         var compoundNBT = new NBTTagCompound();
         compoundNBT.setBoolean("enableUpgrades", ENABLE_CITADEL_UPGRADES);
         compoundNBT.setBoolean("newSiegeTimer", SIEGE_ENABLE_NEW_TIMER);
+        compoundNBT.setInteger("maxMomentum", SIEGE_MOMENTUM_MAX);
+        compoundNBT.setInteger("timeMomentum", SIEGE_MOMENTUM_DURATION);
+        compoundNBT.setLong("siegeTime", SIEGE_BASE_TIME);
+        compoundNBT.setString("momentumMap", SIEGE_MOMENTUM_MULTI.toString());
         packet.configNBT = compoundNBT.toString();
         return packet;
     }

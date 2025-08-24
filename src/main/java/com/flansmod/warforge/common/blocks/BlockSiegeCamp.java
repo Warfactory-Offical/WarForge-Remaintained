@@ -168,6 +168,7 @@ public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvi
             PacketSiegeCampInfo info = new PacketSiegeCampInfo();
             info.mPossibleAttacks = CalculatePossibleAttackDirections(world, pos, player);
             info.mSiegeCampPos = new DimBlockPos(world.provider.getDimension(), pos);
+            info.momentum = faction.getSiegeMomentum();
             WarForgeMod.NETWORK.sendTo(info, (EntityPlayerMP) player);
         }
 

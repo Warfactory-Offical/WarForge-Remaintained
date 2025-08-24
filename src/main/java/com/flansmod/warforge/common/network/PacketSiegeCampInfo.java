@@ -20,6 +20,7 @@ import java.util.List;
 public class PacketSiegeCampInfo extends PacketBase {
     public DimBlockPos mSiegeCampPos;
     public List<SiegeCampAttackInfo> mPossibleAttacks = new ArrayList<>();
+    public byte momentum;
 
 
     @Override
@@ -44,6 +45,7 @@ public class PacketSiegeCampInfo extends PacketBase {
             if (info.mOreQuality != null) { oreQualOrd = (byte) info.mOreQuality.ordinal(); }
             data.writeByte(oreQualOrd);
         }
+        data.writeByte(momentum);
     }
 
     @Override
@@ -72,6 +74,7 @@ public class PacketSiegeCampInfo extends PacketBase {
 
             mPossibleAttacks.add(info);
         }
+        momentum = data.readByte();
 
     }
 
@@ -90,7 +93,7 @@ public class PacketSiegeCampInfo extends PacketBase {
         //Minecraft.getMinecraft().displayGuiScreen(new GuiSiegeCamp(mSiegeCampPos, mPossibleAttacks));
 
         ClientGUI.open(GuiSiegeCamp.makeGUI(
-                mSiegeCampPos, mPossibleAttacks
+                mSiegeCampPos, mPossibleAttacks, momentum
         ));
     }
 

@@ -9,11 +9,12 @@ import com.cleanroommc.modularui.widgets.ButtonWidget;
 import com.flansmod.warforge.api.ChunkDynamicTextureThread;
 import com.flansmod.warforge.api.Color4i;
 import com.flansmod.warforge.api.modularui.MapDrawable;
-import com.flansmod.warforge.common.util.DimBlockPos;
+import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketStartSiege;
 import com.flansmod.warforge.common.network.SiegeCampAttackInfo;
 import com.flansmod.warforge.common.network.SiegeCampAttackInfoRender;
+import com.flansmod.warforge.common.util.DimBlockPos;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
@@ -39,7 +40,7 @@ import java.util.stream.IntStream;
 public class GuiSiegeCamp {
 
     @SideOnly(Side.CLIENT)
-    public static ModularScreen makeGUI(DimBlockPos siegeCampPos, List<SiegeCampAttackInfo> possibleAttacks) {
+    public static ModularScreen makeGUI(DimBlockPos siegeCampPos, List<SiegeCampAttackInfo> possibleAttacks, byte momentum) {
 
         EntityPlayer player = Minecraft.getMinecraft().player;
         WorldClient world = (WorldClient) player.world;
@@ -186,6 +187,10 @@ public class GuiSiegeCamp {
                 .pos(offset, offset)
         );
 
+        panel.child(IKey.str("Current momentum: " + momentum).asWidget()
+                .pos(WIDTH - (offset + 12 + 5 + 100), offset)
+        );
+
         int id = 0;
 
         for (int i = 0; i < 5; i++) {
@@ -229,8 +234,10 @@ public class GuiSiegeCamp {
                             } else {
                                 richTooltip.addLine(IKey.str("No ores in this chunk"));
                             }
-                            if (chunkInfo.canAttack)
+                            if (chunkInfo.canAttack) {
+                                richTooltip.addLine(IKey.str("Attack time: " + WarForgeConfig.SIEGE_MOMENTUM_DURATION * WarForgeConfig.SIEGE_MOMENTUM_MULTI.get(momentum)).style(IKey.BOLD, IKey.RED));
                                 richTooltip.addLine(IKey.str("Click to attack now!").style(IKey.BOLD, IKey.RED));
+                            }
                         })
                         .size(16 * 4)
                         .pos((i * (16 * 4) + offset), (j * (16 * 4) + offset) + VERT_OFFSET));
