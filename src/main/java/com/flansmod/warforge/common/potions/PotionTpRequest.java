@@ -1,7 +1,6 @@
 package com.flansmod.warforge.common.potions;
 
 import com.flansmod.warforge.common.WarForgeMod;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;

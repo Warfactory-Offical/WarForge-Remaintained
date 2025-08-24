@@ -1,6 +1,6 @@
 package com.flansmod.warforge.common.network;
 
-import com.flansmod.warforge.api.Vein;
+import com.flansmod.warforge.api.vein.Vein;
 import com.flansmod.warforge.common.WarForgeMod;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -14,23 +14,26 @@ import static com.flansmod.warforge.client.ClientProxy.VEIN_ENTRIES;
 public class PacketVeinEntries extends PacketBase {
     // clients ask for data, servers send data
     // called by the packet handler to convert to a byte stream to send
-    int startID = -1;
-    private ArrayList<String> orderedEntryList = new ArrayList<>();
+    private ArrayList<Vein> veinBuffer = new ArrayList<>();
+    private int byteCount = 0;
 
-    // tries to fill up a packet to be at least 512 bytes
-    public PacketVeinEntries fillFrom(ArrayList<Vein> orderedVeins, int index) {
-        startID = index;
-        int packetByteCount = 4;  // account for start id being added to packet
-        while (packetByteCount < 512 && index < orderedVeins.size()) {
-            packetByteCount += orderedVeins.get(index).VEIN_ENTRY.length();  // estimate of expected size in bytes
+    private static final int maxPacketByteCount = 1024;
 
-            orderedEntryList.add(orderedVeins.get(index++).VEIN_ENTRY);
-        }
-
-        return this;
+    // fills the pass packet as much as possible from the veins array passed beginning at the start index passed
+    // guarantees that at least one vein will be put into packet, returning the index of the first vein not included
+    public int fillFrom(ArrayList<Vein> veins, int startIndex) {
+        while (startIndex < veins.size() && tryAddVein(veins.get(startIndex))) { ++startIndex; }  // post increment could be used but intellij complains
+        return startIndex;
     }
 
-    public int entryCount() { return orderedEntryList.size(); }
+    // tries to fill up a packet to be at least 512 bytes
+    public boolean tryAddVein(Vein veinToAdd) {
+        if (byteCount > 0 && veinToAdd.SERIALIZED_ENTRY.readableBytes() + byteCount > maxPacketByteCount) { return false; }
+
+        veinBuffer.add(veinToAdd);
+        byteCount += veinToAdd.SERIALIZED_ENTRY.readableBytes();
+        return true;
+    }
 
     // we want this to be compressed
     @Override
@@ -39,30 +42,18 @@ public class PacketVeinEntries extends PacketBase {
     // called by the packet handler to convert to a byte stream to send
     @Override
     public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) {
-        // only the server needs to encode the vein data to send, but regardless the startID should not be -1
-        if (startID != -1) {
-            data.writeInt(startID);
-            // for each entry we can fit, place it in order
-            for (String entry : orderedEntryList) {
-                PacketBase.writeUTF(data, entry);
-            }
+        for (Vein vein : veinBuffer) {
+            final int veinBufBytes = vein.SERIALIZED_ENTRY.readableBytes();
+            data.writeBytes(vein.SERIALIZED_ENTRY, 0, veinBufBytes);
         }
     }
 
     // called by the packet handler to make the packet from a byte stream after construction
     @Override
     public void decodeInto(ChannelHandlerContext ctx, ByteBuf data) {
-        // only the client should receive, but we want to read ints, then UTF's, etc until the byte is emptied
-        // if the readable byte count is <= 4, then there is barely enough room for an int, so error
-        if (data.readableBytes() < 5) {
-            WarForgeMod.LOGGER.atError().log("Vein entry packet received with too few bytes: " + data);
-            return;
-        }
-
-        startID = data.readInt();  // first in is the start id
-
+        // continue and try to deserialize the data until it has all been read through
         while (data.readableBytes() > 0) {
-            orderedEntryList.add(PacketBase.readUTF(data));
+            veinBuffer.add(new Vein(data));
         }
     }
 
@@ -76,9 +67,9 @@ public class PacketVeinEntries extends PacketBase {
     @Override
     public void handleClientSide(EntityPlayer clientPlayer) {
         // store the received veins
-        for (int idOffset = 0; idOffset < orderedEntryList.size(); ++idOffset) {
-            VEIN_ENTRIES.put(startID + idOffset, new Vein(orderedEntryList.get(idOffset), startID + idOffset));
-            WarForgeMod.LOGGER.atDebug().log("Received vein entry of <" + orderedEntryList.get(idOffset) + "> w/ id: " + (startID + idOffset));
+        for (Vein vein : veinBuffer) {
+            VEIN_ENTRIES.put(vein.getId(), vein);
+            WarForgeMod.LOGGER.atDebug().log("Received vein of id <" + vein.getId() + "> with data: \n" + vein);
         }
     }
 }

@@ -29,9 +29,9 @@ public class CommonProxy implements IGuiHandler
 	public static final int GUI_TYPE_SHOP = 7;
 
 	// determines the bonus multiplier or reduction multiplier (reciprocal) for veins of
-	// increasing or decreasing quality, respectively
+	// increasing or decreasing quality, respectively; not configurable for now, but would need sync packets if it were
 	public static float YIELD_QUALITY_MULTIPLIER = 2;
-	
+
 	public void preInit(FMLPreInitializationEvent event)
 	{
 		

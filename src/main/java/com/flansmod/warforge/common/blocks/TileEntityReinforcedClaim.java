@@ -1,7 +1,6 @@
 package com.flansmod.warforge.common.blocks;
 
 import com.flansmod.warforge.common.WarForgeConfig;
-import com.flansmod.warforge.common.WarForgeMod;
 
 public class TileEntityReinforcedClaim extends TileEntityBasicClaim
 {

@@ -1,23 +1,23 @@
 package com.flansmod.warforge.api;
 
 public class ObjectIntPair<T> {
-    private T left;
-    private int right;
+    private T obj;
+    private int integer;
 
     public ObjectIntPair() {
-        left = null;
-        right = 0;
+        obj = null;
+        integer = 0;
     }
 
-    public ObjectIntPair(T left, int right) {
-        this.left = left;
-        this.right = right;
+    public ObjectIntPair(T obj, int integer) {
+        this.obj = obj;
+        this.integer = integer;
     }
 
-    public void setLeft(T left) { this.left = left; }
-    public T getLeft() { return left; }
+    public void setObj(T obj) { this.obj = obj; }
+    public T getObj() { return obj; }
 
-    public void setRight(int right) { this.right = right; }
-    public int getRight() { return right; }
+    public void setInteger(int integer) { this.integer = integer; }
+    public int getInteger() { return integer; }
 
 }

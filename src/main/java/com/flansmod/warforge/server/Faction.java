@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Predicate;
 
+import static com.flansmod.warforge.common.WarForgeMod.VEIN_HANDLER;
 
 /**
  * Data class for faction, responsible for storing faction info
@@ -111,7 +112,6 @@ public class Faction {
     public int getMemberCount() {
         return members.size();
     }
-
 
     public void update() {
         UUID uuidToRemove = nullUuid;
@@ -380,26 +380,21 @@ public class Faction {
         wealth = count;
     }
 
-    public void awardYields() {
-        //
-        for (HashMap.Entry<DimBlockPos, Integer> kvp : claims.entrySet()) {
-            DimBlockPos pos = kvp.getKey();
-            World world = WarForgeMod.MC_SERVER.getWorld(pos.dim);
+	public void awardYields() {
+		for (HashMap.Entry<DimBlockPos, Integer> kvp : claims.entrySet()) {
+			DimBlockPos pos = kvp.getKey();
+			World world = WarForgeMod.MC_SERVER.getWorld(pos.dim);
+			kvp.setValue(kvp.getValue() + 1);  // increment number of yields
 
-            // If It's loaded, process immediately
-            if (world.isBlockLoaded(pos)) {
-                TileEntity te = world.getTileEntity(pos.toRegularPos());
-                if (te instanceof TileEntityYieldCollector) {
-                    ((TileEntityYieldCollector) te).processYield(1);
-                    kvp.setValue(0);
-                }
-            }
-            // Otherwise, cache the number of times it needs to process when it next loads
-            else {
-                kvp.setValue(kvp.getValue() + 1);
-            }
-        }
-    }
+			// If It's loaded and the handler is ready, try to process yields
+			if (world.isBlockLoaded(pos) && VEIN_HANDLER != null && VEIN_HANDLER.hasFinishedInit) {
+				TileEntity te = world.getTileEntity(pos.toRegularPos());
+				if (te instanceof TileEntityYieldCollector) {
+					((TileEntityYieldCollector) te).processYield(claims);
+				}
+			}
+		}
+	}
 
     public void promote(UUID playerID) {
         PlayerData data = members.get(playerID);

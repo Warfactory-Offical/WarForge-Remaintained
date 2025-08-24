@@ -21,9 +21,9 @@ warforge.info.vein.fair=Fair
 warforge.info.vein.poor=Poor
 warforge.info.vein.waiting=Waiting to receive vein data from the server...
 warforge.info.vein.null=This chunk has no vein.
-warforge.info.vein.unknown_vein_id=Received an unrecognized id for the vein in this chunk; try re-logging.
-warforge.info.vein.unknown_qual_id=Received an unrecognized id for the quality of the vein in this chunk...
+warforge.info.vein.unrecognized=Unrecognized vein in current chunk; wait for sync to finish or relog if the issue persists.
 
+warforge.veins.gold= %s Gold Vein
 warforge.veins.gold= %s Gold-Diamond Vein
 warforge.veins.iron= %s Coal-Iron Vein
 

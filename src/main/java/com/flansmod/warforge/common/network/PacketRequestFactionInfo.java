@@ -1,14 +1,13 @@
 package com.flansmod.warforge.common.network;
 
-import java.util.UUID;
-
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.server.Faction;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+
+import java.util.UUID;
 
 public class PacketRequestFactionInfo extends PacketBase 
 {

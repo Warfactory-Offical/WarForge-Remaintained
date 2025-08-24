@@ -1,7 +1,5 @@
 package com.flansmod.warforge.common.network;
 
-import java.util.UUID;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import net.minecraft.entity.player.EntityPlayer;
@@ -9,6 +7,8 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+
+import java.util.UUID;
 
 /**
  * Base class for all packets in Flan's Mod.
@@ -37,7 +37,7 @@ public abstract class PacketBase
 	public abstract void handleClientSide(EntityPlayer clientPlayer);
 	
 	/**
-	 * Util method for quickly writing strings
+	 * Util method for quickly writing strings - stores at most 2 bytes for string length
 	 */
 	public static void writeUTF(ByteBuf data, String s)
 	{

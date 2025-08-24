@@ -1,9 +1,7 @@
 package com.flansmod.warforge.common;
 
-import com.flansmod.warforge.common.network.PacketSyncConfig;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.config.Configuration;
 
 import java.io.File;
@@ -50,7 +48,68 @@ public class WarForgeConfig {
     public static long SIEGE_BASE_TIME = 30;//Minutes;
     public static Map<Integer, Float> SIEGE_MOMENTUM_MULTI = new HashMap<>();
 
+import static com.flansmod.warforge.common.CommonProxy.YIELD_QUALITY_MULTIPLIER;
+import com.flansmod.warforge.common.network.PacketSyncConfig;
+import net.minecraft.block.Block;
+import net.minecraft.item.Item;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraftforge.common.config.Configuration;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static com.flansmod.warforge.client.util.ScreenSpaceUtil.ScreenPos;
+
+public class WarForgeConfig {
+    public static final String CATEGORY_CLAIMS = "Claims";
+
+	// Yields
+    public static final String CATEGORY_YIELDS = "Yields";
+    public static final String CATEGORY_SIEGES = "Sieges";
+
+	// Notoriety
+    public static final String CATEGORY_NOTORIETY = "Notoriety";
+
+	// Legacy
+    public static final String CATEGORY_LEGACY = "Legacy";
+    public static final String CATEGORY_CLIENT = "Client";
+
+	// Warps
+    public static final String CATEGORY_WARPS = "Warps";
+
+	// Config
+    public static Configuration configFile;
+	public static boolean DO_FANCY_RENDERING = true;
+	public static boolean SHOW_OPPONENT_BORDERS = true;
+	public static boolean SHOW_ALLY_BORDERS = true;
+
+	// Yields/ Vein
+	public static float YIELD_DAY_LENGTH = 1.0f; // In real-world hours
+	public static float YIELD_QUALITY_MULTIPLIER = 2;
+	public static long VEIN_MEMBER_DISPLAY_TIME_MS = 1000;
+
+	// Claims
+    public static boolean ENABLE_CITADEL_UPGRADES = false;
+    public static int[] CLAIM_DIM_WHITELIST = new int[]{0};
+    public static int CLAIM_STRENGTH_CITADEL = 15;
+    public static int CLAIM_STRENGTH_REINFORCED = 10;
+    public static int CLAIM_STRENGTH_BASIC = 5;
+    public static int SUPPORT_STRENGTH_CITADEL = 3;
+
+    public static int SUPPORT_STRENGTH_REINFORCED = 2;
+    public static int SUPPORT_STRENGTH_BASIC = 1;
+    public static int ATTACK_STRENGTH_SIEGE_CAMP = 1;
+    public static float LEECH_PROPORTION_SIEGE_CAMP = 0.25f;
+
+	// Sieges
+    public static boolean SIEGE_ENABLE_NEW_TIMER = true;
+    public static byte SIEGE_MOMENTUM_MAX = 4;
+    public static int SIEGE_MOMENTUM_DURATION = 60;  //Minutes
+    public static float SIEGE_BASE_TIME = 30;  //Minutes;
+    public static Map<Integer, Float> SIEGE_MOMENTUM_MULTI = new HashMap<>();
     public static int SIEGE_SWING_PER_DEFENDER_DEATH = 1;
     public static int SIEGE_SWING_PER_ATTACKER_DEATH = 1;
     public static int SIEGE_SWING_PER_DAY_ELAPSED_BASE = 1;
@@ -85,6 +144,7 @@ public class WarForgeConfig {
     public static int LEGACY_PER_DAY = 3;
     public static boolean LEGACY_USES_YIELD_TIMER = true;
     public static boolean MODERN_WARFARE_MODELS = false;
+
     // Wealth - Vault blocks
     public static String[] VAULT_BLOCK_IDS = new String[]{"minecraft:gold_block"};
     public static ArrayList<Block> VAULT_BLOCKS = new ArrayList<Block>();
@@ -95,10 +155,7 @@ public class WarForgeConfig {
     public static boolean BLOCK_ENDER_CHEST = false;
     public static boolean SHOW_YIELD_TIMERS = true;
     public static int CITADEL_MOVE_NUM_DAYS = 7;
-    public static boolean DO_FANCY_RENDERING = true;
-    public static boolean SHOW_OPPONENT_BORDERS = true;
-    public static boolean SHOW_ALLY_BORDERS = true;
-    public static long VEIN_MEMBER_DISPLAY_TIME_MS = 1000;
+
     public static boolean ENABLE_F_HOME_COMMAND = true;
     public static boolean ALLOW_F_HOME_BETWEEN_DIMENSIONS = false;
     public static boolean ENABLE_F_HOME_POTION_EFFECT = false; // TODO
@@ -112,7 +169,6 @@ public class WarForgeConfig {
     public static ScreenPos POS_VEIN_INDICATOR = ScreenPos.BOTTOM_LEFT;
     public static ScreenPos POS_TOAST_INDICATOR = ScreenPos.BOTTOM_LEFT;
     public static ScreenPos POS_SIEGE = ScreenPos.BOTTOM_LEFT;
-
 
     public static long FACTIONS_BOT_CHANNEL_ID = 799595436154683422L;
     // Permissions
@@ -237,7 +293,7 @@ public class WarForgeConfig {
 
         //New siege stuff
         SIEGE_MOMENTUM_DURATION = configFile.getInt("Siege momentum duration", "siege", 60, 1, Integer.MAX_VALUE, "Time the momentum lasts");
-        SIEGE_BASE_TIME = configFile.getInt("SiegeBaseTimeMinutes", "siege", 30, 1, Integer.MAX_VALUE,
+        SIEGE_BASE_TIME = configFile.getFloat("SiegeBaseTimeMinutes", "siege", 30, (float) 0.25, 100_000_000,
                 "Base siege duration in minutes.");
         // Momentum multipliers (define per momentum level)
         String[] defaults = new String[]{
@@ -267,9 +323,7 @@ public class WarForgeConfig {
 
         // Yield parameters
         YIELD_DAY_LENGTH = configFile.getFloat("Yield Day Length", CATEGORY_YIELDS, YIELD_DAY_LENGTH, 0.0001f, 100000f, "The length of time between yields, in real-world hours.");
-
         YIELD_QUALITY_MULTIPLIER = configFile.getFloat("Yield Quality Multiplier", CATEGORY_YIELDS, YIELD_QUALITY_MULTIPLIER, 1, 10000, "A number to be used to vary yield amounts for every vein's components, dividing by this for poor quality veins and multiplying for high quality. Set to 1 to effectively have no difference.");
-        //initializeVeins();
 
         // Notoriety
         NOTORIETY_PER_PLAYER_KILL = configFile.getInt("Notoriety gain per PVP kill", CATEGORY_NOTORIETY, NOTORIETY_PER_PLAYER_KILL, 0, 1024, "How much notoriety a player earns for their faction when killing another player");
@@ -311,7 +365,6 @@ public class WarForgeConfig {
         DO_FANCY_RENDERING = configFile.getBoolean("Enable WarForge Fancy Rendering", CATEGORY_CLIENT, DO_FANCY_RENDERING, "Controls whether or not fancy graphics will be enabled for this mod's rendering.");
         RANDOM_BORDER_REDRAW_DENOMINATOR = configFile.getInt("Random Border Redraw Denominator", CATEGORY_CLIENT, RANDOM_BORDER_REDRAW_DENOMINATOR, 1, Integer.MAX_VALUE, "Sets the bound on a random number generated, which when equal to 0 calls the border redraw. Effectively 1/this chance to redraw every frame");
 
-
         String botChannelString = configFile.getString("Discord Bot Channel ID", Configuration.CATEGORY_GENERAL, "" + FACTIONS_BOT_CHANNEL_ID, "https://github.com/Chikachi/DiscordIntegration/wiki/IMC-Feature");
         FACTIONS_BOT_CHANNEL_ID = Long.parseLong(botChannelString);
 
@@ -327,8 +380,9 @@ public class WarForgeConfig {
         compoundNBT.setBoolean("newSiegeTimer", SIEGE_ENABLE_NEW_TIMER);
         compoundNBT.setInteger("maxMomentum", SIEGE_MOMENTUM_MAX);
         compoundNBT.setInteger("timeMomentum", SIEGE_MOMENTUM_DURATION);
-        compoundNBT.setLong("siegeTime", SIEGE_BASE_TIME);
+        compoundNBT.setFloat("siegeTime", SIEGE_BASE_TIME);
         compoundNBT.setString("momentumMap", SIEGE_MOMENTUM_MULTI.toString());
+        compoundNBT.setFloat("yieldQualMult", YIELD_QUALITY_MULTIPLIER);
         packet.configNBT = compoundNBT.toString();
         return packet;
     }
