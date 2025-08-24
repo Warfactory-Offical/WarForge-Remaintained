@@ -189,6 +189,20 @@ public class GuiSiegeCamp {
 
         panel.child(IKey.str("Current momentum: " + momentum).asWidget()
                 .pos(WIDTH - (offset + 12 + 5 + 100), offset)
+                .tooltip(richTooltip -> {
+                    richTooltip.addLine("§6Momentum System§r");
+                    richTooltip.addLine("§7Momentum affects siege duration.§r");
+                    richTooltip.addLine("§7Gained via §aWON§7 sieges, lost on §cLOST§7 sieges.§r");
+                    richTooltip.addLine("§7Expires after §b" + WarForgeConfig.SIEGE_MOMENTUM_DURATION + " minutes§7.§r");
+
+                    richTooltip.addLine("§eLevel 0 "  + "§r: §a" + WarForgeConfig.SIEGE_BASE_TIME + " minutes§r");
+
+                    for (int level : WarForgeConfig.SIEGE_MOMENTUM_MULTI.keySet()) {
+                        float mult = WarForgeConfig.SIEGE_MOMENTUM_MULTI.get(level);
+                        long adjusted = Math.round(WarForgeConfig.SIEGE_BASE_TIME * mult); // convert ms → minutes
+                        richTooltip.addLine("§eLevel " + level + "§r: §a" + adjusted + " minutes§r");
+                    }
+                })
         );
 
         int id = 0;
@@ -235,7 +249,7 @@ public class GuiSiegeCamp {
                                 richTooltip.addLine(IKey.str("No ores in this chunk"));
                             }
                             if (chunkInfo.canAttack) {
-                                richTooltip.addLine(IKey.str("Attack time: " + WarForgeConfig.SIEGE_MOMENTUM_DURATION * WarForgeConfig.SIEGE_MOMENTUM_MULTI.get(momentum)).style(IKey.BOLD, IKey.RED));
+                                richTooltip.addLine(IKey.str("Attack time: " + WarForgeConfig.SIEGE_BASE_TIME * WarForgeConfig.SIEGE_MOMENTUM_MULTI.getOrDefault(momentum, 0f) + "minutes").style(IKey.BOLD, IKey.RED));
                                 richTooltip.addLine(IKey.str("Click to attack now!").style(IKey.BOLD, IKey.RED));
                             }
                         })

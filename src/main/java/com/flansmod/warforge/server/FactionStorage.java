@@ -896,18 +896,12 @@ public class FactionStorage {
         }
 
         //TODO: Make it all configurable
-        final long SIEGE_BASE_TIME = 30 * 60 * 1000;//30 min
+        final long SIEGE_BASE_TIME = WarForgeConfig.SIEGE_BASE_TIME;
         long maxTime;
         if (currentTimeStamp > attacking.getMomentumExpireryTimestamp())
             maxTime = SIEGE_BASE_TIME;
         else
-            maxTime = switch (attacking.getSiegeMomentum()) {
-                case 1 -> Math.round(SIEGE_BASE_TIME * 0.9f);
-                case 2 -> Math.round(SIEGE_BASE_TIME * 0.8f);
-                case 3 -> Math.round(SIEGE_BASE_TIME * 0.75f);
-                case 4 -> Math.round(SIEGE_BASE_TIME * 0.50f);
-                default -> SIEGE_BASE_TIME;
-            };
+            maxTime = (long) (SIEGE_BASE_TIME * WarForgeConfig.SIEGE_MOMENTUM_MULTI.getOrDefault(attacking.getSiegeMomentum(), 1f));
 
 
         Siege siege = new Siege(attacking.uuid, defendingFactionID, defendingPos, maxTime);
