@@ -895,7 +895,6 @@ public class FactionStorage {
             return;
         }
 
-        //TODO: Make it all configurable
         final long SIEGE_BASE_TIME = WarForgeConfig.SIEGE_BASE_TIME;
         long maxTime;
         if (currentTimeStamp > attacking.getMomentumExpireryTimestamp())

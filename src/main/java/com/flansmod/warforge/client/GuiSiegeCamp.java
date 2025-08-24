@@ -195,7 +195,7 @@ public class GuiSiegeCamp {
                     richTooltip.addLine("§7Gained via §aWON§7 sieges, lost on §cLOST§7 sieges.§r");
                     richTooltip.addLine("§7Expires after §b" + WarForgeConfig.SIEGE_MOMENTUM_DURATION + " minutes§7.§r");
 
-                    richTooltip.addLine("§eLevel 0 "  + "§r: §a" + WarForgeConfig.SIEGE_BASE_TIME + " minutes§r");
+                    richTooltip.addLine("§eLevel 0"  + "§r: §a" + WarForgeConfig.SIEGE_BASE_TIME + " minutes§r");
 
                     for (int level : WarForgeConfig.SIEGE_MOMENTUM_MULTI.keySet()) {
                         float mult = WarForgeConfig.SIEGE_MOMENTUM_MULTI.get(level);
