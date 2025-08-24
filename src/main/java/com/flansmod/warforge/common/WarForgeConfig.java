@@ -79,7 +79,7 @@ public class WarForgeConfig {
     public static float SIEGE_INFO_RADIUS = 200f;
     public static int SIEGE_SWING_PER_DEFENDER_FLAG = 1;
     public static int SIEGE_SWING_PER_ATTACKER_FLAG = 1;
-    public static int SIEGE_DIFFICULTY_PER_DEFENDER_FLAG = 3;
+    public static int SIEGE_DIFF_PER_MEMBER = 1;
     public static boolean SIEGE_CAPTURE = false;
     public static int SIEGE_COOLDOWN_FAIL = 30; // in minutes;
     public static float FLAG_COOLDOWN = 1f; // In minutes
@@ -247,7 +247,7 @@ public class WarForgeConfig {
         SIEGE_COOLDOWN_FAIL = configFile.getInt("Cooldown between sieges after failure", CATEGORY_SIEGES, SIEGE_COOLDOWN_FAIL, 0, 100000, "Cooldown between sieges, in minutes");
         FLAG_COOLDOWN = configFile.getFloat("Cooldown between Flag move", CATEGORY_SIEGES, FLAG_COOLDOWN, 0, 100000f, "Cooldown between flag moves, in minutes");
         SIEGE_SWING_PER_ATTACKER_FLAG = configFile.getInt("Siege Swing Per Attacker Flag", CATEGORY_SIEGES, SIEGE_SWING_PER_ATTACKER_FLAG, 0, 1024, "How much the siege swings per attacker flag per day");
-        SIEGE_DIFFICULTY_PER_DEFENDER_FLAG = configFile.getInt("Siege Difficulty Reinforcement Per Defender Flag", CATEGORY_SIEGES, SIEGE_DIFFICULTY_PER_DEFENDER_FLAG, 0, 1024, "How much having a defender flag at a base reinforces the difficulty of the siege for the attackers");
+        SIEGE_DIFF_PER_MEMBER = configFile.getInt("Siege Difficulty Reinforcement Per Defender Flag", CATEGORY_SIEGES, SIEGE_DIFF_PER_MEMBER, 0, 1024, "How much having a defender flag at a base reinforces the difficulty of the siege for the attackers");
         SIEGE_CAPTURE = configFile.getBoolean("Siege Captures", CATEGORY_SIEGES, SIEGE_CAPTURE, "Does a successful siege convert the claim");
         SIEGE_ENABLE_NEW_TIMER = configFile.getBoolean("Enable Per-Siege timer", CATEGORY_SIEGES, SIEGE_ENABLE_NEW_TIMER, "Enable new per siege time system, instead of a central siege day, each siege has its own timer, starting with the siege");
 

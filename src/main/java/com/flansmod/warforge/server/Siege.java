@@ -1,5 +1,6 @@
 package com.flansmod.warforge.server;
 
+import com.flansmod.warforge.api.interfaces.IClaimStrengthModifier;
 import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.IClaim;
@@ -16,6 +17,8 @@ import net.minecraft.nbt.NBTTagIntArray;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
@@ -36,6 +39,7 @@ public class Siege {
     //TODO: New Kill requirement math: players in team * type of claim (2 - basic, 3 - reinforced)
     // This is defined by the chunk we are attacking and what type it is
     public int mBaseDifficulty = 5;
+
     /**
      * The base progress comes from passive sources and must be recalculated whenever checking progress.
      * Sources for the attackers are:
@@ -45,6 +49,7 @@ public class Siege {
      * - Defender's flags on the defended claim
      */
     private int mExtraDifficulty = 0;
+
     /**
      * The attack progress is accumulated over time based on active actions in the area of the siege
      * Sources for the attackers are:
@@ -262,15 +267,9 @@ public class Siege {
             return;
         }
 
-        mExtraDifficulty = 0;
-
-        // Add a point for each defender flag in place
-        for (HashMap.Entry<UUID, PlayerData> kvp : defenders.members.entrySet()) {
-            //
-            if (kvp.getValue().flagPosition.equals(defendingClaim)) {
-                mExtraDifficulty += WarForgeConfig.SIEGE_DIFFICULTY_PER_DEFENDER_FLAG;
-            }
-        }
+		// Add a point for each defender flag in place
+        mExtraDifficulty = defenders.members.entrySet().size() * WarForgeConfig.SIEGE_DIFF_PER_MEMBER;
+		if (mExtraDifficulty > 5) { mExtraDifficulty = 5; }  // cap at 5
 
         DimChunkPos defendingChunk = defendingClaim.toChunkPos();
         for (EnumFacing direction : EnumFacing.HORIZONTALS) {
@@ -297,6 +296,26 @@ public class Siege {
                 }
             }
         }
+
+		chunkCheck:
+		for (DimBlockPos blockPos : defenders.claims.keySet()) {
+			if (defendingClaim.dim != blockPos.dim) continue;
+			var teMap = WarForgeMod.MC_SERVER.getWorld(defendingClaim.dim).getChunk(blockPos).getTileEntityMap();
+			for (TileEntity te : teMap.values()) {
+				if (te instanceof IClaimStrengthModifier claimModifier && claimModifier.isActive()) {
+					ChunkPos pos = new ChunkPos(te.getPos());
+					for (Vec3i vec : claimModifier.getEffectArea()) {
+						ChunkPos affectedChunk = new ChunkPos(pos.x + vec.getX(), pos.z + vec.getZ());
+						if (affectedChunk.equals((ChunkPos) blockPos.toChunkPos())) {
+							mExtraDifficulty += claimModifier.getClaimContribution();
+							if (!claimModifier.canStack())
+								break chunkCheck;
+						}
+					}
+
+				}
+			}
+		}
     }
 
     // called when siege is ended for any reason and not detected as completed normally
