@@ -1,7 +1,7 @@
 package com.flansmod.warforge.common.network;
 
 import com.cleanroommc.modularui.factory.ClientGUI;
-import com.flansmod.warforge.api.Quality;
+import com.flansmod.warforge.api.vein.Quality;
 import com.flansmod.warforge.client.ClientProxy;
 import com.flansmod.warforge.client.GuiSiegeCamp;
 import com.flansmod.warforge.common.util.DimBlockPos;
@@ -22,7 +22,6 @@ public class PacketSiegeCampInfo extends PacketBase {
     public List<SiegeCampAttackInfo> mPossibleAttacks = new ArrayList<>();
     public byte momentum;
 
-
     @Override
     public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) {
         data.writeInt(mSiegeCampPos.dim);
@@ -31,7 +30,6 @@ public class PacketSiegeCampInfo extends PacketBase {
         data.writeInt(mSiegeCampPos.getZ());
 
         data.writeByte(mPossibleAttacks.size());
-
         for (SiegeCampAttackInfo info : mPossibleAttacks) {
             data.writeBoolean(info.canAttack);
             writeUUID(data, info.mFactionUUID);
@@ -39,12 +37,13 @@ public class PacketSiegeCampInfo extends PacketBase {
             data.writeByte(info.mOffset.getX());
             data.writeByte(info.mOffset.getZ());
             data.writeInt(info.mFactionColour);
-            data.writeInt(info.mWarforgeVein != null ? info.mWarforgeVein.getID() : -1);
+            data.writeShort(info.mWarforgeVein != null ? info.mWarforgeVein.getId() : -1);
 
             byte oreQualOrd = 0;
             if (info.mOreQuality != null) { oreQualOrd = (byte) info.mOreQuality.ordinal(); }
             data.writeByte(oreQualOrd);
         }
+
         data.writeByte(momentum);
     }
 
@@ -68,7 +67,7 @@ public class PacketSiegeCampInfo extends PacketBase {
             int dz = data.readByte();
             info.mOffset = new Vec3i(dx, 0, dz);
             info.mFactionColour = data.readInt();
-            int possibleVein = data.readInt();
+            short possibleVein = data.readShort();
             info.mWarforgeVein = possibleVein < 0 ? null : ClientProxy.VEIN_ENTRIES.get(possibleVein);
             info.mOreQuality = Quality.values()[data.readByte()];
 

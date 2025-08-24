@@ -15,6 +15,7 @@ import com.flansmod.warforge.common.network.PacketStartSiege;
 import com.flansmod.warforge.common.network.SiegeCampAttackInfo;
 import com.flansmod.warforge.common.network.SiegeCampAttackInfoRender;
 import com.flansmod.warforge.common.util.DimBlockPos;
+import com.flansmod.warforge.server.StackComparable;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
@@ -241,18 +242,17 @@ public class GuiSiegeCamp {
                             if (chunkInfo.mWarforgeVein != null) {
 
                                 richTooltip.addLine(new IngredientDrawable(
-                                        Arrays.stream(chunkInfo.mWarforgeVein.component_ids)
-                                                .map(ForgeRegistries.ITEMS::getValue)
+                                        chunkInfo.mWarforgeVein.compIds.stream()
+                                                .map(StackComparable::toItem)
                                                 .filter(Objects::nonNull)
-                                                .map(ItemStack::new)
                                                 .toArray(ItemStack[]::new)
                                 ).asIcon().size(25));
-                                richTooltip.addLine(IKey.str("Ore In the chunk: " + I18n.format(chunkInfo.mWarforgeVein.translation_key, I18n.format(chunkInfo.mOreQuality.getTranslationKey()))));
+                                richTooltip.addLine(IKey.str("Ore In the chunk: " + I18n.format(chunkInfo.mWarforgeVein.translationKey, I18n.format(chunkInfo.mOreQuality.getTranslationKey()))));
                             } else {
                                 richTooltip.addLine(IKey.str("No ores in this chunk"));
                             }
                             if (chunkInfo.canAttack) {
-                                richTooltip.addLine(IKey.str("Attack time: " + WarForgeConfig.SIEGE_BASE_TIME * WarForgeConfig.SIEGE_MOMENTUM_MULTI.getOrDefault(momentum, 1f) + "minutes").style( IKey.RED));
+                                richTooltip.addLine(IKey.str("Attack time: " + WarForgeConfig.SIEGE_BASE_TIME * WarForgeConfig.SIEGE_MOMENTUM_MULTI.getOrDefault(momentum, 1f) + " minutes").style( IKey.RED));
                                 richTooltip.addLine(IKey.str("Click to attack now!").style(IKey.BOLD, IKey.RED));
                             }
                         })

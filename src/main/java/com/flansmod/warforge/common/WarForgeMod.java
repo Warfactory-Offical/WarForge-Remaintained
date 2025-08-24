@@ -190,7 +190,7 @@ public class WarForgeMod implements ILateMixinLoader {
     public void preInit(FMLPreInitializationEvent event) {
         LOGGER = event.getModLog();
 		//Load config
-        WarForgeConfig.SyncConfig(event.getSuggestedConfigurationFile());
+        WarForgeConfig.syncConfig(event.getSuggestedConfigurationFile());
 		
 		timestampOfFirstDay = System.currentTimeMillis();
 		numberOfSiegeDaysTicked = 0L;
@@ -451,13 +451,13 @@ public class WarForgeMod implements ILateMixinLoader {
         ObjectIntPair<UUID> conqueredChunkInfo = FACTIONS.conqueredChunks.get(pos);
         if (conqueredChunkInfo != null) {
             // remove invalid entries if necessary, and if not then do actual comparison
-            if (conqueredChunkInfo.getLeft() == null || conqueredChunkInfo.getLeft().equals(Faction.nullUuid) || FACTIONS.getFaction(conqueredChunkInfo.getLeft()) == null) {
+            if (conqueredChunkInfo.getObj() == null || conqueredChunkInfo.getObj().equals(Faction.nullUuid) || FACTIONS.getFaction(conqueredChunkInfo.getObj()) == null) {
                 WarForgeMod.LOGGER.atError().log("Found invalid conquered chunk at " + pos + "; removing and permitting placement.");
                 FACTIONS.conqueredChunks.remove(pos);
-            } else if (!conqueredChunkInfo.getLeft().equals(playerFaction.uuid)) {
+            } else if (!conqueredChunkInfo.getObj().equals(playerFaction.uuid)) {
                 player.sendMessage(new TextComponentTranslation("warforge.info.chunk_is_conquered",
-                        WarForgeMod.FACTIONS.getFaction(FACTIONS.conqueredChunks.get(pos).getLeft()).name,
-                        TimeHelper.formatTime(FACTIONS.conqueredChunks.get(pos).getRight())));
+                        WarForgeMod.FACTIONS.getFaction(FACTIONS.conqueredChunks.get(pos).getObj()).name,
+                        TimeHelper.formatTime(FACTIONS.conqueredChunks.get(pos).getInteger())));
                 event.setCanceled(true);
                 return;
             }

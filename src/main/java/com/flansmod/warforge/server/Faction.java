@@ -1,6 +1,5 @@
 package com.flansmod.warforge.server;
 
-import com.flansmod.warforge.common.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.IClaim;

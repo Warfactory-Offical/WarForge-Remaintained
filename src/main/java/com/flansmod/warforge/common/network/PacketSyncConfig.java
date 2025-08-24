@@ -76,13 +76,17 @@ public class PacketSyncConfig extends  PacketBase {
         } catch (Exception e) {
             WarForgeMod.LOGGER.error("Failed to parse momentumMap from config sync: " + mapString, e);
         }
+
+        WarForgeConfig.YIELD_QUALITY_MULTIPLIER = compound.getFloat("yieldQualMult");
+
         WarForgeConfig.SIEGE_MOMENTUM_MULTI.clear();
         WarForgeConfig.SIEGE_MOMENTUM_MULTI.putAll(parsedMap);
 
         WarForgeMod.LOGGER.info("Synced siege config: baseTime=" + WarForgeConfig.SIEGE_BASE_TIME
                 + ", maxMomentum=" + WarForgeConfig.SIEGE_MOMENTUM_MAX
                 + ", duration=" + WarForgeConfig.SIEGE_MOMENTUM_DURATION
-                + ", multipliers=" + WarForgeConfig.SIEGE_MOMENTUM_MULTI);
+                + ", multipliers=" + WarForgeConfig.SIEGE_MOMENTUM_MULTI
+                + ", yieldQualMult=" + WarForgeConfig.YIELD_QUALITY_MULTIPLIER);
     }
 
     public boolean canUseCompression() {return true;}

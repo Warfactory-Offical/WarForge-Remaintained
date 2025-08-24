@@ -23,10 +23,7 @@ import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.model.ModelBanner;
-import net.minecraft.client.renderer.GLAllocation;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.I18n;
@@ -504,6 +501,7 @@ public class ClientTickHandler {
 		float defendB = (float)(infoToRender.defendingColour & 255) / 255.0F;
 
 		// Render Background and Bars
+        var pos = WarForgeConfig.POS_SIEGE;
 		int xText = ScreenSpaceUtil.getX(pos, 256);  // 256 = width of bar
 		int yText = ScreenSpaceUtil.getY(pos, 40);   // 40 = total height (bar + text)
 
@@ -606,7 +604,6 @@ public class ClientTickHandler {
         GlStateManager.disableAlpha();
         ScreenSpaceUtil.incrementY(pos, totalHeight + 14 + extraPadding);
     }
-
 
     private void updateRenderData() {
         World world = Minecraft.getMinecraft().world;

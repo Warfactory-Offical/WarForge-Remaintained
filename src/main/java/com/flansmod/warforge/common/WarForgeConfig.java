@@ -67,8 +67,8 @@ public class WarForgeConfig {
 	// Sieges
     public static boolean SIEGE_ENABLE_NEW_TIMER = true;
     public static byte SIEGE_MOMENTUM_MAX = 4;
-    public static int SIEGE_MOMENTUM_DURATION = 60;//Minutes
-    public static long SIEGE_BASE_TIME = 30;//Minutes;
+    public static int SIEGE_MOMENTUM_DURATION = 60;  //Minutes
+    public static float SIEGE_BASE_TIME = 30;  //Minutes;
     public static Map<Integer, Float> SIEGE_MOMENTUM_MULTI = new HashMap<>();
     public static int SIEGE_SWING_PER_DEFENDER_DEATH = 1;
     public static int SIEGE_SWING_PER_ATTACKER_DEATH = 1;
@@ -253,7 +253,7 @@ public class WarForgeConfig {
 
         //New siege stuff
         SIEGE_MOMENTUM_DURATION = configFile.getInt("Siege momentum duration", "siege", 60, 1, Integer.MAX_VALUE, "Time the momentum lasts");
-        SIEGE_BASE_TIME = configFile.getInt("SiegeBaseTimeMinutes", "siege", 30, 1, Integer.MAX_VALUE,
+        SIEGE_BASE_TIME = configFile.getFloat("SiegeBaseTimeMinutes", "siege", 30, (float) 0.25, 100_000_000,
                 "Base siege duration in minutes.");
         // Momentum multipliers (define per momentum level)
         String[] defaults = new String[]{
@@ -325,7 +325,6 @@ public class WarForgeConfig {
         DO_FANCY_RENDERING = configFile.getBoolean("Enable WarForge Fancy Rendering", CATEGORY_CLIENT, DO_FANCY_RENDERING, "Controls whether or not fancy graphics will be enabled for this mod's rendering.");
         RANDOM_BORDER_REDRAW_DENOMINATOR = configFile.getInt("Random Border Redraw Denominator", CATEGORY_CLIENT, RANDOM_BORDER_REDRAW_DENOMINATOR, 1, Integer.MAX_VALUE, "Sets the bound on a random number generated, which when equal to 0 calls the border redraw. Effectively 1/this chance to redraw every frame");
 
-
         String botChannelString = configFile.getString("Discord Bot Channel ID", Configuration.CATEGORY_GENERAL, "" + FACTIONS_BOT_CHANNEL_ID, "https://github.com/Chikachi/DiscordIntegration/wiki/IMC-Feature");
         FACTIONS_BOT_CHANNEL_ID = Long.parseLong(botChannelString);
 
@@ -341,8 +340,9 @@ public class WarForgeConfig {
         compoundNBT.setBoolean("newSiegeTimer", SIEGE_ENABLE_NEW_TIMER);
         compoundNBT.setInteger("maxMomentum", SIEGE_MOMENTUM_MAX);
         compoundNBT.setInteger("timeMomentum", SIEGE_MOMENTUM_DURATION);
-        compoundNBT.setLong("siegeTime", SIEGE_BASE_TIME);
+        compoundNBT.setFloat("siegeTime", SIEGE_BASE_TIME);
         compoundNBT.setString("momentumMap", SIEGE_MOMENTUM_MULTI.toString());
+        compoundNBT.setFloat("yieldQualMult", YIELD_QUALITY_MULTIPLIER);
         packet.configNBT = compoundNBT.toString();
         return packet;
     }

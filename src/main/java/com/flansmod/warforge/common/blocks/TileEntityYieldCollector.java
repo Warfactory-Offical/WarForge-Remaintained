@@ -4,10 +4,10 @@ import akka.japi.Pair;
 import com.flansmod.warforge.api.vein.Quality;
 import com.flansmod.warforge.api.vein.Vein;
 import com.flansmod.warforge.api.vein.init.VeinUtils;
-import com.flansmod.warforge.common.DimBlockPos;
-import com.flansmod.warforge.common.DimChunkPos;
-import com.flansmod.warforge.common.InventoryHelper;
 import com.flansmod.warforge.common.WarForgeMod;
+import com.flansmod.warforge.common.util.DimBlockPos;
+import com.flansmod.warforge.common.util.DimChunkPos;
+import com.flansmod.warforge.common.util.InventoryHelper;
 import com.flansmod.warforge.server.Faction;
 import com.flansmod.warforge.server.StackComparable;
 import net.minecraft.entity.player.EntityPlayer;
@@ -46,7 +46,7 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 		claims.replace(this.getClaimPos(), 0);
 
 		DimChunkPos currPos = new DimChunkPos(world.provider.getDimension(), getPos());
-		if (!VEIN_HANDLER.dimHasVeins(currPos.mDim)) { return; }
+		if (!VEIN_HANDLER.dimHasVeins(currPos.dim)) { return; }
 
 		// get vein data
 		Pair<Vein, Quality> veinInfo = VEIN_HANDLER.getVein(world.provider.getDimension(), currPos.x, currPos.z, world.getSeed());
@@ -63,7 +63,7 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 			int numItems = 0;  // figure out how many items of this component are needed
 
 			// determine yield amount based on quality and component base yield
-			ArrayList<short[]> subCompYieldInfos = VeinUtils.getYieldInfo(currComp, veinInfo, currPos.mDim);
+			ArrayList<short[]> subCompYieldInfos = VeinUtils.getYieldInfo(currComp, veinInfo, currPos.dim);
 
 			// yield this component the appropriate number of times
 			for (int j = 0; j < numYields; ++j) {

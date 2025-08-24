@@ -35,15 +35,14 @@ public class SiegeCampAttackInfoRender extends SiegeCampAttackInfo {
         if (mWarforgeVein == null) return ;
         TextureAtlasSprite sprite = null;
 
-        ResourceLocation resLoc = mWarforgeVein.component_ids[0];
-        Item item = ForgeRegistries.ITEMS.getValue(resLoc);
-
-        if (item != null) {
-            ItemStack stack = new ItemStack(item);
+        ItemStack stack = null;
+        var compIt = mWarforgeVein.compIds.iterator();
+        if (compIt.hasNext()) { stack = compIt.next().toItem(); }
 
 
-            if (item instanceof ItemBlock) {
-                Block block = ((ItemBlock) item).getBlock();
+        if (stack != null) {
+            if (stack.getItem() instanceof ItemBlock) {
+                Block block = ((ItemBlock) stack.getItem()).getBlock();
                 IBlockState state = block.getDefaultState();
                 IBakedModel model = Minecraft.getMinecraft().getBlockRendererDispatcher().getModelForState(state);
 
@@ -68,6 +67,7 @@ public class SiegeCampAttackInfoRender extends SiegeCampAttackInfo {
 
 
         }
+
         veinSprite = sprite;
     }
 }

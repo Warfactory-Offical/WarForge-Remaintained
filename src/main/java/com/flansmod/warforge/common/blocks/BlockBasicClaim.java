@@ -2,11 +2,10 @@ package com.flansmod.warforge.common.blocks;
 
 import com.flansmod.warforge.common.blocks.models.RotatableStateMapper;
 import com.flansmod.warforge.common.CommonProxy;
-import com.flansmod.warforge.common.DimChunkPos;
+import com.flansmod.warforge.common.util.DimChunkPos;
 import com.flansmod.warforge.common.Content;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketFactionInfo;
-import com.flansmod.warforge.common.util.DimChunkPos;
 import com.flansmod.warforge.common.util.IDynamicModels;
 import com.flansmod.warforge.server.Faction;
 import lombok.SneakyThrows;
