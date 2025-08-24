@@ -60,6 +60,7 @@ public class GuiSiegeCamp {
         threads.add(new Thread(() ->
                 computeAdjacency(possibleAttacks, radius, adjesencyArray))
         );
+
         threads.get(0).start();
         Map<ChunkPos, Chunk> chunks = new LinkedHashMap<>();
         for (int x = centerX - radius; x <= centerX + radius; x++) {
@@ -68,6 +69,7 @@ public class GuiSiegeCamp {
                 if (chunk != null) chunks.put(chunk.getPos(), chunk);
             }
         }
+
         int[] minMax = chunks.values().parallelStream()
                 .map(chunk -> {
                     int localMin = Integer.MAX_VALUE;
@@ -161,6 +163,7 @@ public class GuiSiegeCamp {
             if (textureAction != null)
                 textureAction.register();
         }
+
         int offset = 6;
         int VERT_OFFSET = 13;
         int WIDTH = (16 * 4) * 5 + (2 * offset);
@@ -183,6 +186,7 @@ public class GuiSiegeCamp {
                 .height(12)
                 .pos(WIDTH - offset * 3, (offset / 2) + 1)
         );
+
         panel.child(IKey.str("Select chunk to siege").asWidget()
                 .pos(offset, offset)
         );
@@ -217,7 +221,7 @@ public class GuiSiegeCamp {
                         .onMousePressed(mouseButton -> {
                             if ((chunkInfo.mOffset.getX() == 0 && chunkInfo.mOffset.getZ() == 0) && !chunkInfo.canAttack)
                                 return false;
-                            player.sendMessage(new TextComponentString(chunkInfo.mOffset.toString()));
+                            //player.sendMessage(new TextComponentString(chunkInfo.mOffset.toString()));  debug vec dis
                             PacketStartSiege siegePacket = new PacketStartSiege();
 
                             siegePacket.mSiegeCampPos = siegeCampPos;
@@ -243,8 +247,7 @@ public class GuiSiegeCamp {
                                                 .map(ItemStack::new)
                                                 .toArray(ItemStack[]::new)
                                 ).asIcon().size(25));
-                                richTooltip.addLine(IKey.str("Ore In the chunk: " + I18n.format(chunkInfo.mWarforgeVein.translation_key)));
-                                richTooltip.addLine(IKey.str("Quality: " + I18n.format(chunkInfo.mOreQuality.getTranslationKey())));
+                                richTooltip.addLine(IKey.str("Ore In the chunk: " + I18n.format(chunkInfo.mWarforgeVein.translation_key, I18n.format(chunkInfo.mOreQuality.getTranslationKey()))));
                             } else {
                                 richTooltip.addLine(IKey.str("No ores in this chunk"));
                             }

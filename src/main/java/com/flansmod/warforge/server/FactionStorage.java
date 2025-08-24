@@ -151,6 +151,8 @@ public class FactionStorage {
     }
 
     public Faction getFaction(UUID factionID) {
+        if (factionID == null) { return null; }  // fixes NPE when clicking on random chunk to begin siege
+
         if (factionID.equals(Faction.nullUuid))
             return null;
 
@@ -878,14 +880,14 @@ public class FactionStorage {
         Faction defending = getFaction(defendingFactionID);
 
         if (defending == null) {
-            factionOfficer.sendMessage(new TextComponentString("Could not find a target faction at that poisition"));
+            factionOfficer.sendMessage(new TextComponentString("Could not find a target faction at that position"));
             return;
         }
 
         DimBlockPos defendingPos = defending.getSpecificPosForClaim(defendingChunk);
 
         if (IsSiegeInProgress(defendingPos.toChunkPos())) {
-            factionOfficer.sendMessage(new TextComponentString("That position is already being sieged"));
+            factionOfficer.sendMessage(new TextComponentString("That position is already under siege"));
             return;
         }
 
