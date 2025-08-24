@@ -1,5 +1,6 @@
 package com.flansmod.warforge.server;
 
+import com.flansmod.warforge.api.interfaces.IClaimStrengthModifier;
 import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.IClaim;
@@ -16,6 +17,8 @@ import net.minecraft.nbt.NBTTagIntArray;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
@@ -126,7 +129,9 @@ public class Siege {
         boolean endByAttack = GetAttackProgress() >= GetAttackSuccessThreshold();
         boolean endByDef = GetDefenceProgress() >= 5;
 
-        if (WarForgeConfig.SIEGE_ENABLE_NEW_TIMER) { endByAttack = endByAttack || timeElapsed == 0; }
+        if (WarForgeConfig.SIEGE_ENABLE_NEW_TIMER) {
+            endByAttack = endByAttack || timeElapsed == 0;
+        }
         TileEntitySiegeCamp abandonedCamp = hasAbandonedSieges();
 
         // if a siege could complete, but an abandoned camp is stopping it from happening, notify the attackers
@@ -152,11 +157,15 @@ public class Siege {
             TileEntity siegeCamp = WarForgeMod.MC_SERVER.getWorld(siegeCampPos.dim).getTileEntity(siegeCampPos.toRegularPos());
             if (siegeCamp instanceof TileEntitySiegeCamp) {
                 int attackerAbandonTimer = ((TileEntitySiegeCamp) siegeCamp).getAttackerAbandonTickTimer();
-                if (attackerAbandonTimer > 0) { abandonedCamps.add((TileEntitySiegeCamp) siegeCamp); }
+                if (attackerAbandonTimer > 0) {
+                    abandonedCamps.add((TileEntitySiegeCamp) siegeCamp);
+                }
             }
         }
 
-        if (abandonedCamps.size() == 0) { return null; }
+        if (abandonedCamps.size() == 0) {
+            return null;
+        }
 
         int largestAbandonTimer = 0;
         var largestAbandonTE = abandonedCamps.get(0);
@@ -265,11 +274,10 @@ public class Siege {
         mExtraDifficulty = 0;
 
         // Add a point for each defender flag in place
-        for (HashMap.Entry<UUID, PlayerData> kvp : defenders.members.entrySet()) {
-            //
-            if (kvp.getValue().flagPosition.equals(defendingClaim)) {
-                mExtraDifficulty += WarForgeConfig.SIEGE_DIFFICULTY_PER_DEFENDER_FLAG;
-            }
+        for (HashMap.Entry<UUID, PlayerData> ignored : defenders.members.entrySet()) {
+            if (mExtraDifficulty >= 5) break;
+
+            mExtraDifficulty += WarForgeConfig.SIEGE_DIFF_PER_MEMBER;
         }
 
         DimChunkPos defendingChunk = defendingClaim.toChunkPos();
@@ -294,6 +302,26 @@ public class Siege {
                     if (te instanceof IClaim) {
                         mExtraDifficulty -= ((IClaim) te).getSupportStrength();
                     }
+                }
+            }
+        }
+
+        chunkCheck:
+        for (DimBlockPos blockPos : defenders.claims.keySet()) {
+            if (defendingClaim.dim != blockPos.dim) continue;
+            var teMap = WarForgeMod.MC_SERVER.getWorld(defendingClaim.dim).getChunk(blockPos).getTileEntityMap();
+            for (TileEntity te : teMap.values()) {
+                if (te instanceof IClaimStrengthModifier claimModifier && claimModifier.isActive()) {
+                    ChunkPos pos = new ChunkPos(te.getPos());
+                    for (Vec3i vec : claimModifier.getEffectArea()) {
+                        ChunkPos affectedChunk = new ChunkPos(pos.x + vec.getX(), pos.z + vec.getZ());
+                        if (affectedChunk.equals((ChunkPos) blockPos.toChunkPos())) {
+                            mExtraDifficulty += claimModifier.getClaimContribution();
+                            if (!claimModifier.canStack())
+                                break chunkCheck;
+                        }
+                    }
+
                 }
             }
         }
