@@ -28,10 +28,8 @@ import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.biome.BiomeColorHelper;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -200,11 +198,12 @@ public class GuiSiegeCamp {
                     richTooltip.addLine("§7Gained via §aWON§7 sieges, lost on §cLOST§7 sieges.§r");
                     richTooltip.addLine("§7Expires after §b" + WarForgeConfig.SIEGE_MOMENTUM_DURATION + " minutes§7.§r");
 
-                    richTooltip.addLine("§eLevel 0"  + "§r: §a" + WarForgeConfig.SIEGE_BASE_TIME + " minutes§r");
+                    //FIXME
+                    richTooltip.addLine("§eLevel 0"  + "§r: §a" + (float)WarForgeConfig.SIEGE_MOMENTUM_TIME.get((byte)0)/60 + " minutes§r");
 
-                    for (int level : WarForgeConfig.SIEGE_MOMENTUM_MULTI.keySet()) {
-                        float mult = WarForgeConfig.SIEGE_MOMENTUM_MULTI.get(level);
-                        long adjusted = Math.round(WarForgeConfig.SIEGE_BASE_TIME * mult); // convert ms → minutes
+                    for (byte level : WarForgeConfig.SIEGE_MOMENTUM_TIME.keySet()) {
+                        float time = WarForgeConfig.SIEGE_MOMENTUM_TIME.get(level);
+                        long adjusted = Math.round(time/60); // convert ms → minutes
                         richTooltip.addLine("§eLevel " + level + "§r: §a" + adjusted + " minutes§r");
                     }
                 })
@@ -252,7 +251,7 @@ public class GuiSiegeCamp {
                                 richTooltip.addLine(IKey.str("No ores in this chunk"));
                             }
                             if (chunkInfo.canAttack) {
-                                richTooltip.addLine(IKey.str("Attack time: " + WarForgeConfig.SIEGE_BASE_TIME * WarForgeConfig.SIEGE_MOMENTUM_MULTI.getOrDefault(momentum, 1f) + " minutes").style( IKey.RED));
+                                richTooltip.addLine(IKey.str("Attack time: " + WarForgeConfig.SIEGE_MOMENTUM_TIME.get(momentum) + " minutes").style( IKey.RED));
                                 richTooltip.addLine(IKey.str("Click to attack now!").style(IKey.BOLD, IKey.RED));
                             }
                         })

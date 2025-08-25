@@ -9,7 +9,6 @@ import com.flansmod.warforge.common.network.PacketSiegeCampProgressUpdate;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
 import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.util.DimChunkPos;
-import com.flansmod.warforge.server.Faction.PlayerData;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
@@ -24,7 +23,6 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.UUID;
 
 public class Siege {
@@ -36,8 +34,6 @@ public class Siege {
     public long siegeEndTimeStamp = 999L;
     public boolean finished = false; //Used for controlling whenever siege has been concluded, Does not require saving
 
-    //TODO: New Kill requirement math: players in team * type of claim (2 - basic, 3 - reinforced)
-    // This is defined by the chunk we are attacking and what type it is
     public int mBaseDifficulty = 5;
 
     /**
@@ -130,7 +126,6 @@ public class Siege {
         boolean endByAttack = GetAttackProgress() >= GetAttackSuccessThreshold();
         boolean endByDef = GetDefenceProgress() >= 5;
 
-        if (WarForgeConfig.SIEGE_ENABLE_NEW_TIMER) { endByAttack = endByAttack || timeElapsed == 0; }
         TileEntitySiegeCamp abandonedCamp = hasAbandonedSieges();
 
         // if a siege could complete, but an abandoned camp is stopping it from happening, notify the attackers
@@ -156,11 +151,15 @@ public class Siege {
             TileEntity siegeCamp = WarForgeMod.MC_SERVER.getWorld(siegeCampPos.dim).getTileEntity(siegeCampPos.toRegularPos());
             if (siegeCamp instanceof TileEntitySiegeCamp) {
                 int attackerAbandonTimer = ((TileEntitySiegeCamp) siegeCamp).getAttackerAbandonTickTimer();
-                if (attackerAbandonTimer > 0) { abandonedCamps.add((TileEntitySiegeCamp) siegeCamp); }
+                if (attackerAbandonTimer > 0) {
+                    abandonedCamps.add((TileEntitySiegeCamp) siegeCamp);
+                }
             }
         }
 
-        if (abandonedCamps.size() == 0) { return null; }
+        if (abandonedCamps.size() == 0) {
+            return null;
+        }
 
         int largestAbandonTimer = 0;
         var largestAbandonTE = abandonedCamps.get(0);
@@ -221,7 +220,13 @@ public class Siege {
     }
 
     public void updateSiegeTimer() {
-        timeElapsed = timeElapsed - 20L;//One tick
+        timeElapsed = timeElapsed - 20L;//One second
+        if (timeElapsed <= 0) {
+            mAttackProgress += WarForgeConfig.SIEGE_SWING_PER_DAY_ELAPSED_BASE;
+            timeElapsed = WarForgeConfig.SIEGE_MOMENTUM_TIME.get(WarForgeMod.FACTIONS.getFaction(attackingFaction).getSiegeMomentum());
+            siegeEndTimeStamp = System.currentTimeMillis() + timeElapsed;
+            WarForgeMod.FACTIONS.sendSiegeInfoToNearby(defendingClaim.toChunkPos());
+        }
     }
 
     public void AdvanceDay() {
@@ -266,9 +271,11 @@ public class Siege {
             return;
         }
 
-		// Add a point for each defender flag in place
+        // Add a point for each defender flag in place
         mExtraDifficulty = defenders.members.entrySet().size() * WarForgeConfig.SIEGE_DIFF_PER_MEMBER;
-		if (mExtraDifficulty > 5) { mExtraDifficulty = 5; }  // cap at 5
+        if (mExtraDifficulty > 5) {
+            mExtraDifficulty = 5;
+        }  // cap at 5
 
         DimChunkPos defendingChunk = defendingClaim.toChunkPos();
         for (EnumFacing direction : EnumFacing.HORIZONTALS) {
@@ -296,25 +303,25 @@ public class Siege {
             }
         }
 
-		chunkCheck:
-		for (DimBlockPos blockPos : defenders.claims.keySet()) {
-			if (defendingClaim.dim != blockPos.dim) continue;
-			var teMap = WarForgeMod.MC_SERVER.getWorld(defendingClaim.dim).getChunk(blockPos).getTileEntityMap();
-			for (TileEntity te : teMap.values()) {
-				if (te instanceof IClaimStrengthModifier claimModifier && claimModifier.isActive()) {
-					ChunkPos pos = new ChunkPos(te.getPos());
-					for (Vec3i vec : claimModifier.getEffectArea()) {
-						ChunkPos affectedChunk = new ChunkPos(pos.x + vec.getX(), pos.z + vec.getZ());
-						if (affectedChunk.equals((ChunkPos) blockPos.toChunkPos())) {
-							mExtraDifficulty += claimModifier.getClaimContribution();
-							if (!claimModifier.canStack())
-								break chunkCheck;
-						}
-					}
+        chunkCheck:
+        for (DimBlockPos blockPos : defenders.claims.keySet()) {
+            if (defendingClaim.dim != blockPos.dim) continue;
+            var teMap = WarForgeMod.MC_SERVER.getWorld(defendingClaim.dim).getChunk(blockPos).getTileEntityMap();
+            for (TileEntity te : teMap.values()) {
+                if (te instanceof IClaimStrengthModifier claimModifier && claimModifier.isActive()) {
+                    ChunkPos pos = new ChunkPos(te.getPos());
+                    for (Vec3i vec : claimModifier.getEffectArea()) {
+                        ChunkPos affectedChunk = new ChunkPos(pos.x + vec.getX(), pos.z + vec.getZ());
+                        if (affectedChunk.equals((ChunkPos) blockPos.toChunkPos())) {
+                            mExtraDifficulty += claimModifier.getClaimContribution();
+                            if (!claimModifier.canStack())
+                                break chunkCheck;
+                        }
+                    }
 
-				}
-			}
-		}
+                }
+            }
+        }
     }
 
     // called when siege is ended for any reason and not detected as completed normally
