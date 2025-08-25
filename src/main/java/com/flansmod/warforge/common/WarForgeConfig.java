@@ -5,6 +5,7 @@ import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.config.Configuration;
+import scala.Int;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -59,8 +60,7 @@ public class WarForgeConfig {
     public static boolean SIEGE_ENABLE_NEW_TIMER = true;
     public static byte SIEGE_MOMENTUM_MAX = 4;
     public static int SIEGE_MOMENTUM_DURATION = 60;  //Minutes
-    public static float SIEGE_BASE_TIME = 30;  //Minutes;
-    public static Map<Integer, Float> SIEGE_MOMENTUM_MULTI = new HashMap<>();
+    public static Map<Byte, Integer> SIEGE_MOMENTUM_TIME = new HashMap<>();
     public static int SIEGE_SWING_PER_DEFENDER_DEATH = 1;
     public static int SIEGE_SWING_PER_ATTACKER_DEATH = 1;
     public static int SIEGE_SWING_PER_DAY_ELAPSED_BASE = 1;
@@ -244,26 +244,36 @@ public class WarForgeConfig {
 
         //New siege stuff
         SIEGE_MOMENTUM_DURATION = configFile.getInt("Siege momentum duration", "siege", 60, 1, Integer.MAX_VALUE, "Time the momentum lasts");
-        SIEGE_BASE_TIME = configFile.getFloat("SiegeBaseTimeMinutes", "siege", 30, (float) 0.25, 100_000_000,
-                "Base siege duration in minutes.");
         // Momentum multipliers (define per momentum level)
         String[] defaults = new String[]{
-                "1=0.9",
-                "2=0.8",
-                "3=0.75",
-                "4=0.5"
+                "0=15",
+                "1=10",
+                "2=8:30",
+                "3=5",
+                "4=2:30"
         };
         String[] values = configFile.getStringList("SiegeMomentumMultipliers", "siege", defaults,
                 "List of momentum multipliers in the form level=multiplier");
 
-        SIEGE_MOMENTUM_MULTI.clear();
+        SIEGE_MOMENTUM_TIME.clear();
         for (String s : values) {
             String[] split = s.split("=");
             if (split.length == 2) {
                 try {
-                    int level = Integer.parseInt(split[0].trim());
-                    float mult = Float.parseFloat(split[1].trim());
-                    SIEGE_MOMENTUM_MULTI.put(level, mult);
+                    byte level = Byte.parseByte(split[0].trim());
+                    String timeStr = split[1].trim();
+
+                    int seconds;
+                    if (timeStr.contains(":")) {
+                        String[] mmss = timeStr.split(":");
+                        int minutes = Integer.parseInt(mmss[0].trim());
+                        int secs = (mmss.length > 1) ? Integer.parseInt(mmss[1].trim()) : 0;
+                        seconds = minutes * 60 + secs;
+                    } else {
+                        seconds = Integer.parseInt(timeStr); // already seconds
+                    }
+
+                    SIEGE_MOMENTUM_TIME.put(level, seconds);
                 } catch (NumberFormatException ignored) {
                 }
             }
@@ -331,8 +341,7 @@ public class WarForgeConfig {
         compoundNBT.setBoolean("newSiegeTimer", SIEGE_ENABLE_NEW_TIMER);
         compoundNBT.setInteger("maxMomentum", SIEGE_MOMENTUM_MAX);
         compoundNBT.setInteger("timeMomentum", SIEGE_MOMENTUM_DURATION);
-        compoundNBT.setFloat("siegeTime", SIEGE_BASE_TIME);
-        compoundNBT.setString("momentumMap", SIEGE_MOMENTUM_MULTI.toString());
+        compoundNBT.setString("momentumMap", SIEGE_MOMENTUM_TIME.toString());
         compoundNBT.setFloat("yieldQualMult", YIELD_QUALITY_MULTIPLIER);
         packet.configNBT = compoundNBT.toString();
         return packet;

@@ -13,11 +13,12 @@ import net.minecraft.nbt.NBTTagCompound;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PacketSyncConfig extends  PacketBase {
+public class PacketSyncConfig extends PacketBase {
     public String configNBT;
+
     @Override
     public void encodeInto(ChannelHandlerContext ctx, ByteBuf data) {
-        writeUTF(data,configNBT);
+        writeUTF(data, configNBT);
     }
 
     @Override
@@ -53,41 +54,40 @@ public class PacketSyncConfig extends  PacketBase {
         WarForgeConfig.SIEGE_MOMENTUM_MAX = (byte) compound.getInteger("maxMomentum");
         WarForgeConfig.SIEGE_MOMENTUM_DURATION = compound.getInteger("timeMomentum");
 
-        // Long
-        WarForgeConfig.SIEGE_BASE_TIME = compound.getLong("siegeTime");
 
         // Momentum map (stored as String → needs parsing back)
         String mapString = compound.getString("momentumMap");
-        Map<Integer, Float> parsedMap = new HashMap<>();
+        Map<Byte, Integer> parsedMap = new HashMap<>();
         try {
-            // The .toString() from Map looks like {1=0.9, 2=0.8, ...}
-            // So we need to strip braces and split
             if (mapString.startsWith("{") && mapString.endsWith("}")) {
                 mapString = mapString.substring(1, mapString.length() - 1);
             }
             for (String entry : mapString.split(",")) {
                 String[] kv = entry.trim().split("=");
                 if (kv.length == 2) {
-                    int key = Integer.parseInt(kv[0].trim());
-                    float val = Float.parseFloat(kv[1].trim());
-                    parsedMap.put(key, val);
+                    byte key = Byte.parseByte(kv[0].trim());
+                    int seconds = Integer.parseInt(kv[1].trim());
+                    parsedMap.put(key, seconds);
                 }
             }
         } catch (Exception e) {
             WarForgeMod.LOGGER.error("Failed to parse momentumMap from config sync: " + mapString, e);
         }
 
+
         WarForgeConfig.YIELD_QUALITY_MULTIPLIER = compound.getFloat("yieldQualMult");
 
-        WarForgeConfig.SIEGE_MOMENTUM_MULTI.clear();
-        WarForgeConfig.SIEGE_MOMENTUM_MULTI.putAll(parsedMap);
+        WarForgeConfig.SIEGE_MOMENTUM_TIME.clear();
+        WarForgeConfig.SIEGE_MOMENTUM_TIME.putAll(parsedMap);
 
-        WarForgeMod.LOGGER.info("Synced siege config: baseTime=" + WarForgeConfig.SIEGE_BASE_TIME
-                + ", maxMomentum=" + WarForgeConfig.SIEGE_MOMENTUM_MAX
+        WarForgeMod.LOGGER.info("Synced siege config:"
+                + " maxMomentum=" + WarForgeConfig.SIEGE_MOMENTUM_MAX
                 + ", duration=" + WarForgeConfig.SIEGE_MOMENTUM_DURATION
-                + ", multipliers=" + WarForgeConfig.SIEGE_MOMENTUM_MULTI
+                + ", multipliers=" + WarForgeConfig.SIEGE_MOMENTUM_TIME
                 + ", yieldQualMult=" + WarForgeConfig.YIELD_QUALITY_MULTIPLIER);
     }
 
-    public boolean canUseCompression() {return true;}
+    public boolean canUseCompression() {
+        return true;
+    }
 }
