@@ -199,9 +199,9 @@ public class GuiSiegeCamp {
                     richTooltip.addLine("§7Expires after §b" + WarForgeConfig.SIEGE_MOMENTUM_DURATION + " minutes§7.§r");
 
                     //FIXME
-                    richTooltip.addLine("§eLevel 0"  + "§r: §a" + (float)WarForgeConfig.SIEGE_MOMENTUM_TIME.get(0)/60 + " minutes§r");
+                    richTooltip.addLine("§eLevel 0"  + "§r: §a" + (float)WarForgeConfig.SIEGE_MOMENTUM_TIME.get((byte)0)/60 + " minutes§r");
 
-                    for (int level : WarForgeConfig.SIEGE_MOMENTUM_TIME.keySet()) {
+                    for (byte level : WarForgeConfig.SIEGE_MOMENTUM_TIME.keySet()) {
                         float time = WarForgeConfig.SIEGE_MOMENTUM_TIME.get(level);
                         long adjusted = Math.round(time/60); // convert ms → minutes
                         richTooltip.addLine("§eLevel " + level + "§r: §a" + adjusted + " minutes§r");
