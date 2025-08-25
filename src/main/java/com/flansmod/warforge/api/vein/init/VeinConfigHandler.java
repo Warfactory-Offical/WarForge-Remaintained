@@ -107,7 +107,13 @@ public class VeinConfigHandler {
     public static void loadVeins() throws ConfigurationException {
         // try to get the raw veins and write no veins on failure
         Yaml yaml = new Yaml();
-        var veinData = parseGlobalVeinData();  // we need to keep the global data to write to a file later
+        var veinData = parseGlobalVeinData();
+        // we need to keep the global data to write to a file later
+        if (veinData == null) {
+            VEIN_HANDLER.populateVeinMap(null);
+            return;
+        }
+
         List<LinkedHashMap<String, Object>> allVeinData = veinData.second();
         if (allVeinData == null) {
             VEIN_HANDLER.populateVeinMap(null);
