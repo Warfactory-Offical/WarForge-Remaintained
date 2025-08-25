@@ -343,6 +343,8 @@ public class WarForgeConfig {
         compoundNBT.setInteger("timeMomentum", SIEGE_MOMENTUM_DURATION);
         compoundNBT.setString("momentumMap", SIEGE_MOMENTUM_TIME.toString());
         compoundNBT.setFloat("yieldQualMult", YIELD_QUALITY_MULTIPLIER);
+        compoundNBT.setInteger("atkSiegeRadius", SIEGE_ATTACKER_RADIUS);
+        compoundNBT.setInteger("defSiegeRadius", SIEGE_DEFENDER_RADIUS);
         packet.configNBT = compoundNBT.toString();
         return packet;
     }

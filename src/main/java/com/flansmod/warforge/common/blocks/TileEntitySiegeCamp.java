@@ -28,6 +28,9 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
 
+import static com.flansmod.warforge.common.WarForgeConfig.SIEGE_ATTACKER_RADIUS;
+import static com.flansmod.warforge.common.WarForgeConfig.SIEGE_DEFENDER_RADIUS;
+
 public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 {
 	private UUID placer = Faction.nullUuid;
@@ -234,7 +237,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 			// --- ATTACKER HANDLING ---
 
 			// if there are no players in the radius
-			if (WarForgeMod.FACTIONS.getFaction(factionUUID).getOnlinePlayers(this::isPlayerInWarzone).size() < 1) {
+			if (WarForgeMod.FACTIONS.getFaction(factionUUID).getOnlinePlayers(this::isAttackerInWarzone).size() < 1) {
 				if (handleDesertion(true)) return; // cancel update if siege concludes
 			} else {
 				// stops at 0 and decrements gradually to stop attackers from popping into and out of warzone
@@ -252,7 +255,6 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 			}
 
 			// --- DEFENDER HANDLING ---
-
 			if (lastSeenDefenderCount == 0 && defenders.onlinePlayerCount > 0 && defenderOfflineTimerMs > 0) {
 				defenders.messageAll(new TextComponentString("Your faction [" + defenders.name + "] has an offline timer of " + TimeHelper.formatTime(defenderOfflineTimerMs) + " for the siege camp at " + getClaimPos()));
 			}
@@ -260,7 +262,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 			lastSeenDefenderCount = defenders.onlinePlayerCount;
 
 			if (defenders.onlinePlayerCount > largestSeenDefenderCount) largestSeenDefenderCount = defenders.onlinePlayerCount; // update largest number of defenders seen
-			int numActiveDefenders = defenders.getOnlinePlayers(entityPlayer -> isPlayerInRadius(entityPlayer, WarForgeConfig.SIEGE_DEFENDER_RADIUS)).size();
+			int numActiveDefenders = defenders.getOnlinePlayers(this::isDefenderInWarzone).size();
 
 			// check if the defenders have quit, and if not check if they are actively defending
 			boolean haveDefendersQuit = haveDefendersLiveQuit();
@@ -348,7 +350,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 	private boolean handleDesertion(boolean isAttackingSide) {
 		// end siege if idle timer reaches desertion timer
 		int abandonTimer = isAttackingSide ? WarForgeConfig.ATTACKER_DESERTION_TIMER : WarForgeConfig.DEFENDER_DESERTION_TIMER;
-		int abandonRadius = isAttackingSide ? WarForgeConfig.SIEGE_ATTACKER_RADIUS : WarForgeConfig.SIEGE_DEFENDER_RADIUS;
+		int abandonRadius = isAttackingSide ? SIEGE_ATTACKER_RADIUS : WarForgeConfig.SIEGE_DEFENDER_RADIUS;
 		int currentTickTimer = isAttackingSide ? attackerAbandonTickTimer : defenderAbandonTickTimer;
 
 		if (currentTickTimer >= abandonTimer * 20) {
@@ -386,11 +388,12 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 		return false;
 	}
 
-	private boolean isPlayerInWarzone(EntityPlayer player) {
-		if(player == null) return false;
-		DimChunkPos playerChunk = new DimChunkPos(player.dimension, player.getPosition());
-		DimChunkPos blockChunk = new DimChunkPos(world.provider.getDimension(), getClaimPos());
-		return !player.isDead && Siege.isPlayerInRadius(blockChunk, playerChunk);
+	private boolean isAttackerInWarzone(EntityPlayer player) {
+		return isPlayerInRadius(player, SIEGE_ATTACKER_RADIUS);
+	}
+
+	private boolean isDefenderInWarzone(EntityPlayer player) {
+		return isPlayerInRadius(player, SIEGE_DEFENDER_RADIUS);
 	}
 
 	private boolean isPlayerInRadius(EntityPlayer player, int radius) {

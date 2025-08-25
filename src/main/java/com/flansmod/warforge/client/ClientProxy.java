@@ -10,6 +10,7 @@ import com.flansmod.warforge.common.blocks.*;
 import com.flansmod.warforge.common.effect.AnimatedEffectHandler;
 import com.flansmod.warforge.common.network.PacketRequestFactionInfo;
 import com.flansmod.warforge.common.network.SiegeCampProgressInfo;
+import com.flansmod.warforge.server.Faction;
 import it.unimi.dsi.fastutil.shorts.Short2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
@@ -19,19 +20,26 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.input.Keyboard;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
+
+import static com.flansmod.warforge.common.WarForgeConfig.SIEGE_ATTACKER_RADIUS;
+import static com.flansmod.warforge.common.WarForgeConfig.SIEGE_DEFENDER_RADIUS;
+import static com.flansmod.warforge.common.WarForgeMod.FACTIONS;
 
 public class ClientProxy extends CommonProxy
 {
@@ -133,6 +141,38 @@ public class ClientProxy extends CommonProxy
 		if (info.attackingName.equals("c") && info.defendingName.equals("c")) {
 			sSiegeInfo.clear();
 			return;
+		}
+
+		// add warzone chunks manually only when the siege is first recognized
+		if (!sSiegeInfo.containsKey(info.attackingPos)) {
+			// initialize data about this client
+			Faction playerFaction = FACTIONS.getFactionOfPlayer(Minecraft.getMinecraft().player.getUniqueID());
+			String facName = null;
+			if (playerFaction != null && !playerFaction.uuid.equals(Faction.nullUuid)) { facName = playerFaction.name; }
+
+			// assign radius according to player faction
+			int sqrRad = -1;
+			if (facName != null && facName.equals(info.defendingName)) { sqrRad = SIEGE_DEFENDER_RADIUS; }
+			else if (facName != null && facName.equals(info.attackingName)) { sqrRad = SIEGE_ATTACKER_RADIUS; }
+
+			// if the player is on either side of the siege, fill the warzone for them
+			if (sqrRad != -1) {
+				// setup the warzone data
+				int warzoneLength = 2 * sqrRad + 1;
+				int zEnd = info.attackingPos.getZ() + sqrRad;
+				int xEnd = info.attackingPos.getX() + sqrRad;
+				info.warzoneChunks = new ArrayList<>(warzoneLength * warzoneLength);
+
+				// add the warzone chunks
+				for (int z = info.attackingPos.getZ() - sqrRad; z < zEnd; ++z) {
+					for (int x = info.attackingPos.getX() - sqrRad; x < xEnd; ++x) {
+						info.warzoneChunks.add(new ChunkPos(x, z));  // don't use dim chunk as dim is redundant info
+					}
+				}
+			}
+		} else {
+			// copy the warzone chunks
+			info.warzoneChunks = sSiegeInfo.get(info.attackingPos).warzoneChunks;
 		}
 
         sSiegeInfo.remove(info.attackingPos);

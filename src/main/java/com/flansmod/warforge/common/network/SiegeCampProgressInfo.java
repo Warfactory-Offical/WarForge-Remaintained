@@ -3,17 +3,20 @@ package com.flansmod.warforge.common.network;
 import com.flansmod.warforge.common.util.DimBlockPos;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import net.minecraft.util.math.ChunkPos;
+
+import java.util.ArrayList;
 
 @NoArgsConstructor
 @AllArgsConstructor
 public class SiegeCampProgressInfo {
     public DimBlockPos defendingPos;
     public DimBlockPos attackingPos;
+    public ArrayList<ChunkPos> warzoneChunks;
     public int attackingColour;
     public int defendingColour;
     public String attackingName;
     public String defendingName;
-
 
     public int completionPoint = 5;
     public int mPreviousProgress = 0;

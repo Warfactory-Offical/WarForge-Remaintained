@@ -74,8 +74,9 @@ public class PacketSyncConfig extends PacketBase {
             WarForgeMod.LOGGER.error("Failed to parse momentumMap from config sync: " + mapString, e);
         }
 
-
         WarForgeConfig.YIELD_QUALITY_MULTIPLIER = compound.getFloat("yieldQualMult");
+        WarForgeConfig.SIEGE_ATTACKER_RADIUS = compound.getInteger("atkSiegeRadius");
+        WarForgeConfig.SIEGE_DEFENDER_RADIUS = compound.getInteger("defSiegeRadius");
 
         WarForgeConfig.SIEGE_MOMENTUM_TIME.clear();
         WarForgeConfig.SIEGE_MOMENTUM_TIME.putAll(parsedMap);
