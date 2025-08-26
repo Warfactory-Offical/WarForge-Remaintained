@@ -1,11 +1,11 @@
 package com.flansmod.warforge.common;
 
+import com.flansmod.warforge.api.Time;
 import com.flansmod.warforge.common.network.PacketSyncConfig;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.config.Configuration;
-import scala.Int;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -18,32 +18,32 @@ import static com.flansmod.warforge.client.util.ScreenSpaceUtil.ScreenPos;
 public class WarForgeConfig {
     public static final String CATEGORY_CLAIMS = "Claims";
 
-	// Yields
+    // Yields
     public static final String CATEGORY_YIELDS = "Yields";
     public static final String CATEGORY_SIEGES = "Sieges";
 
-	// Notoriety
+    // Notoriety
     public static final String CATEGORY_NOTORIETY = "Notoriety";
 
-	// Legacy
+    // Legacy
     public static final String CATEGORY_LEGACY = "Legacy";
     public static final String CATEGORY_CLIENT = "Client";
 
-	// Warps
+    // Warps
     public static final String CATEGORY_WARPS = "Warps";
 
-	// Config
+    // Config
     public static Configuration configFile;
-	public static boolean DO_FANCY_RENDERING = true;
-	public static boolean SHOW_OPPONENT_BORDERS = true;
-	public static boolean SHOW_ALLY_BORDERS = true;
+    public static boolean DO_FANCY_RENDERING = true;
+    public static boolean SHOW_OPPONENT_BORDERS = true;
+    public static boolean SHOW_ALLY_BORDERS = true;
 
-	// Yields/ Vein
-	public static float YIELD_DAY_LENGTH = 1.0f; // In real-world hours
-	public static float YIELD_QUALITY_MULTIPLIER = 2;
-	public static long VEIN_MEMBER_DISPLAY_TIME_MS = 1000;
+    // Yields/ Vein
+    public static float YIELD_DAY_LENGTH = 1.0f; // In real-world hours
+    public static float YIELD_QUALITY_MULTIPLIER = 2;
+    public static long VEIN_MEMBER_DISPLAY_TIME_MS = 1000;
 
-	// Claims
+    // Claims
     public static boolean ENABLE_CITADEL_UPGRADES = false;
     public static int[] CLAIM_DIM_WHITELIST = new int[]{0};
     public static int CLAIM_STRENGTH_CITADEL = 15;
@@ -56,7 +56,7 @@ public class WarForgeConfig {
     public static int ATTACK_STRENGTH_SIEGE_CAMP = 1;
     public static float LEECH_PROPORTION_SIEGE_CAMP = 0.25f;
 
-	// Sieges
+    // Sieges
     public static boolean SIEGE_ENABLE_NEW_TIMER = true;
     public static byte SIEGE_MOMENTUM_MAX = 4;
     public static int SIEGE_MOMENTUM_DURATION = 60;  //Minutes
@@ -246,10 +246,10 @@ public class WarForgeConfig {
         SIEGE_MOMENTUM_DURATION = configFile.getInt("Siege momentum duration", "siege", 60, 1, Integer.MAX_VALUE, "Time the momentum lasts");
         // Momentum multipliers (define per momentum level)
         String[] defaults = new String[]{
-                "0=15",
-                "1=10",
+                "0=15:00",
+                "1=10:00",
                 "2=8:30",
-                "3=5",
+                "3=5:00",
                 "4=2:30"
         };
         String[] values = configFile.getStringList("SiegeMomentumMultipliers", "siege", defaults,
@@ -260,21 +260,11 @@ public class WarForgeConfig {
             String[] split = s.split("=");
             if (split.length == 2) {
                 try {
-                    byte level = Byte.parseByte(split[0].trim());
-                    String timeStr = split[1].trim();
-
-                    int seconds;
-                    if (timeStr.contains(":")) {
-                        String[] mmss = timeStr.split(":");
-                        int minutes = Integer.parseInt(mmss[0].trim());
-                        int secs = (mmss.length > 1) ? Integer.parseInt(mmss[1].trim()) : 0;
-                        seconds = minutes * 60 + secs;
-                    } else {
-                        seconds = Integer.parseInt(timeStr); // already seconds
-                    }
-
-                    SIEGE_MOMENTUM_TIME.put(level, seconds);
-                } catch (NumberFormatException ignored) {
+                    Time time = Time.fromString(split[1]);
+                    byte level = Byte.parseByte(split[0]);
+                    SIEGE_MOMENTUM_TIME.put(level, (int) (time.getMs() / 1000));
+                } catch (RuntimeException e) {
+                    e.printStackTrace();
                 }
             }
         }

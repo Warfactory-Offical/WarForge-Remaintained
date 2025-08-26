@@ -8,6 +8,7 @@ import com.cleanroommc.modularui.screen.ModularScreen;
 import com.cleanroommc.modularui.widgets.ButtonWidget;
 import com.flansmod.warforge.api.ChunkDynamicTextureThread;
 import com.flansmod.warforge.api.Color4i;
+import com.flansmod.warforge.api.Time;
 import com.flansmod.warforge.api.modularui.MapDrawable;
 import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
@@ -199,12 +200,9 @@ public class GuiSiegeCamp {
                     richTooltip.addLine("§7Expires after §b" + WarForgeConfig.SIEGE_MOMENTUM_DURATION + " minutes§7.§r");
 
                     //FIXME
-                    richTooltip.addLine("§eLevel 0"  + "§r: §a" + (float)WarForgeConfig.SIEGE_MOMENTUM_TIME.get((byte)0)/60 + " minutes§r");
-
                     for (byte level : WarForgeConfig.SIEGE_MOMENTUM_TIME.keySet()) {
-                        float time = WarForgeConfig.SIEGE_MOMENTUM_TIME.get(level);
-                        long adjusted = Math.round(time/60); // convert ms → minutes
-                        richTooltip.addLine("§eLevel " + level + "§r: §a" + adjusted + " minutes§r");
+                        long time = WarForgeConfig.SIEGE_MOMENTUM_TIME.get(level)*1000;
+                        richTooltip.addLine("§eLevel " + level + "§r: §a" + new Time(time).getFormattedTime(Time.TimeFormat.MINUTES_SECONDS, Time.Verbality.SHORT));
                     }
                 })
         );

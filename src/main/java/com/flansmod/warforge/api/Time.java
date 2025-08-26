@@ -34,6 +34,30 @@ public class Time {
         setMs(endTimestamp - startTimestamp);
     }
 
+    public static Time fromString(String string) throws RuntimeException {
+        String[] strings = string.split(":");
+
+        switch (strings.length) {
+            case 1 -> { //Assuming seconds
+                return new Time(Integer.parseInt(strings[0]) * 1000L);
+            }
+            case 2 -> { //minutes, seconds
+                int seconds = Integer.parseInt(strings[1]);
+                int minutes = Integer.parseInt(strings[0]);
+                return new Time((seconds * 1000L) + (minutes * 60L * 1000L));
+            }
+
+            case 3 -> { //hours, minutes, seconds
+                int seconds = Integer.parseInt(strings[2]);
+                int minutes = Integer.parseInt(strings[1]);
+                int hours = Integer.parseInt(strings[0]);
+                return new Time((seconds * 1000L) + (minutes * 60L * 1000L) + (hours * 60L * 60L * 10000L));
+            }
+
+            default -> throw new RuntimeException("Provided string is incorrect");
+        }
+    }
+
     public void setMs(long ms) {
         this.ms = ms;
         this.dirty = true;
