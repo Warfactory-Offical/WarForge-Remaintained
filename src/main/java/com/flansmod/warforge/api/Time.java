@@ -5,6 +5,7 @@ import lombok.Getter;
 
 /**
  * Object used to track and format time;
+ *
  * @author MrNorwood
  */
 public class Time {
@@ -27,10 +28,17 @@ public class Time {
         this.startTimestamp = System.currentTimeMillis();
     }
 
+    public Time(long startTimestamp, long endTimestamp) {
+        this.startTimestamp = startTimestamp;
+        this.endTimestamp = endTimestamp;
+        setMs(endTimestamp - startTimestamp);
+    }
+
     public void setMs(long ms) {
         this.ms = ms;
         this.dirty = true;
     }
+
 
     public void change(long ms) {
         this.ms += ms;
