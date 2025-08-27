@@ -246,12 +246,12 @@ public class VeinUtils {
 
     // decompresses the vein info, with separate handling for server and client, returning null for the null vein and
     // a pair of null values for an unrecognized vein on the client
-    public Pair<Vein, Quality> decompressVeinInfo(short veinInfo) {
+    public static Pair<Vein, Quality> decompressVeinInfo(short veinInfo) {
         if (veinInfo == NULL_VEIN_ID) { return null; }
 
         short[] decompVeinInfo = splitVeinInfo(veinInfo);
         if (FMLCommonHandler.instance().getEffectiveSide() == Side.SERVER) {
-            return new Pair<>(ID_TO_VEINS.get(decompVeinInfo[0]), Quality.getQuality(decompVeinInfo[1]));
+            return new Pair<>(VEIN_HANDLER.ID_TO_VEINS.get(decompVeinInfo[0]), Quality.getQuality(decompVeinInfo[1]));
         } else {
             Vein targetVein = VEIN_ENTRIES.get(decompVeinInfo[0]);
             if (targetVein == null) { return new Pair<>(null, null); }  // use this to indicate we don't know the vein
@@ -259,7 +259,7 @@ public class VeinUtils {
         }
     }
 
-    public short[] splitVeinInfo(short veinInfo) {
+    public static short[] splitVeinInfo(short veinInfo) {
         if (veinInfo == NULL_VEIN_ID) { return new short[]{NULL_VEIN_ID, (short) 7}; }  // null vein id is also its info
         return new short[]{(short) (veinInfo & 0x00_00_1F_FF), (short) ((veinInfo & 0x00_00_E0_00) >> 13)};
     }

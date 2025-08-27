@@ -4,11 +4,10 @@ import akka.japi.Pair;
 import com.flansmod.warforge.api.WarforgeCache;
 import com.flansmod.warforge.api.vein.Quality;
 import com.flansmod.warforge.api.vein.Vein;
+import com.flansmod.warforge.api.vein.init.VeinUtils;
 import com.flansmod.warforge.common.util.DimChunkPos;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-
-import static com.flansmod.warforge.common.WarForgeMod.VEIN_HANDLER;
 
 @SideOnly(Side.CLIENT)
 public class ChunkVeinCache {
@@ -25,7 +24,7 @@ public class ChunkVeinCache {
     }
 
     public void add(DimChunkPos chunkPos, short compressedVeinInfo) {
-        cache.put(chunkPos, VEIN_HANDLER.decompressVeinInfo(compressedVeinInfo));
+        cache.put(chunkPos, VeinUtils.decompressVeinInfo(compressedVeinInfo));
     }
 
     public Pair<Vein, Quality> get(DimChunkPos chunkPos) {
