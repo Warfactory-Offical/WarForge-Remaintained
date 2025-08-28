@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 public class Siege {
+    public static final FactionStorage FACTION_STORAGE = WarForgeMod.FACTIONS;
     public UUID attackingFaction;
     public UUID defendingFaction;
     public ArrayList<DimBlockPos> attackingCamps;
@@ -214,6 +215,7 @@ public class Siege {
         }
 
         calculateBasePower();
+        defenders.isCurrentlyDefending = true;
         WarForgeMod.INSTANCE.messageAll(new TextComponentString(attackers.name + " started a siege against " + defenders.name), true);
         WarForgeMod.FACTIONS.sendSiegeInfoToNearby(defendingClaim.toChunkPos());
         return true;
@@ -274,7 +276,7 @@ public class Siege {
             attackers.messageAll(new TextComponentString("Your siege on " + defenders.name + " at " + defendingClaim.toFancyString() + " did not shift today. The progress is at " + GetAttackProgress() + "/" + mBaseDifficulty));
         }
 
-        WarForgeMod.FACTIONS.sendSiegeInfoToNearby(defendingClaim.toChunkPos());
+        FACTION_STORAGE.sendSiegeInfoToNearby(defendingClaim.toChunkPos());
     }
 
     public void calculateBasePower() {
@@ -341,7 +343,7 @@ public class Siege {
 
     // called when siege is ended for any reason and not detected as completed normally
     public void onCancelled() {
-
+        FACTION_STORAGE.getFaction(defendingFaction).isCurrentlyDefending =false;
         // canceling is only run inside EndSiege, which is only run in TE, so no need for this to do anything
     }
 

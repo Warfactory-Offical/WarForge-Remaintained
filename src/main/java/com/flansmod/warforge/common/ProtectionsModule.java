@@ -9,6 +9,7 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MoverType;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemFood;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EntityDamageSource;
@@ -52,6 +53,9 @@ public class ProtectionsModule {
 
             if (faction.citadelPos.toChunkPos().equals(pos))
                 return playerIsInFaction ? WarForgeConfig.CITADEL_FRIEND : WarForgeConfig.CITADEL_FOE;
+
+            if (playerIsInFaction && faction.isCurrentlyDefending)
+                return WarForgeConfig.CLAIM_DEFENDED;
 
             return playerIsInFaction ? WarForgeConfig.CLAIM_FRIEND : WarForgeConfig.CLAIM_FOE;
         }
@@ -186,7 +190,12 @@ public class ProtectionsModule {
         ProtectionConfig config = GetProtections(eventEntity.getUniqueID(), pos);
 
         if (!config.PLACE_BLOCKS) {
-            if (!config.BLOCK_PLACE_EXCEPTIONS.contains(event.getBlockSnapshot().getCurrentBlock().getBlock())) {
+            if (!config.BLOCK_PLACE_WHITELIST.contains(event.getBlockSnapshot().getCurrentBlock().getBlock())) {
+                //WarForgeMod.LOGGER.info("Cancelled block placement event");
+                event.setCanceled(true);
+            }
+        } else {
+            if (!config.BLOCK_PLACE_BLACKLIST.contains(event.getBlockSnapshot().getCurrentBlock().getBlock())) {
                 //WarForgeMod.LOGGER.info("Cancelled block placement event");
                 event.setCanceled(true);
             }
@@ -205,10 +214,15 @@ public class ProtectionsModule {
         ProtectionConfig config = GetProtections(event.getPlayer().getUniqueID(), pos);
 
         if (!config.BREAK_BLOCKS || !config.BLOCK_REMOVAL) {
-            if (!config.BLOCK_BREAK_EXCEPTIONS.contains(event.getState().getBlock())) {
+            if (!config.BLOCK_BREAK_WHITELIST.contains(event.getState().getBlock())) {
+                event.setCanceled(true);
+            }
+        } else {
+            if (!config.BLOCK_BREAK_BLACKLIST.contains(event.getState().getBlock())) {
                 event.setCanceled(true);
             }
         }
+
     }
 
     @SubscribeEvent
@@ -240,17 +254,20 @@ public class ProtectionsModule {
         ProtectionConfig config = GetProtections(event.getEntityPlayer().getUniqueID(), pos);
 
 
+        Block block = event.getWorld().getBlockState(event.getPos()).getBlock();
         if (!config.INTERACT) {
-            Block block = event.getWorld().getBlockState(event.getPos()).getBlock();
             if (block != WarForgeMod.CONTENT.citadelBlock
                     && block != WarForgeMod.CONTENT.basicClaimBlock
                     && block != WarForgeMod.CONTENT.reinforcedClaimBlock
                     && block != WarForgeMod.CONTENT.dummyTranslusent
                     && block != WarForgeMod.CONTENT.statue
-                    && !config.BLOCK_INTERACT_EXCEPTIONS.contains(block)) {
+                    && !config.BLOCK_INTERACT_WHITELIST.contains(block)) {
                 //WarForgeMod.LOGGER.info("Cancelled item use event while looking at block");
                 event.setCanceled(true);
             }
+        } else {
+            if (config.BLOCK_INTERACT_BLACKLIST.contains(block))
+                event.setCanceled(true);
         }
     }
 
@@ -269,9 +286,14 @@ public class ProtectionsModule {
         DimBlockPos pos = new DimBlockPos(event.getEntity().dimension, event.getPos());
         ProtectionConfig config = GetProtections(event.getEntityPlayer().getUniqueID(), pos);
 
+        Item usedItem = event.getItemStack().getItem();
         if (!config.USE_ITEM) {
-            //WarForgeMod.LOGGER.info("Cancelled item use event");
-            event.setCanceled(true);
+            if (!config.ITEM_USE_WHITELIST.contains(usedItem))
+                event.setCanceled(true);
+        } else {
+            if (config.ITEM_USE_BLACKLIST.contains(usedItem))
+                event.setCanceled(true);
+
         }
     }
 

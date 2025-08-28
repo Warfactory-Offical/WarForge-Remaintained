@@ -232,15 +232,6 @@ public class WarForgeMod implements ILateMixinLoader {
 
         FMLInterModComms.sendRuntimeMessage(this, DISCORD_MODID, "registerListener", "");
 
-        WarForgeConfig.UNCLAIMED.findBlocks();
-        WarForgeConfig.SAFE_ZONE.findBlocks();
-        WarForgeConfig.WAR_ZONE.findBlocks();
-        WarForgeConfig.CITADEL_FRIEND.findBlocks();
-        WarForgeConfig.CITADEL_FOE.findBlocks();
-        WarForgeConfig.CLAIM_FRIEND.findBlocks();
-        WarForgeConfig.CLAIM_FOE.findBlocks();
-        WarForgeConfig.SIEGECAMP_SIEGER.findBlocks();
-        WarForgeConfig.SIEGECAMP_OTHER.findBlocks();
         IMultiBlockInit.registerMaps();
         if (WarForgeConfig.ENABLE_CITADEL_UPGRADES) {
             Path configFile = Paths.get("config/" + WarForgeMod.MODID + "/upgrade_levels.cfg");
@@ -258,6 +249,19 @@ public class WarForgeMod implements ILateMixinLoader {
         }
 
 
+    }
+
+    @EventHandler
+    public void onLoadComplete(FMLLoadCompleteEvent event){
+        WarForgeConfig.UNCLAIMED.findBlocks();
+        WarForgeConfig.SAFE_ZONE.findBlocks();
+        WarForgeConfig.WAR_ZONE.findBlocks();
+        WarForgeConfig.CITADEL_FRIEND.findBlocks();
+        WarForgeConfig.CITADEL_FOE.findBlocks();
+        WarForgeConfig.CLAIM_FRIEND.findBlocks();
+        WarForgeConfig.CLAIM_FOE.findBlocks();
+        WarForgeConfig.SIEGECAMP_SIEGER.findBlocks();
+        WarForgeConfig.SIEGECAMP_OTHER.findBlocks();
     }
 
     public long getCooldownRemainingSeconds(float cooldown, long startOfCooldown) {

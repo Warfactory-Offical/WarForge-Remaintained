@@ -63,6 +63,7 @@ public class Faction {
     public int legacy = 0;
     public short citadelLevel = 0;
     public int citadelMoveCooldown = 1;
+    public boolean isCurrentlyDefending = false;
     //Only for new system
     public long citadelMoveTimeStamp = 0;
     private byte siegeMomentum = 0;
@@ -498,6 +499,7 @@ public class Faction {
         lastSiegeTimestamp = tags.getLong("lastSiegeTimestamp");
         siegeMomentum = tags.getByte("siegeMomentum");
         momentumExpireryTimestamp = tags.getLong("momentumExpireryTimestamp");
+        isCurrentlyDefending = tags.getBoolean("isDefending");
 
 
         // Get member data
@@ -566,6 +568,7 @@ public class Faction {
             memberList.appendTag(memberTags);
         }
         tags.setTag("members", memberList);
+        tags.setBoolean("isDefending", isCurrentlyDefending);
     }
 
     // checks all stored claim locations to check if they are siege blocks

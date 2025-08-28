@@ -20,6 +20,7 @@ import com.flansmod.warforge.common.util.TimeHelper;
 import com.flansmod.warforge.server.Faction.PlayerData;
 import com.flansmod.warforge.server.Faction.Role;
 import com.mojang.authlib.GameProfile;
+import com.sun.jna.platform.win32.Winioctl;
 import lombok.Getter;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.EntityLivingBase;
@@ -471,6 +472,13 @@ public class FactionStorage {
 
         // Then remove the siege
         sieges.remove(chunkPos);
+
+        //Remove defending status from the faction
+        for(Siege activeSiege : sieges.values()){
+            if(activeSiege.defendingFaction.equals(defenders.uuid))
+                return;
+        }
+        defenders.isCurrentlyDefending = false;
     }
 
     public boolean requestCreateFaction(TileEntityCitadel citadel, EntityPlayer player, String factionName, int colour) {
@@ -1082,7 +1090,6 @@ public class FactionStorage {
         if (pos.equals(faction.citadelPos)) {
             return false;
         }
-
 
         for (HashMap.Entry<DimChunkPos, Siege> siege : sieges.entrySet()) {
             if (siege.getKey().equals(pos.toChunkPos())) {

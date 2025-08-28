@@ -5,14 +5,12 @@ import com.flansmod.warforge.common.network.PacketSyncConfig;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraftforge.common.config.Config;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.flansmod.warforge.client.util.ScreenSpaceUtil.ScreenPos;
 
@@ -133,6 +131,7 @@ public class WarForgeConfig {
     public static ProtectionConfig CLAIM_FOE = new ProtectionConfig();
     public static ProtectionConfig SIEGECAMP_SIEGER = new ProtectionConfig();
     public static ProtectionConfig SIEGECAMP_OTHER = new ProtectionConfig();
+    public static ProtectionConfig CLAIM_DEFENDED = new ProtectionConfig();
 
     // Init default perms
     static {
@@ -146,9 +145,9 @@ public class WarForgeConfig {
         SAFE_ZONE.PLAYER_DEAL_DAMAGE = false;
         SAFE_ZONE.BLOCK_REMOVAL = false;
         SAFE_ZONE.EXPLOSION_DAMAGE = false;
-        SAFE_ZONE.BLOCK_BREAK_EXCEPTION_IDS = new String[]{};
-        SAFE_ZONE.BLOCK_PLACE_EXCEPTION_IDS = new String[]{};
-        SAFE_ZONE.BLOCK_INTERACT_EXCEPTION_IDS = new String[]{"minecraft:ender_chest", "minecraft:lever", "minecraft:button", "warforge:leaderboard"};
+        SAFE_ZONE.BLOCK_BREAK_WHITELIST_IDS = new String[]{};
+        SAFE_ZONE.BLOCK_PLACE_WHITELIST_IDS = new String[]{};
+        SAFE_ZONE.BLOCK_INTERACT_WHITELIST_IDS = new String[]{"minecraft:ender_chest", "minecraft:lever", "minecraft:button", "warforge:leaderboard"};
         SAFE_ZONE.ALLOW_MOB_SPAWNS = false;
         SAFE_ZONE.ALLOW_MOB_ENTRY = false;
         SAFE_ZONE.ALLOW_MOUNT_ENTITY = false;
@@ -164,9 +163,9 @@ public class WarForgeConfig {
         WAR_ZONE.PLAYER_DEAL_DAMAGE = true;
         WAR_ZONE.BLOCK_REMOVAL = false;
         WAR_ZONE.EXPLOSION_DAMAGE = false;
-        WAR_ZONE.BLOCK_BREAK_EXCEPTION_IDS = new String[]{"minecraft:web", "minecraft:tnt", "minecraft:end_crystal"};
-        WAR_ZONE.BLOCK_PLACE_EXCEPTION_IDS = new String[]{"minecraft:web", "minecraft:tnt", "minecraft:end_crystal"};
-        WAR_ZONE.BLOCK_INTERACT_EXCEPTION_IDS = new String[]{"minecraft:ender_chest", "minecraft:lever", "minecraft:button", "warforge:leaderboard"};
+        WAR_ZONE.BLOCK_BREAK_WHITELIST_IDS = new String[]{"minecraft:web", "minecraft:tnt", "minecraft:end_crystal"};
+        WAR_ZONE.BLOCK_PLACE_WHITELIST_IDS = new String[]{"minecraft:web", "minecraft:tnt", "minecraft:end_crystal"};
+        WAR_ZONE.BLOCK_INTERACT_WHITELIST_IDS = new String[]{"minecraft:ender_chest", "minecraft:lever", "minecraft:button", "warforge:leaderboard"};
 
         CITADEL_FOE.BREAK_BLOCKS = false;
         CITADEL_FOE.PLACE_BLOCKS = false;
@@ -182,6 +181,9 @@ public class WarForgeConfig {
         CLAIM_FOE.ALLOW_DISMOUNT_ENTITY = false;
         UNCLAIMED.EXPLOSION_DAMAGE = true;
         //WarForgeMod.VEIN_MAP.defaultReturnValue(null);
+
+        CLAIM_DEFENDED.BREAK_BLOCKS = true;
+
     }
 
     public static void syncConfig(File suggestedFile) {
@@ -197,6 +199,7 @@ public class WarForgeConfig {
         CLAIM_FOE.SyncConfig("ClaimFoe", "Claims of other Factions");
         SIEGECAMP_SIEGER.SyncConfig("Sieger", "Sieges they started");
         SIEGECAMP_OTHER.SyncConfig("SiegeOther", "Other sieges, defending or neutral");
+        CLAIM_DEFENDED.SyncConfig("ClaimDefended", "Claims under sieged faction that are not under direct siege");
 
         // Claim Settings
         CLAIM_DIM_WHITELIST = configFile.get(CATEGORY_CLAIMS, "Claim Dimension Whitelist", CLAIM_DIM_WHITELIST, "In which dimensions should player be able to claim chunks").getIntList();
@@ -325,8 +328,7 @@ public class WarForgeConfig {
     }
 
 
-
-    private static void syncConfigSieges(File suggestedFile){
+    private static void syncConfigSieges(File suggestedFile) {
 
     }
 
@@ -361,40 +363,65 @@ public class WarForgeConfig {
         public boolean ALLOW_MOB_ENTRY = true;
         public boolean ALLOW_MOUNT_ENTITY = true;
         public boolean ALLOW_DISMOUNT_ENTITY = true;
-        public List<Block> BLOCK_PLACE_EXCEPTIONS;
-        public List<Block> BLOCK_BREAK_EXCEPTIONS;
-        public List<Block> BLOCK_INTERACT_EXCEPTIONS;
-        public List<Item> ITEM_USE_EXCEPTIONS;
-        private String[] BLOCK_PLACE_EXCEPTION_IDS = new String[]{"minecraft:torch"};
-        private String[] BLOCK_BREAK_EXCEPTION_IDS = new String[]{"minecraft:torch", "warforge:siegecampblock"};
-        private String[] BLOCK_INTERACT_EXCEPTION_IDS = new String[]{"minecraft:ender_chest", "warforge:citadelblock", "warforge:basicclaimblock", "warforge:reinforcedclaimblock", "warforge:siegecampblock"};
-        private String[] ITEM_USE_EXCEPTION_IDS = new String[]{"minecraft:snowball"};
 
-        private List<Block> findBlocks(String[] input) {
-            List<Block> output = new ArrayList<Block>(input.length);
+        public Set<Block> BLOCK_PLACE_WHITELIST;
+        public Set<Block> BLOCK_BREAK_WHITELIST;
+        public Set<Block> BLOCK_INTERACT_WHITELIST;
+        public Set<Item> ITEM_USE_WHITELIST;
+
+        public Set<Block> BLOCK_PLACE_BLACKLIST;
+        public Set<Block> BLOCK_BREAK_BLACKLIST;
+        public Set<Block> BLOCK_INTERACT_BLACKLIST;
+        public Set<Item> ITEM_USE_BLACKLIST;
+
+        private String[] BLOCK_PLACE_BLACKLIST_IDS = new String[]{};
+        private String[] BLOCK_BREAK_BLACKLIST_IDS = new String[]{};
+        private String[] BLOCK_INTERACT_BLACKLIST_IDS = new String[]{};
+        private String[] ITEM_USE_BLACKLIST_IDS = new String[]{};
+
+        private String[] BLOCK_PLACE_WHITELIST_IDS = new String[]{"minecraft:torch"};
+        private String[] BLOCK_BREAK_WHITELIST_IDS = new String[]{"minecraft:torch", "warforge:siegecampblock"};
+        private String[] BLOCK_INTERACT_WHITELIST_IDS = new String[]{"minecraft:ender_chest", "warforge:citadelblock", "warforge:basicclaimblock", "warforge:reinforcedclaimblock", "warforge:siegecampblock"};
+        private String[] ITEM_USE_WHITELIST_IDS = new String[]{"minecraft:snowball"};
+
+        private Set<Block> findBlocks(String[] input) {
+            Set<Block> output = new HashSet<>(input.length);
             for (String blockID : input) {
-                Block block = Block.getBlockFromName(blockID);
-                if (block != null)
+                ResourceLocation rl = new ResourceLocation(blockID);
+                Block block = ForgeRegistries.BLOCKS.getValue(rl);
+                if (block != null) {
                     output.add(block);
+                } else {
+                    WarForgeMod.LOGGER.warn("Unknown block ID in config: {}", blockID);
+                }
             }
             return output;
         }
 
-        private List<Item> FindItems(String[] input) {
-            List<Item> output = new ArrayList<Item>(input.length);
+        private Set<Item> findItems(String[] input) {
+            Set<Item> output = new HashSet<>(input.length);
             for (String itemID : input) {
-                Item item = Item.getByNameOrId(itemID);
-                if (item != null)
+                ResourceLocation rl = new ResourceLocation(itemID);
+                Item item = ForgeRegistries.ITEMS.getValue(rl);
+                if (item != null) {
                     output.add(item);
+                } else {
+                    WarForgeMod.LOGGER.warn("Unknown item ID in config: {}", itemID);
+                }
             }
             return output;
         }
 
         public void findBlocks() {
-            BLOCK_PLACE_EXCEPTIONS = findBlocks(BLOCK_PLACE_EXCEPTION_IDS);
-            BLOCK_BREAK_EXCEPTIONS = findBlocks(BLOCK_BREAK_EXCEPTION_IDS);
-            BLOCK_INTERACT_EXCEPTIONS = findBlocks(BLOCK_INTERACT_EXCEPTION_IDS);
-            ITEM_USE_EXCEPTIONS = FindItems(ITEM_USE_EXCEPTION_IDS);
+            BLOCK_PLACE_WHITELIST = findBlocks(BLOCK_PLACE_WHITELIST_IDS);
+            BLOCK_BREAK_WHITELIST = findBlocks(BLOCK_BREAK_WHITELIST_IDS);
+            BLOCK_INTERACT_WHITELIST = findBlocks(BLOCK_INTERACT_WHITELIST_IDS);
+            ITEM_USE_WHITELIST = findItems(ITEM_USE_WHITELIST_IDS);
+
+            BLOCK_PLACE_BLACKLIST = findBlocks(BLOCK_PLACE_BLACKLIST_IDS);
+            BLOCK_BREAK_BLACKLIST = findBlocks(BLOCK_BREAK_BLACKLIST_IDS);
+            BLOCK_INTERACT_BLACKLIST = findBlocks(BLOCK_INTERACT_BLACKLIST_IDS);
+            ITEM_USE_BLACKLIST = findItems(ITEM_USE_BLACKLIST_IDS);
         }
 
         public void SyncConfig(String name, String desc) {
@@ -410,10 +437,64 @@ public class WarForgeConfig {
             PLAYER_TAKE_DAMAGE_FROM_OTHER = configFile.getBoolean(name + " - Take Any Other Dmg", name, PLAYER_TAKE_DAMAGE_FROM_OTHER, "Can players take damage from any other source in " + desc);
             PLAYER_DEAL_DAMAGE = configFile.getBoolean(name + " - Deal Damage", name, PLAYER_DEAL_DAMAGE, "Can players deal damage in " + desc);
 
-            BLOCK_PLACE_EXCEPTION_IDS = configFile.getStringList(name + " - Place Exceptions", name, BLOCK_PLACE_EXCEPTION_IDS, "The block IDs that can still be placed. Has no effect if block placement is allowed anyway");
-            BLOCK_BREAK_EXCEPTION_IDS = configFile.getStringList(name + " - Break Exceptions", name, BLOCK_BREAK_EXCEPTION_IDS, "The block IDs that can still be broken. Has no effect if block breaking is allowed anyway");
-            BLOCK_INTERACT_EXCEPTION_IDS = configFile.getStringList(name + " - Interact Exceptions", name, BLOCK_INTERACT_EXCEPTION_IDS, "The block IDs that can still be interacted with. Has no effect if interacting is allowed anyway");
-            ITEM_USE_EXCEPTION_IDS = configFile.getStringList(name + " - Use Exceptions", name, ITEM_USE_EXCEPTION_IDS, "The item IDs that can still be used. Has no effect if interacting is allowed anyway");
+            // Whitelists
+            BLOCK_PLACE_WHITELIST_IDS = configFile.getStringList(
+                    name + " - Place Whitelist",
+                    name,
+                    BLOCK_PLACE_WHITELIST_IDS,
+                    "Whitelist: block IDs that can still be placed. Has no effect if block placement is allowed anyway"
+            );
+
+            BLOCK_BREAK_WHITELIST_IDS = configFile.getStringList(
+                    name + " - Break Whitelist",
+                    name,
+                    BLOCK_BREAK_WHITELIST_IDS,
+                    "Whitelist: block IDs that can still be broken. Has no effect if block breaking is allowed anyway"
+            );
+
+            BLOCK_INTERACT_WHITELIST_IDS = configFile.getStringList(
+                    name + " - Interact Whitelist",
+                    name,
+                    BLOCK_INTERACT_WHITELIST_IDS,
+                    "Whitelist: block IDs that can still be interacted with. Has no effect if interacting is allowed anyway"
+            );
+
+            ITEM_USE_WHITELIST_IDS = configFile.getStringList(
+                    name + " - Use Whitelist",
+                    name,
+                    ITEM_USE_WHITELIST_IDS,
+                    "Whitelist: item IDs that can still be used. Has no effect if using items is allowed anyway"
+            );
+
+// Blacklists
+            BLOCK_PLACE_BLACKLIST_IDS = configFile.getStringList(
+                    name + " - Place Blacklist",
+                    name,
+                    BLOCK_PLACE_BLACKLIST_IDS,
+                    "Blacklist: block IDs that can never be placed, even if placement is otherwise allowed"
+            );
+
+            BLOCK_BREAK_BLACKLIST_IDS = configFile.getStringList(
+                    name + " - Break Blacklist",
+                    name,
+                    BLOCK_BREAK_BLACKLIST_IDS,
+                    "Blacklist: block IDs that can never be broken, even if breaking is otherwise allowed"
+            );
+
+            BLOCK_INTERACT_BLACKLIST_IDS = configFile.getStringList(
+                    name + " - Interact Blacklist",
+                    name,
+                    BLOCK_INTERACT_BLACKLIST_IDS,
+                    "Blacklist: block IDs that can never be interacted with, even if interaction is otherwise allowed"
+            );
+
+            ITEM_USE_BLACKLIST_IDS = configFile.getStringList(
+                    name + " - Use Blacklist",
+                    name,
+                    ITEM_USE_BLACKLIST_IDS,
+                    "Blacklist: item IDs that can never be used, even if using items is otherwise allowed"
+            );
+
 
             ALLOW_MOB_SPAWNS = configFile.getBoolean(name + " - Allow Mob Spawns", name, ALLOW_MOB_SPAWNS, "Can mobs spawn in " + desc);
             ALLOW_MOB_ENTRY = configFile.getBoolean(name + " - Allow Mob Entry", name, ALLOW_MOB_ENTRY, "Can mobs enter " + desc);

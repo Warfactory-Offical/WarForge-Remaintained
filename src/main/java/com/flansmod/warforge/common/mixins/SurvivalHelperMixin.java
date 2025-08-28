@@ -31,7 +31,7 @@ public class SurvivalHelperMixin {
         ProtectionConfig config = ProtectionsModule.GetProtections(player.getUniqueID(), dimPos);
 
         if (!config.PLACE_BLOCKS) {
-            if (!config.BLOCK_PLACE_EXCEPTIONS.contains(blockState.getBlock())) {
+            if (!config.BLOCK_PLACE_WHITELIST.contains(blockState.getBlock())) {
                 cir.setReturnValue(false);
             }
         }
