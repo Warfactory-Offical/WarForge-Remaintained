@@ -27,6 +27,7 @@ import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import static com.flansmod.warforge.common.WarForgeConfig.SIEGE_ATTACKER_RADIUS;
 import static com.flansmod.warforge.common.WarForgeConfig.SIEGE_DEFENDER_RADIUS;
@@ -194,15 +195,9 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 		else destroy();
 	}
 
+    @SideOnly(Side.SERVER)//NEVER let client use this
 	public void destroy() {
-		IBlockState oldState = world.getBlockState(getClaimPos());
-		world.markBlockRangeForRenderUpdate(pos, pos);
-		world.notifyBlockUpdate(getClaimPos(), oldState, Blocks.AIR.getDefaultState(), 3); // 2 is bit mask apparently indicating send to client
-		world.scheduleBlockUpdate(pos, this.getBlockType(), 0, 0);
-		markDirty();
-
-		world.destroyBlock(getClaimPos(), true); // destroy block of failed siege (gets rid of tile-entity
-		world.removeTileEntity(getClaimPos());
+        WarForgeMod.FACTIONS.requestRemoveClaimServer(getClaimPos());
 	}
 
 	// allows client side to also receive block events (not used currently)

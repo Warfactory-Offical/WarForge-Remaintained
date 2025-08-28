@@ -1,5 +1,6 @@
 package com.flansmod.warforge.server;
 
+import com.flansmod.warforge.api.Time;
 import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.blocks.IClaim;
@@ -27,7 +28,9 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
@@ -87,19 +90,42 @@ public class Faction {
         return WarForgeMod.MC_SERVER.getPlayerList().getPlayerByUUID(playerID);
     }
 
-    public boolean increaseSiegeMomentum() {
+    public boolean increaseSiegeMomentum(boolean message) {
         boolean increased = false;
         if (siegeMomentum < WarForgeConfig.SIEGE_MOMENTUM_MAX) {
             siegeMomentum++;
             increased = true;
         }
         momentumExpireryTimestamp = System.currentTimeMillis() + (long) WarForgeConfig.SIEGE_MOMENTUM_DURATION * 60 * 1000;
+        if (increased) {
+            long nextSiegeMillis = WarForgeConfig.SIEGE_MOMENTUM_TIME.get(siegeMomentum) * 1000;
+            String formattedTime = new Time(nextSiegeMillis)
+                    .getFormattedTime(Time.TimeFormat.MINUTES_SECONDS, Time.Verbality.FULL);
+
+            if (increased && message) {
+                ITextComponent msg = new TextComponentString("")
+                        .appendSibling(new TextComponentString("Your power grows. Siege momentum increased to "))
+                        .appendSibling(new TextComponentString(String.valueOf(siegeMomentum)).setStyle(new Style().setBold(true).setColor(TextFormatting.GOLD)))
+                        .appendSibling(new TextComponentString(". Next siege will take: "))
+                        .appendSibling(new TextComponentString(formattedTime).setStyle(new Style().setColor(TextFormatting.GREEN)));
+
+                messageAll(msg);
+            } else if (!increased && message) {
+                ITextComponent msg = new TextComponentString("")
+                        .appendSibling(new TextComponentString("You haven't gained any more momentum, however it's time was extended by another " + WarForgeConfig.SIEGE_MOMENTUM_DURATION + "minutes"));
+
+                messageAll(msg);
+            }
+        }
         return increased;
     }
 
-    public void stopMomentum() {
+    public void stopMomentum(boolean message) {
         siegeMomentum = 0;
         momentumExpireryTimestamp = 0L;
+        if(message){
+            messageAll( new TextComponentString("Your extra momentum was lost"));
+        }
     }
 
     public byte getSiegeMomentum() {
@@ -380,21 +406,21 @@ public class Faction {
         wealth = count;
     }
 
-	public void awardYields() {
-		for (HashMap.Entry<DimBlockPos, Integer> kvp : claims.entrySet()) {
-			DimBlockPos pos = kvp.getKey();
-			World world = WarForgeMod.MC_SERVER.getWorld(pos.dim);
-			kvp.setValue(kvp.getValue() + 1);  // increment number of yields
+    public void awardYields() {
+        for (HashMap.Entry<DimBlockPos, Integer> kvp : claims.entrySet()) {
+            DimBlockPos pos = kvp.getKey();
+            World world = WarForgeMod.MC_SERVER.getWorld(pos.dim);
+            kvp.setValue(kvp.getValue() + 1);  // increment number of yields
 
-			// If It's loaded and the handler is ready, try to process yields
-			if (world.isBlockLoaded(pos) && VEIN_HANDLER != null && VEIN_HANDLER.hasFinishedInit) {
-				TileEntity te = world.getTileEntity(pos.toRegularPos());
-				if (te instanceof TileEntityYieldCollector) {
-					((TileEntityYieldCollector) te).processYield(claims);
-				}
-			}
-		}
-	}
+            // If It's loaded and the handler is ready, try to process yields
+            if (world.isBlockLoaded(pos) && VEIN_HANDLER != null && VEIN_HANDLER.hasFinishedInit) {
+                TileEntity te = world.getTileEntity(pos.toRegularPos());
+                if (te instanceof TileEntityYieldCollector) {
+                    ((TileEntityYieldCollector) te).processYield(claims);
+                }
+            }
+        }
+    }
 
     public void promote(UUID playerID) {
         PlayerData data = members.get(playerID);

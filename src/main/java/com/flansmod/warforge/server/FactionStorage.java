@@ -388,13 +388,7 @@ public class FactionStorage {
                     onNonCitadelClaimPlaced((IClaim) te, attackers);
                 }
 
-                boolean increased = attackers.increaseSiegeMomentum();
-                if (increased)
-                    attackers.messageAll(new TextComponentTranslation("warforge.info_momentum_gained",
-                            attackers.getSiegeMomentum(),
-                            TimeHelper.formatTime(attackers.getMomentumExpireryTimestamp() - System.currentTimeMillis())));
-                else
-                    attackers.messageAll(new TextComponentTranslation("warforge.info_momentum_extended", TimeHelper.formatTime((long) WarForgeConfig.SIEGE_MOMENTUM_DURATION * 60 * 1000)));
+                    attackers.increaseSiegeMomentum(true);
                 siege.onCompleted(true);
             }
 
@@ -411,7 +405,7 @@ public class FactionStorage {
                 defenders.messageAll(new TextComponentTranslation("warforge.info.siege_won_defenders", defenders.name, blockPos.toFancyString()));
                 defenders.notoriety += WarForgeConfig.NOTORIETY_PER_SIEGE_DEFEND_SUCCESS;
 
-                attackers.stopMomentum();
+                attackers.stopMomentum(true);
                 attackers.messageAll(new TextComponentTranslation("warforge.info_momentum_lost"));
 
                 siege.onCompleted(false);
@@ -459,7 +453,7 @@ public class FactionStorage {
                 TileEntity te = MC_SERVER.getWorld(blockPos.dim).getTileEntity(blockPos.toRegularPos());
                 onNonCitadelClaimPlaced((IClaim) te, attackers);
             }
-            attackers.increaseSiegeMomentum();
+            attackers.increaseSiegeMomentum(true);
         } else {
             if (WarForgeConfig.DEFENDER_CONQUERED_CHUNK_PERIOD > 0) {
                 conqueredChunks.put(chunkPos, new ObjectIntPair<>(copyUUID(defenders.uuid), WarForgeConfig.DEFENDER_CONQUERED_CHUNK_PERIOD)); // defenders get won claims defended
@@ -470,7 +464,7 @@ public class FactionStorage {
             attackers.messageAll(new TextComponentTranslation("warforge.info.siege_lost_attackers", attackers.name, blockPos.toFancyString()));
             defenders.messageAll(new TextComponentTranslation("warforge.info.siege_won_defenders", defenders.name, blockPos.toFancyString()));
             defenders.notoriety += WarForgeConfig.NOTORIETY_PER_SIEGE_DEFEND_SUCCESS;
-            attackers.stopMomentum();
+            attackers.stopMomentum(true);
         }
 
         if (doCleanup) siege.onCompleted(successful);
@@ -1075,6 +1069,33 @@ public class FactionStorage {
         mClaims.remove(pos.toChunkPos());
         faction.messageAll(new TextComponentString(player.getName() + " unclaimed " + pos.toFancyString()));
 
+        return true;
+    }
+
+    public boolean requestRemoveClaimServer(DimBlockPos pos) {
+        UUID factionID = getClaim(pos);
+        Faction faction = getFaction(factionID);
+        if (factionID.equals(Faction.nullUuid) || faction == null) {
+            return false;
+        }
+
+        if (pos.equals(faction.citadelPos)) {
+            return false;
+        }
+
+
+        for (HashMap.Entry<DimChunkPos, Siege> siege : sieges.entrySet()) {
+            if (siege.getKey().equals(pos.toChunkPos())) {
+                return false;
+            }
+
+            if (siege.getValue().attackingCamps.contains(pos)) {
+                return false;
+            }
+        }
+
+        faction.onClaimLost(pos);
+        mClaims.remove(pos.toChunkPos());
         return true;
     }
 

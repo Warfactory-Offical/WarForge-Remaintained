@@ -201,7 +201,7 @@ public class GuiSiegeCamp {
 
                     //FIXME
                     for (byte level : WarForgeConfig.SIEGE_MOMENTUM_TIME.keySet()) {
-                        long time = WarForgeConfig.SIEGE_MOMENTUM_TIME.get(level)*1000;
+                        long time = WarForgeConfig.SIEGE_MOMENTUM_TIME.get(level) * 1000;
                         richTooltip.addLine("§eLevel " + level + "§r: §a" + new Time(time).getFormattedTime(Time.TimeFormat.MINUTES_SECONDS, Time.Verbality.SHORT));
                     }
                 })
@@ -249,7 +249,7 @@ public class GuiSiegeCamp {
                                 richTooltip.addLine(IKey.str("No ores in this chunk"));
                             }
                             if (chunkInfo.canAttack) {
-                                richTooltip.addLine(IKey.str("Attack time: " + WarForgeConfig.SIEGE_MOMENTUM_TIME.get(momentum) + " minutes").style( IKey.RED));
+                                richTooltip.addLine(IKey.str("Total attack time: " + new Time(WarForgeConfig.SIEGE_MOMENTUM_TIME.get(momentum) * 1000).getFormattedTime(Time.TimeFormat.HOURS_MINUTES_SECONDS, Time.Verbality.SHORT)).style(IKey.RED));
                                 richTooltip.addLine(IKey.str("Click to attack now!").style(IKey.BOLD, IKey.RED));
                             }
                         })
