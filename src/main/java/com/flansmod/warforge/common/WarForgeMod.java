@@ -305,9 +305,9 @@ public class WarForgeMod implements ILateMixinLoader {
                 FACTIONS.advanceSiegeDay();
                 shouldUpdate = true;
             }
-        } else if(MinecraftServer.getCurrentTimeMillis() % 20 == 0) {
+        } else  {
             FACTIONS.updateSiegeTimers();
-            shouldUpdate = true;
+            //shouldUpdate = true;
         }
 
         //Yield timer

@@ -80,7 +80,7 @@ public class ClientTickHandler {
     public static long timerSiegeEndStamp = 0L;
    	public static boolean CLAIMS_DIRTY = false;
     public static boolean UI_DEBUG = false;
-    public static boolean TIMER_DEBUG = false;
+    public static boolean TIMER_DEBUG = true;
     private final Tessellator tess;
     private final ModelBanner bannerModel = new ModelBanner();
     private final HashMap<ItemStack, ResourceLocation> bannerTextures = new HashMap<ItemStack, ResourceLocation>();

@@ -30,7 +30,7 @@ public class Siege {
     public UUID defendingFaction;
     public ArrayList<DimBlockPos> attackingCamps;
     public DimBlockPos defendingClaim;
-    public long timeElapsed;
+    public long timeRemainingMillis;
     public long siegeEndTimeStamp = 999L;
     public boolean finished = false; //Used for controlling whenever siege has been concluded, Does not require saving
 
@@ -66,7 +66,7 @@ public class Siege {
         attackingFaction = attacker;
         defendingFaction = defender;
         defendingClaim = defending;
-        this.timeElapsed = time;
+        this.timeRemainingMillis = time;
 
         TileEntity te = WarForgeMod.MC_SERVER.getWorld(defending.dim).getTileEntity(defending.toRegularPos());
         if (te instanceof IClaim) {
@@ -196,7 +196,7 @@ public class Siege {
         info.defendingColour = defenders.colour;
         info.progress = GetAttackProgress();
         info.completionPoint = GetAttackSuccessThreshold();
-        info.timeProgress = timeElapsed;
+        info.timeProgress = timeRemainingMillis;
         info.endTimestamp = siegeEndTimeStamp;
         info.finished = finished;
 
@@ -206,7 +206,7 @@ public class Siege {
     public boolean start() {
         Faction attackers = WarForgeMod.FACTIONS.getFaction(attackingFaction);
         Faction defenders = WarForgeMod.FACTIONS.getFaction(defendingFaction);
-        siegeEndTimeStamp = System.currentTimeMillis() + timeElapsed;
+        recalculateEndTimestamp();
 
         if (attackers == null || defenders == null) {
             WarForgeMod.LOGGER.error("Invalid factions in siege. Cannot start");
@@ -219,13 +219,28 @@ public class Siege {
         return true;
     }
 
+    private void recalculateEndTimestamp() {
+        siegeEndTimeStamp = System.currentTimeMillis() + timeRemainingMillis;
+    }
+
     public void updateSiegeTimer() {
-        timeElapsed = timeElapsed - 20L;//One second
-        if (timeElapsed <= 0) {
+        if (timeRemainingMillis <= 0) {
             mAttackProgress += WarForgeConfig.SIEGE_SWING_PER_DAY_ELAPSED_BASE;
-            timeElapsed = WarForgeConfig.SIEGE_MOMENTUM_TIME.get(WarForgeMod.FACTIONS.getFaction(attackingFaction).getSiegeMomentum());
-            siegeEndTimeStamp = System.currentTimeMillis() + timeElapsed;
+
+            long momentumTime = WarForgeConfig.SIEGE_MOMENTUM_TIME
+                    .get(WarForgeMod.FACTIONS.getFaction(attackingFaction).getSiegeMomentum()) * 1000L;
+            timeRemainingMillis = momentumTime;
+
+            siegeEndTimeStamp = System.currentTimeMillis() + timeRemainingMillis;
+
             WarForgeMod.FACTIONS.sendSiegeInfoToNearby(defendingClaim.toChunkPos());
+        } else {
+            timeRemainingMillis -= 50L;
+
+            long actualRemaining = siegeEndTimeStamp - System.currentTimeMillis();
+            if (Math.abs(actualRemaining - timeRemainingMillis) > 1000L) {
+                timeRemainingMillis = actualRemaining;
+            }
         }
     }
 
@@ -420,8 +435,8 @@ public class Siege {
         mExtraDifficulty = tags.getInteger("extraDifficulty");
         if (WarForgeConfig.SIEGE_ENABLE_NEW_TIMER) {
 
-            timeElapsed = tags.getInteger("timeElapsed");
-            siegeEndTimeStamp = System.currentTimeMillis() + timeElapsed;
+            timeRemainingMillis = tags.getInteger("timeElapsed");
+            recalculateEndTimestamp();
         }
     }
 
@@ -441,6 +456,6 @@ public class Siege {
         tags.setInteger("progress", mAttackProgress);
         tags.setInteger("baseDifficulty", mBaseDifficulty);
         tags.setInteger("extraDifficulty", mExtraDifficulty);
-        tags.setLong("timeElapsed", timeElapsed);
+        tags.setLong("timeElapsed", timeRemainingMillis);
     }
 }

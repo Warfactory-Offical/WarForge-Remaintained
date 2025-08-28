@@ -897,7 +897,7 @@ public class FactionStorage {
             return;
         }
 
-        long maxTime = WarForgeConfig.SIEGE_MOMENTUM_TIME.get(attacking.getSiegeMomentum());
+        long maxTime = WarForgeConfig.SIEGE_MOMENTUM_TIME.get(attacking.getSiegeMomentum()) * 1000L;
 
         Siege siege = new Siege(attacking.uuid, defendingFactionID, defendingPos, maxTime);
         siege.attackingCamps.add(siegeCampPos);

@@ -5,6 +5,7 @@ import com.flansmod.warforge.common.network.PacketSyncConfig;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.Configuration;
 
 import java.io.File;
@@ -243,7 +244,7 @@ public class WarForgeConfig {
         SIEGE_ENABLE_NEW_TIMER = configFile.getBoolean("Enable Per-Siege timer", CATEGORY_SIEGES, SIEGE_ENABLE_NEW_TIMER, "Enable new per siege time system, instead of a central siege day, each siege has its own timer, starting with the siege");
 
         //New siege stuff
-        SIEGE_MOMENTUM_DURATION = configFile.getInt("Siege momentum duration", "siege", 60, 1, Integer.MAX_VALUE, "Time the momentum lasts");
+        SIEGE_MOMENTUM_DURATION = configFile.getInt("Siege momentum duration", CATEGORY_SIEGES, 60, 1, Integer.MAX_VALUE, "Time the momentum lasts");
         // Momentum multipliers (define per momentum level)
         String[] defaults = new String[]{
                 "0=15:00",
@@ -252,7 +253,7 @@ public class WarForgeConfig {
                 "3=5:00",
                 "4=2:30"
         };
-        String[] values = configFile.getStringList("SiegeMomentumMultipliers", "siege", defaults,
+        String[] values = configFile.getStringList("SiegeMomentumMultipliers", CATEGORY_SIEGES, defaults,
                 "List of momentum multipliers in the form level=multiplier");
 
         SIEGE_MOMENTUM_TIME.clear();
@@ -321,6 +322,12 @@ public class WarForgeConfig {
 
         if (configFile.hasChanged())
             configFile.save();
+    }
+
+
+
+    private static void syncConfigSieges(File suggestedFile){
+
     }
 
     //New system to deal with that config sync
