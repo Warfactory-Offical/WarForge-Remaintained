@@ -544,7 +544,6 @@ public class WarForgeMod implements ILateMixinLoader {
 
     @SubscribeEvent
     public void playerJoinedGame(PlayerLoggedInEvent event) {
-
         NETWORK.sendTo(WarForgeConfig.createConfigSyncPacket(), (EntityPlayerMP) event.player);
         if (!event.player.world.isRemote) {
             if (Double.isNaN(event.player.posX) || Double.isInfinite(event.player.posX)
@@ -642,6 +641,7 @@ public class WarForgeMod implements ILateMixinLoader {
         tags.setLong("shutdown-timestamp", serverStopTimestamp);
     }
 
+    // Always goes before player join/ leave events; joining when server is loading will not call those events b4 this
     @EventHandler
     public void serverAboutToStart(FMLServerAboutToStartEvent event) {
         MC_SERVER = event.getServer();

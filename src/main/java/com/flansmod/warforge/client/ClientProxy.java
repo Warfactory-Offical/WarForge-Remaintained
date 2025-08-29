@@ -1,6 +1,7 @@
 package com.flansmod.warforge.client;
 
 import com.flansmod.warforge.api.vein.Vein;
+import com.flansmod.warforge.api.vein.init.VeinUtils;
 import com.flansmod.warforge.common.CommonProxy;
 import com.flansmod.warforge.common.Content;
 import com.flansmod.warforge.common.blocks.models.ClaimModels;
@@ -49,23 +50,23 @@ public class ClientProxy extends CommonProxy
 
 	public static ChunkVeinCache CHUNK_VEIN_CACHE = new ChunkVeinCache();
 
+	public static short megachunkLength = -1;
+
 	public static KeyBinding factionChatKey = new KeyBinding("key.factionchat.desc",
 			KeyConflictContext.IN_GAME,
 			Keyboard.KEY_Y,
 			"key.warforge.factionchat");
-	
+
 	@Override
-	public void preInit(FMLPreInitializationEvent event)
-	{
+	public void preInit(FMLPreInitializationEvent event) {
 		MinecraftForge.EVENT_BUS.register(this);
 		MinecraftForge.EVENT_BUS.register(new ClientTickHandler());
 		MinecraftForge.EVENT_BUS.register(new AnimatedEffectHandler());
 		ClientRegistry.registerKeyBinding(factionChatKey);
 	}
-	
+
 	@Override
-	public void Init(FMLInitializationEvent event)
-	{
+	public void Init(FMLInitializationEvent event) {
 //		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityCitadel.class, new TileEntityClaimRenderer());
 //		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityBasicClaim.class, new TileEntityClaimRenderer());
 //		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityReinforcedClaim.class, new TileEntityClaimRenderer());
@@ -77,20 +78,17 @@ public class ClientProxy extends CommonProxy
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityCitadel.class, new RenderTileEntityClaim(ClaimModels.ModelType.CITADEL));
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityBasicClaim.class, new RenderTileEntityClaim(ClaimModels.ModelType.BASIC_CLAIM));
 	}
-	
+
 	@Override
-	public void TickClient()
-	{
-		if(factionChatKey.isPressed())
-		{
+	public void TickClient() {
+		if(factionChatKey.isPressed()) {
 			GuiChat gui = new GuiChat("/f chat ");
 			Minecraft.getMinecraft().displayGuiScreen(gui);
 		}
 	}
-	
+
 	@Override
-	public Object getClientGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z)
-	{
+	public Object getClientGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
         return switch (ID) {
             case GUI_TYPE_CITADEL -> new GuiCitadel(getServerGuiElement(ID, player, world, x, y, z));
             case GUI_TYPE_CREATE_FACTION ->
@@ -104,20 +102,18 @@ public class ClientProxy extends CommonProxy
             default -> null;
         };
     }
-	
-	@Override 	
-	public TileEntity GetTile(DimBlockPos pos)
-	{
+
+	@Override
+	public TileEntity GetTile(DimBlockPos pos) {
 		if(Minecraft.getMinecraft().world.provider.getDimension() == pos.dim)
 			return Minecraft.getMinecraft().world.getTileEntity(pos.toRegularPos());
-		
+
 		WarForgeMod.LOGGER.error("Can't get info about a tile entity in a different dimension on client");
 		return null;
 	}
-	
+
 	@SubscribeEvent
-	public void registerModels(ModelRegistryEvent event)
-	{
+	public void registerModels(ModelRegistryEvent event) {
 		RegisterModel(Content.citadelBlockItem);
 		RegisterModel(Content.basicClaimBlockItem);
 		RegisterModel(Content.reinforcedClaimBlockItem);
@@ -129,14 +125,12 @@ public class ClientProxy extends CommonProxy
 		RegisterModel(Content.wealthLeaderboardItem);
 		RegisterModel(Content.notorietyLeaderboardItem);
 	}
-	
-	private void RegisterModel(Item item)
-	{
+
+	private void RegisterModel(Item item) {
 		ModelLoader.setCustomModelResourceLocation(item, 0, new ModelResourceLocation(item.getRegistryName(), "inventory"));
 	}
-	
-	public void UpdateSiegeInfo(SiegeCampProgressInfo info) 
-	{
+
+	public void UpdateSiegeInfo(SiegeCampProgressInfo info) {
 		// sent to client on server stop to avoid de-sync
 		if (info.attackingName.equals("c") && info.defendingName.equals("c")) {
 			sSiegeInfo.clear();
@@ -152,8 +146,7 @@ public class ClientProxy extends CommonProxy
 
 			// assign radius according to player faction
 			int sqrRad = -1;
-			if (facName != null && facName.equals(info.defendingName)) { sqrRad = SIEGE_DEFENDER_RADIUS; }
-			else if (facName != null && facName.equals(info.attackingName)) { sqrRad = SIEGE_ATTACKER_RADIUS; }
+			if (facName != null && facName.equals(info.defendingName)) { sqrRad = SIEGE_DEFENDER_RADIUS; } else if (facName != null && facName.equals(info.attackingName)) { sqrRad = SIEGE_ATTACKER_RADIUS; }
 
 			// if the player is on either side of the siege, fill the warzone for them
 			if (sqrRad != -1) {
@@ -176,12 +169,11 @@ public class ClientProxy extends CommonProxy
 		}
 
         sSiegeInfo.remove(info.attackingPos);
-		
+
 		sSiegeInfo.put(info.attackingPos, info);
 	}
-	
-	public static void requestFactionInfo(UUID factionID)
-	{
+
+	public static void requestFactionInfo(UUID factionID) {
 		PacketRequestFactionInfo request = new PacketRequestFactionInfo();
 		request.mFactionIDRequest = factionID;
 		WarForgeMod.NETWORK.sendToServer(request);

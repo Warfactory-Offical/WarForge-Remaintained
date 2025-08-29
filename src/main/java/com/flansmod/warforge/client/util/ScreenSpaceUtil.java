@@ -25,8 +25,9 @@ public class ScreenSpaceUtil {
     public static void resetOffsets(RenderGameOverlayEvent event) {
         RESOLUTIONX = event.getResolution().getScaledWidth();
         RESOLUTIONY = event.getResolution().getScaledHeight();
+
         topOffset = topLeftOffset = topRightOffset = 0;
-        bottomOffset = RESOLUTIONY - 43;
+        bottomOffset = RESOLUTIONY - 43;  // -43 for toolbar + hunger/ hearts?
         bottomLeftOffset = bottomRightOffset = RESOLUTIONY;
     }
 
@@ -51,6 +52,7 @@ public class ScreenSpaceUtil {
             default -> false;
         };
     }
+
     public static int getXOffset(ScreenPos pos, int offset) {
         return switch (pos) {
             case TOP_RIGHT, BOTTOM_RIGHT -> -offset;
@@ -65,13 +67,13 @@ public class ScreenSpaceUtil {
             default -> offset;
         };
     }
+
     public static int getYOffset(ScreenPos pos, int offset) {
         return switch (pos) {
             case TOP, TOP_RIGHT, TOP_LEFT -> offset;
             default -> -offset;
         };
     }
-
 
     public static int getX(ScreenPos pos, int elementWidth) {
         int screenWidth = RESOLUTIONX;
@@ -172,10 +174,12 @@ public class ScreenSpaceUtil {
             this.ySupplier = ySupplier;
             this.ySetter = ySetter;
         }
+
         public static ScreenPos fromString(String name) {
             for (ScreenPos pos : values()) {
                 if (pos.name().equalsIgnoreCase(name)) return pos;
             }
+
             return TOP; // default fallback
         }
 

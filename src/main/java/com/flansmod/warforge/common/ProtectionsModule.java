@@ -44,6 +44,7 @@ public class ProtectionsModule {
         UUID factionID = WarForgeMod.FACTIONS.getClaim(pos);
         if (factionID.equals(FactionStorage.SAFE_ZONE_ID))
             return WarForgeConfig.SAFE_ZONE;
+
         if (factionID.equals(FactionStorage.WAR_ZONE_ID))
             return WarForgeConfig.WAR_ZONE;
 
@@ -195,7 +196,7 @@ public class ProtectionsModule {
                 event.setCanceled(true);
             }
         } else {
-            if (!config.BLOCK_PLACE_BLACKLIST.contains(event.getBlockSnapshot().getCurrentBlock().getBlock())) {
+            if (config.BLOCK_PLACE_BLACKLIST.contains(event.getBlockSnapshot().getCurrentBlock().getBlock())) {
                 //WarForgeMod.LOGGER.info("Cancelled block placement event");
                 event.setCanceled(true);
             }
@@ -218,7 +219,7 @@ public class ProtectionsModule {
                 event.setCanceled(true);
             }
         } else {
-            if (!config.BLOCK_BREAK_BLACKLIST.contains(event.getState().getBlock())) {
+            if (config.BLOCK_BREAK_BLACKLIST.contains(event.getState().getBlock())) {
                 event.setCanceled(true);
             }
         }

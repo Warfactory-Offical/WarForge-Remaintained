@@ -80,7 +80,7 @@ public class ClientTickHandler {
     public static long timerSiegeEndStamp = 0L;
    	public static boolean CLAIMS_DIRTY = false;
     public static boolean UI_DEBUG = false;
-    public static boolean TIMER_DEBUG = true;
+    public static boolean TIMER_DEBUG = false;
     private final Tessellator tess;
     private final ModelBanner bannerModel = new ModelBanner();
     private final HashMap<ItemStack, ResourceLocation> bannerTextures = new HashMap<ItemStack, ResourceLocation>();
@@ -334,15 +334,12 @@ public class ClientTickHandler {
 		// even if we aren't rendering, count up start time to indicate we are within the same chunk as before
 		boolean isNewChunk = lastRenderStartTimeMs == -1;
 		long currTimeMs = System.currentTimeMillis();
-		float xTextCenter = (float) event.getResolution().getScaledWidth() / 2; // Centered;
-		float yText = 32;
 
 		// even though intelliJ thinks veinInfo is never null, it definitely should be able to be
 		// we render either the item, or some waiting icon
 		ItemStack currMemberItemStack = null;
 		boolean hasItemToRender = veinInfo != null && veinInfo.first() != null && veinInfo.first().compIds.size() > 0;
 		if (hasItemToRender)  {
-
 			// initialize render info
 			if (lastRenderStartTimeMs == -1) {
 				lastRenderStartTimeMs = currTimeMs;
@@ -371,14 +368,20 @@ public class ClientTickHandler {
 			compInfoStrings = createVeinInfoStrings(veinInfo, hasData);
 		}
 
+        ScreenSpaceUtil.ScreenPos veinPos = WarForgeConfig.POS_VEIN_INDICATOR;
 		final int imageSize = hasItemToRender ? 24 : 0;
-		final int imageTextOverlap = imageSize / 2;
-		final float halfTextHeight = (3 * mc.fontRenderer.FONT_HEIGHT) >> 2;
-		final int nameWidth =  mc.fontRenderer.getStringWidth(compInfoStrings.get(0));
-		final float titleLeftShift = (float) (imageSize + nameWidth - imageTextOverlap) / 2;
 
 		// draw the vein info
-		mc.fontRenderer.drawStringWithShadow(compInfoStrings.get(0), xTextCenter + imageSize - imageTextOverlap - titleLeftShift, yText, 0xFFFFFF);
+        final int textHeight = ScreenSpaceUtil.TEXTHEIGHT;
+        final int veinTitleWidth = mc.fontRenderer.getStringWidth(compInfoStrings.get(0));
+        final int titleX = ScreenSpaceUtil.getX(veinPos, veinTitleWidth);
+        final int veinInfoHeight = Math.max(textHeight, (textHeight + imageSize) / 2);
+        final int titleY = ScreenSpaceUtil.getY(veinPos, veinInfoHeight) + 4 + (veinInfoHeight - textHeight);
+        final int imageX = titleX - imageSize / 2;  // offset the image to the left of the title + gap
+
+        if (titleY > WarForgeConfig.HUD_VERT_CUTOFF_PERCENT * ScreenSpaceUtil.RESOLUTIONY) { return; }  // don't overdraw onto main part of screen
+		mc.fontRenderer.drawStringWithShadow(compInfoStrings.get(0), titleX, titleY, 0xFFFFFF);
+        veinPos.incrementY(textHeight);
 
 		// draw the item
 		if (currMemberItemStack != null) {
@@ -388,7 +391,8 @@ public class ClientTickHandler {
 			GlStateManager.enableDepth();
 
 			// render the item
-			GlStateManager.translate(xTextCenter - titleLeftShift, yText + 4 - halfTextHeight, 0);
+            // y offset is position of dead center of image, so we need to offset down to align with the text
+			GlStateManager.translate(imageX - 4, titleY + textHeight / 2f, 0);
 			GlStateManager.scale(imageSize, imageSize, 1);
 			GlStateManager.rotate(180, 0, 1, 0);
 			GlStateManager.rotate(180, 0, 0, 1);
@@ -405,9 +409,10 @@ public class ClientTickHandler {
 
 		// draw the component strings
 		for (int i = 1; i < compInfoStrings.size(); ++i) {
+            // we want the components to look left aligned and indented
 			String currFormattedComp = compInfoStrings.get(i);
-			yText += mc.fontRenderer.FONT_HEIGHT + 2;
-			mc.fontRenderer.drawStringWithShadow(currFormattedComp, xTextCenter - (float) mc.fontRenderer.getStringWidth(currFormattedComp) / 2, yText, 0xFFFFFF);
+			mc.fontRenderer.drawStringWithShadow(currFormattedComp, titleX + 4, veinPos.getY(), 0xFFFFFF);
+            veinPos.incrementY(textHeight);
 		}
 	}
 

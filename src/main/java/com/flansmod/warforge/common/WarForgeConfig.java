@@ -13,6 +13,7 @@ import java.io.File;
 import java.util.*;
 
 import static com.flansmod.warforge.client.util.ScreenSpaceUtil.ScreenPos;
+import static com.flansmod.warforge.common.WarForgeMod.VEIN_HANDLER;
 
 public class WarForgeConfig {
     public static final String CATEGORY_CLAIMS = "Claims";
@@ -36,6 +37,7 @@ public class WarForgeConfig {
     public static boolean DO_FANCY_RENDERING = true;
     public static boolean SHOW_OPPONENT_BORDERS = true;
     public static boolean SHOW_ALLY_BORDERS = true;
+    public static float HUD_VERT_CUTOFF_PERCENT = 0.40f;
 
     // Yields/ Vein
     public static float YIELD_DAY_LENGTH = 1.0f; // In real-world hours
@@ -115,10 +117,10 @@ public class WarForgeConfig {
     public static boolean ALLOW_SPAWN_BETWEEN_DIMENSIONS = false;
     public static boolean ENABLE_TPA_POTIONS = true;
 
-    public static ScreenPos POS_TIMERS = ScreenPos.BOTTOM_LEFT;
-    public static ScreenPos POS_VEIN_INDICATOR = ScreenPos.BOTTOM_LEFT;
-    public static ScreenPos POS_TOAST_INDICATOR = ScreenPos.BOTTOM_LEFT;
-    public static ScreenPos POS_SIEGE = ScreenPos.BOTTOM_LEFT;
+    public static ScreenPos POS_TIMERS = ScreenPos.BOTTOM_RIGHT;
+    public static ScreenPos POS_VEIN_INDICATOR = ScreenPos.TOP;
+    public static ScreenPos POS_TOAST_INDICATOR = ScreenPos.TOP;
+    public static ScreenPos POS_SIEGE = ScreenPos.TOP;
 
     public static long FACTIONS_BOT_CHANNEL_ID = 799595436154683422L;
     // Permissions
@@ -297,11 +299,12 @@ public class WarForgeConfig {
         SHOW_YIELD_TIMERS = configFile.getBoolean("Show yield timers", CATEGORY_CLIENT, SHOW_YIELD_TIMERS, "Whether to show a readout of the time until the next yield / siege in top left of your screen");
         VEIN_MEMBER_DISPLAY_TIME_MS = configFile.getInt("Vein Member Display Time", CATEGORY_CLIENT, (int) VEIN_MEMBER_DISPLAY_TIME_MS, 100, Integer.MAX_VALUE, "The time in milliseconds for which each member of a vein will be displayed when it is being cycled through, to the precision allowed by the client tick system.");
         MODERN_WARFARE_MODELS = configFile.getBoolean("Enable modern warfare models", Configuration.CATEGORY_CLIENT, MODERN_WARFARE_MODELS, "Enable modern warfare models, instead of medival more vanilla-friendly models");
+        HUD_VERT_CUTOFF_PERCENT = configFile.getFloat("HUD Vertical cutoff", CATEGORY_CLIENT, HUD_VERT_CUTOFF_PERCENT, 0.0f, 1.0f, "What percent of the entire screen resolution from the top must certain displays (such as vein info) be before they stop rendering. Set to 0.0 to disable all relevant displays, or 1.0 to turn this off.");
 
         POS_TIMERS = ScreenPos.fromString(configFile.getString("Yield timer position", CATEGORY_CLIENT, "BOTTOM_RIGHT", "Position of the yield timers"));
         POS_SIEGE = ScreenPos.fromString(configFile.getString("Siege status position", CATEGORY_CLIENT, "TOP", "Position of the siege status"));
         POS_TOAST_INDICATOR = ScreenPos.fromString(configFile.getString("Toast indicator position", CATEGORY_CLIENT, "TOP", "Position of the  toast indicator"));
-        POS_VEIN_INDICATOR = ScreenPos.fromString(configFile.getString("Chunk vein indicator position", CATEGORY_CLIENT, "BOTTOM", "Position of the  chunk vein indicator"));
+        POS_VEIN_INDICATOR = ScreenPos.fromString(configFile.getString("Chunk vein indicator position", CATEGORY_CLIENT, "TOP", "Position of the  chunk vein indicator"));
 
         // Other permissions
         BLOCK_ENDER_CHEST = configFile.getBoolean("Disable Ender Chest", Configuration.CATEGORY_GENERAL, BLOCK_ENDER_CHEST, "Prevent players from opening ender chests");
@@ -342,6 +345,7 @@ public class WarForgeConfig {
         compoundNBT.setInteger("timeMomentum", SIEGE_MOMENTUM_DURATION);
         compoundNBT.setString("momentumMap", SIEGE_MOMENTUM_TIME.toString());
         compoundNBT.setFloat("yieldQualMult", YIELD_QUALITY_MULTIPLIER);
+        compoundNBT.setShort("megachunkLength", VEIN_HANDLER.megachunkLength);
         compoundNBT.setInteger("atkSiegeRadius", SIEGE_ATTACKER_RADIUS);
         compoundNBT.setInteger("defSiegeRadius", SIEGE_DEFENDER_RADIUS);
         packet.configNBT = compoundNBT.toString();

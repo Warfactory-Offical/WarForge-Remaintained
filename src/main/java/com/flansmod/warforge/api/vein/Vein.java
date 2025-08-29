@@ -3,6 +3,7 @@ package com.flansmod.warforge.api.vein;
 
 import com.flansmod.warforge.api.vein.init.VeinConfigHandler;
 import com.flansmod.warforge.api.vein.init.VeinUtils;
+import com.flansmod.warforge.client.ClientProxy;
 import com.flansmod.warforge.server.StackComparable;
 import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.ints.Int2FloatOpenHashMap;
@@ -51,10 +52,14 @@ public class Vein {
         dimWeights = new Int2ObjectOpenHashMap<>(veinEntry.dimWeights.size());
         dimWeights.defaultReturnValue(new short[]{0, 0});
 
+        short megachunkArea = 0;
+        if (isServer) { megachunkArea = VEIN_HANDLER.megachunkArea; }
+        else { megachunkArea = (short) (ClientProxy.megachunkLength * ClientProxy.megachunkLength); }
+
         // carry over the dimension weight information
         for(VeinConfigHandler.DimWeight dimWeight : veinEntry.dimWeights.values()) {
             dimWeights.put(dimWeight.id, new short[]{ dimWeight.weight,
-                    (short) (VEIN_HANDLER.megachunkArea * dimWeight.weight / VeinUtils.WEIGHT_FRACTION_TENS_POW)});
+                    (short) (megachunkArea * dimWeight.weight / VeinUtils.WEIGHT_FRACTION_TENS_POW)});
         }
 
         // integrate multipliers into yields

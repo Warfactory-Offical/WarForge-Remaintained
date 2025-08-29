@@ -1,5 +1,6 @@
 package com.flansmod.warforge.common.network;
 
+import com.flansmod.warforge.client.ClientProxy;
 import com.flansmod.warforge.common.WarForgeConfig;
 import com.flansmod.warforge.common.WarForgeMod;
 import io.netty.buffer.ByteBuf;
@@ -75,6 +76,7 @@ public class PacketSyncConfig extends PacketBase {
         }
 
         WarForgeConfig.YIELD_QUALITY_MULTIPLIER = compound.getFloat("yieldQualMult");
+        ClientProxy.megachunkLength = compound.getShort("megachunkLength");
         WarForgeConfig.SIEGE_ATTACKER_RADIUS = compound.getInteger("atkSiegeRadius");
         WarForgeConfig.SIEGE_DEFENDER_RADIUS = compound.getInteger("defSiegeRadius");
 
