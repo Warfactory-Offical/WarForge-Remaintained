@@ -105,7 +105,7 @@ public class BlockDummy extends Block implements ITileEntityProvider {
         if (playerIn.isSneaking()) {
             TileEntity masterTile = worldIn.getTileEntity(masterPos);
             if (masterTile instanceof TileEntityClaim claim) {
-                claim.increaseRotation(45f);
+                claim.increaseRotation();
                 return true;
             }
             return false;

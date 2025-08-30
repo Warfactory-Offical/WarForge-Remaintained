@@ -52,6 +52,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 
 	public void onPlacedBy(EntityLivingBase placer) {
 		this.placer = placer.getUniqueID();
+        super.onPlacedBy(placer);
 	}
 
 	@Override

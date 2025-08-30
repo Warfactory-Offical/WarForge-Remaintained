@@ -35,24 +35,11 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
         bannerStack = ItemStack.EMPTY;
     }
 
+    //TODO: This needs to be handled with enums and not array indexes
     public void onPlacedBy(EntityLivingBase placer) {
         // This locks in the placer as the only person who can create a faction using the interface on this citadel
         this.placer = placer.getUniqueID();
-        rotation = 0;
-        EnumFacing blockRotation = world.getBlockState(new BlockPos(pos.getX(), pos.getY(), pos.getZ())).getValue(FACING);
-        switch (blockRotation) {
-            case NORTH: //WORKING
-                rotation = 270;
-                break;
-            case EAST: //WORKING
-                rotation = 180;
-                break;
-            case SOUTH: //WORKING
-                rotation = 90;
-                break;
-            case WEST: //WORKING
-                rotation = 0;
-        }
+        super.onPlacedBy(placer);
 
     }
 
@@ -217,7 +204,7 @@ public class TileEntityCitadel extends TileEntityYieldCollector implements IClai
     @Override
     public void readFromNBT(NBTTagCompound nbt) {
         super.readFromNBT(nbt);
-        rotation = nbt.getFloat("rotation");
+        rotation = nbt.getByte("rotation");
 
         bannerStack = new ItemStack(nbt.getCompoundTag("banner"));
         placer = nbt.getUniqueId("placer");

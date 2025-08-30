@@ -114,11 +114,11 @@ public class BlockBasicClaim extends MultiBlockColumn implements ITileEntityProv
         if (!world.isRemote) {
 
             TileEntity te = world.getTileEntity(pos);
-            if (te != null) {
-                TileEntityBasicClaim claim = (TileEntityBasicClaim) te;
+            if (te instanceof TileEntityBasicClaim claim) {
 
                 WarForgeMod.FACTIONS.onNonCitadelClaimPlaced(claim, placer);
                 super.onBlockPlacedBy(world, pos, state, placer, stack);
+                claim.onPlacedBy(placer);
             }
 
         }
@@ -143,7 +143,7 @@ public class BlockBasicClaim extends MultiBlockColumn implements ITileEntityProv
         if (player.isSneaking()) {
             TileEntityBasicClaim claim = (TileEntityBasicClaim) world.getTileEntity(pos);
             assert claim != null;
-            claim.increaseRotation(45f);
+            claim.increaseRotation();
             return true;
         }
         if (!world.isRemote) {
@@ -204,7 +204,7 @@ public class BlockBasicClaim extends MultiBlockColumn implements ITileEntityProv
     @SneakyThrows
     public void bakeModel(ModelBakeEvent event) {
         IModel medieval = ModelLoaderRegistry.getModelOrMissing(
-                new ResourceLocation(WarForgeMod.MODID, "block/citadelblock"));
+                new ResourceLocation(WarForgeMod.MODID, "block/basicclaimblock"));
         IModel modern = ModelLoaderRegistry.getModelOrMissing(
                 new ResourceLocation(WarForgeMod.MODID, "block/statues/modern/onlytable"));
         registerFacingModels(medieval, modern, event.getModelRegistry(), getRegistryName());

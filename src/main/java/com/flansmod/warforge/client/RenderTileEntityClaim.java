@@ -29,7 +29,7 @@ public class RenderTileEntityClaim extends FastTESR<TileEntityClaim> {
                                      BufferBuilder buffer) {
         if (te.getFaction().equals(Faction.nullUuid)) return;
 
-        int index = Math.floorMod((int) Math.round(te.rotation / 45.0), 8);
+        byte index = te.rotation;
         IBakedModel bakedModel = bakedModels[index];
         BlockPos pos = te.getPos();
 

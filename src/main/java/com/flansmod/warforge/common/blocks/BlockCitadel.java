@@ -2,45 +2,60 @@ package com.flansmod.warforge.common.blocks;
 
 import com.flansmod.warforge.common.CommonProxy;
 import com.flansmod.warforge.common.WarForgeMod;
+import com.flansmod.warforge.common.blocks.models.RotatableStateMapper;
 import com.flansmod.warforge.common.network.PacketFactionInfo;
 import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.util.DimChunkPos;
 import com.flansmod.warforge.common.util.IDynamicModels;
 import com.flansmod.warforge.server.Faction;
 import com.flansmod.warforge.server.FactionStorage;
+import lombok.SneakyThrows;
 import net.minecraft.block.BlockHorizontal;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.block.model.ModelResourceLocation;
+import net.minecraft.client.renderer.block.statemap.StateMapperBase;
+import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.client.event.ModelBakeEvent;
+import net.minecraftforge.client.model.IModel;
+import net.minecraftforge.client.model.ModelLoader;
+import net.minecraftforge.client.model.ModelLoaderRegistry;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.UUID;
 
+import static com.flansmod.warforge.client.models.BakingUtil.registerFacingModels;
 import static com.flansmod.warforge.common.Content.dummyTranslusent;
 import static com.flansmod.warforge.common.Content.statue;
 import static com.flansmod.warforge.common.blocks.BlockDummy.MODEL;
 import static com.flansmod.warforge.common.blocks.BlockDummy.modelEnum.KING;
 import static com.flansmod.warforge.common.blocks.BlockDummy.modelEnum.TRANSLUCENT;
 
-public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvider, IMultiBlock {
+public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvider, IMultiBlock, IDynamicModels {
     public static final PropertyDirection FACING = BlockHorizontal.FACING;
 
     public BlockCitadel(Material materialIn) {
@@ -132,7 +147,7 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
             TileEntityClaim citadel = (TileEntityClaim) world.getTileEntity(pos);
             assert citadel != null;
             if (!citadel.getFaction().equals(Faction.nullUuid))
-                citadel.increaseRotation(45f);
+                citadel.increaseRotation();
             else if (!world.isRemote) {
                 breakBlock(world, pos, state);
                 world.destroyBlock(pos, true);
@@ -184,6 +199,36 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
     @Override
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
         super.breakBlock(worldIn, pos, state);
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public StateMapperBase getStateMapper(ResourceLocation loc) {
+        return new RotatableStateMapper(getRegistryName());
+    }
+
+    @Override
+    @SneakyThrows
+    public void bakeModel(ModelBakeEvent event) {
+        IModel medieval = ModelLoaderRegistry.getModelOrMissing(
+                new ResourceLocation(WarForgeMod.MODID, "block/citadelblock"));
+        IModel modern = ModelLoaderRegistry.getModelOrMissing(
+                new ResourceLocation(WarForgeMod.MODID, "block/statues/modern/flag_pole"));
+        registerFacingModels(medieval, modern, event.getModelRegistry(), getRegistryName());
+    }
+
+    @Override
+    public void registerModel() {
+        ModelLoader.setCustomModelResourceLocation(
+                Item.getItemFromBlock(this),
+                0,
+                new ModelResourceLocation(Objects.requireNonNull(getRegistryName()), "inventory")
+        );
+    }
+
+    @Override
+    public void registerSprite(TextureMap map) {
+        //Already registered via ClaimModels's recursive register
     }
 
 }

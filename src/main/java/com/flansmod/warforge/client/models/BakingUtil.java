@@ -33,7 +33,7 @@ public class BakingUtil {
             ModelResourceLocation loc = new ModelResourceLocation(
                     baseLoc, "facing=" + facing.getName().toLowerCase()
             );
-            if (facing.equals(EnumFacing.SOUTH)) {
+            if (facing.equals(EnumFacing.NORTH)) {
                 invLoc = new ModelResourceLocation(baseLoc, "inventory");
                 registry.putObject(invLoc, themed);
             }

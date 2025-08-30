@@ -3,9 +3,11 @@ package com.flansmod.warforge.common.blocks;
 import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.server.Faction;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -15,11 +17,13 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.UUID;
 
+import static com.flansmod.warforge.common.blocks.BlockCitadel.FACING;
+
 public abstract class TileEntityClaim extends TileEntity implements IClaim {
     public int colour = 0xFF_FF_FF;
     public String factionName = "";
     protected UUID factionUUID = Faction.nullUuid;
-    public float rotation;
+    public byte rotation;
 
     // This is so weird
     private World worldCreate;
@@ -30,11 +34,33 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim {
         return factionUUID;
     }
 
-    public void increaseRotation(float inc) {
-        rotation += inc;
-        rotation %= 360;
+    public void increaseRotation() {
+        rotation += 1;
+        rotation  = (byte) (rotation % 8);
         updateTileEntity();
     }
+
+    //TODO: This needs to be handled with enums and not array indexes
+    public void onPlacedBy(EntityLivingBase placer) {
+        // This locks in the placer as the only person who can create a faction using the interface on this citadel
+        rotation = 0;
+        EnumFacing blockRotation = world.getBlockState(new BlockPos(pos.getX(), pos.getY(), pos.getZ())).getValue(FACING);
+        switch (blockRotation) {
+            case NORTH: //WORKING
+                rotation = 0;
+                break;
+            case EAST: //WORKING
+                rotation = 6;
+                break;
+            case SOUTH: //WORKING
+                rotation = 4;
+                break;
+            case WEST: //WORKING
+                rotation = 2;
+        }
+
+    }
+
 
 
     @Override
@@ -125,7 +151,7 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim {
         super.readFromNBT(nbt);
 
         factionUUID = nbt.getUniqueId("faction");
-        rotation = nbt.getFloat("rotation");
+        rotation = nbt.getByte("rotation");
 
         // Verifications
         if (FMLCommonHandler.instance().getEffectiveSide() == Side.SERVER) {
@@ -165,7 +191,7 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim {
         tags.setUniqueId("faction", factionUUID);
         tags.setInteger("colour", colour);
         tags.setString("name", factionName);
-        tags.setFloat("rotation", rotation);
+        tags.setByte("rotation", rotation);
         return tags;
     }
 
@@ -174,7 +200,7 @@ public abstract class TileEntityClaim extends TileEntity implements IClaim {
         factionUUID = tags.getUniqueId("faction");
         colour = tags.getInteger("colour");
         factionName = tags.getString("name");
-        rotation = tags.getFloat("rotation");
+        rotation = tags.getByte("rotation");
     }
 
     @Override
