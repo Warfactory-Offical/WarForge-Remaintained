@@ -68,7 +68,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
-@Mod(modid = WarForgeMod.MODID, name = WarForgeMod.NAME, version = WarForgeMod.VERSION)
+@Mod(modid = WarForgeMod.MODID, name = WarForgeMod.NAME, version = WarForgeMod.VERSION,
+        dependencies = "after:modularui@[2.5.0-rc5,)"
+)
 @Mod.EventBusSubscriber(modid = WarForgeMod.MODID)
 public class WarForgeMod implements ILateMixinLoader {
     public static final String MODID = "warforge";
