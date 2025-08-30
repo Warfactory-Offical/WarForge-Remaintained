@@ -4,36 +4,50 @@ import akka.japi.Pair;
 import com.flansmod.warforge.api.vein.Quality;
 import com.flansmod.warforge.api.vein.Vein;
 import com.flansmod.warforge.common.WarForgeMod;
+import com.flansmod.warforge.common.blocks.models.RotatableStateMapper;
 import com.flansmod.warforge.common.network.PacketRemoveClaim;
 import com.flansmod.warforge.common.network.PacketSiegeCampInfo;
 import com.flansmod.warforge.common.network.SiegeCampAttackInfo;
 import com.flansmod.warforge.common.util.DimBlockPos;
 import com.flansmod.warforge.common.util.DimChunkPos;
+import com.flansmod.warforge.common.util.IDynamicModels;
 import com.flansmod.warforge.server.Faction;
+import lombok.SneakyThrows;
+import net.minecraft.block.BlockHorizontal;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.EnumPushReaction;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.properties.PropertyDirection;
+import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.block.model.ModelResourceLocation;
+import net.minecraft.client.renderer.block.statemap.StateMapperBase;
+import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumBlockRenderType;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
+import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.client.event.ModelBakeEvent;
+import net.minecraftforge.client.model.IModel;
+import net.minecraftforge.client.model.ModelLoader;
+import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.*;
 
+import static com.flansmod.warforge.client.models.BakingUtil.registerFacingModels;
 import static com.flansmod.warforge.common.Content.dummyTranslusent;
 import static com.flansmod.warforge.common.Content.statue;
 import static com.flansmod.warforge.common.WarForgeMod.*;
@@ -41,13 +55,30 @@ import static com.flansmod.warforge.common.blocks.BlockDummy.MODEL;
 import static com.flansmod.warforge.common.blocks.BlockDummy.modelEnum.BERSERKER;
 import static com.flansmod.warforge.common.blocks.BlockDummy.modelEnum.TRANSLUCENT;
 
-public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvider {
+public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvider, IDynamicModels {
     //25s break time, no effective tool.
+    public static final PropertyDirection FACING = BlockHorizontal.FACING;
     public BlockSiegeCamp(Material materialIn) {
         super(materialIn);
         this.setCreativeTab(CreativeTabs.COMBAT);
         this.setResistance(30000000f);
         this.setHardness(5f); // (*5) to get harvest time
+        IDynamicModels.INSTANCES.add(this);
+    }
+
+    @Override
+    protected BlockStateContainer createBlockState() {
+        return new BlockStateContainer(this, FACING);
+    }
+
+    @Override
+    public IBlockState getStateFromMeta(int meta) {
+        return this.getDefaultState().withProperty(FACING, EnumFacing.HORIZONTALS[meta]);
+    }
+
+    @Override
+    public int getMetaFromState(IBlockState state) {
+        return state.getValue(FACING).getHorizontalIndex();
     }
 
     // these are likely redundant, as the default is no tool, but I guess it doesnt hurt
@@ -128,8 +159,7 @@ public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvi
     public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack) {
         if (!world.isRemote) {
             TileEntity te = world.getTileEntity(pos);
-            if (te != null) {
-                TileEntitySiegeCamp siegeCamp = (TileEntitySiegeCamp) te;
+            if ( te instanceof TileEntitySiegeCamp siegeCamp) {
                 FACTIONS.onNonCitadelClaimPlaced(siegeCamp, placer);
                 siegeCamp.onPlacedBy(placer);
                 super.onBlockPlacedBy(world, pos, state, placer, stack);
@@ -291,5 +321,35 @@ public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvi
             put(dummyTranslusent.getDefaultState().withProperty(MODEL, TRANSLUCENT), new Vec3i(0, 2, 0));
         }});
 
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public StateMapperBase getStateMapper(ResourceLocation loc) {
+        return new RotatableStateMapper(getRegistryName());
+    }
+
+    @Override
+    @SneakyThrows
+    public void bakeModel(ModelBakeEvent event) {
+        IModel medieval = ModelLoaderRegistry.getModelOrMissing(
+                new ResourceLocation(WarForgeMod.MODID, "block/warstump"));
+        IModel modern = ModelLoaderRegistry.getModelOrMissing(
+                new ResourceLocation(WarForgeMod.MODID, "block/statues/modern/flag_pole"));
+        registerFacingModels(medieval, modern, event.getModelRegistry(), getRegistryName());
+    }
+
+    @Override
+    public void registerModel() {
+        ModelLoader.setCustomModelResourceLocation(
+                Item.getItemFromBlock(this),
+                0,
+                new ModelResourceLocation(Objects.requireNonNull(getRegistryName()), "inventory")
+        );
+    }
+
+    @Override
+    public void registerSprite(TextureMap map) {
+        //Already registered via ClaimModels's recursive register
     }
 }

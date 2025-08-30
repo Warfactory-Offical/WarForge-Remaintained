@@ -77,12 +77,12 @@ public class BlockCitadel extends MultiBlockColumn implements ITileEntityProvide
 
     @Override
     public boolean isOpaqueCube(IBlockState state) {
-        return false;
+        return true;
     }
 
     @Override
     public boolean isFullCube(IBlockState state) {
-        return false;
+        return true;
     }
 
     @Override

@@ -77,6 +77,7 @@ public class ClientProxy extends CommonProxy
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityLeaderboard.class, new TileEntityLeaderboardRenderer());
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityCitadel.class, new RenderTileEntityClaim(ClaimModels.ModelType.CITADEL));
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityBasicClaim.class, new RenderTileEntityClaim(ClaimModels.ModelType.BASIC_CLAIM));
+        ClientRegistry.bindTileEntitySpecialRenderer(TileEntitySiegeCamp.class, new RenderTileEntityClaim(ClaimModels.ModelType.SIEGE));
 	}
 
 	@Override
