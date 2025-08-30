@@ -372,7 +372,7 @@ public class WarForgeMod implements ILateMixinLoader {
     @SubscribeEvent
     public void blockRemoved(BlockEvent.BreakEvent event) {
         IBlockState state = event.getState();
-        if (isClaim(state.getBlock(), null)) {
+        if (isClaim(state.getBlock())) {
             if (event.getWorld().getTileEntity(event.getPos()) instanceof TileEntityClaim te && te.getFaction().equals(Faction.nullUuid))
                 return;
             event.setCanceled(true);

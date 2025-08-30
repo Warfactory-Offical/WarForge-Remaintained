@@ -91,8 +91,6 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 	@Override
 	public boolean canBeSieged() { return false; }
 
-
-
 	private enum SiegeStatus {
 		IDLING,
 		ACTIVE,
@@ -107,18 +105,13 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 		public boolean isFailed() { return this.ordinal() == 2 || this.ordinal() == 4; }
 	}
 
-	// separated from overridden method to allow for testing and to make functionality apparent
-	public void endSiegePrepped() {
-		siegeStatus = SiegeStatus.FAILED; // siege is failed as all player flags from placing group are lost
-		concludeSiege();
-	}
-
 	// forces siege to end as failure
 	public void failSiege() {
 		siegeStatus = SiegeStatus.FAILED;
 		concludeSiege();
 	}
 
+	// cleanup function used for multiple camp siege
 	public void cleanupFailedSiege() {
 		siegeStatus = SiegeStatus.FAILED_CLEANUP;
 		concludeSiege();
@@ -182,8 +175,6 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 		defenders = null;
 		destroy();
 	}
-
-
 
     @SideOnly(Side.SERVER)//NEVER let client use this
 	public void destroy() {
