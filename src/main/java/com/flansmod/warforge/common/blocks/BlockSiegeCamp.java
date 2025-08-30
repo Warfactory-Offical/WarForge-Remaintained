@@ -61,8 +61,8 @@ public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvi
     public BlockSiegeCamp(Material materialIn) {
         super(materialIn);
         this.setCreativeTab(CreativeTabs.COMBAT);
-        this.setResistance(30000000f);
-        this.setHardness(5f); // (*5) to get harvest time
+        this.setBlockUnbreakable();
+        this.setResistance(30000000f); //Makes sense. We probably don't wanna let people bomb it
         IDynamicModels.INSTANCES.add(this);
     }
 
@@ -100,7 +100,7 @@ public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvi
 
     @Override
     public boolean isOpaqueCube(IBlockState state) {
-        return false;
+        return true;
     }
 
     @Override
@@ -115,7 +115,7 @@ public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvi
 
     @Override
     public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
-        return layer == BlockRenderLayer.TRANSLUCENT;
+        return layer == BlockRenderLayer.CUTOUT;
     }
 
 
@@ -257,38 +257,7 @@ public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvi
     public EnumPushReaction getPushReaction(IBlockState state) {
         return EnumPushReaction.IGNORE;
     }
-    // called when block is removed on both client and server, but block is intact at time of call
-	/* UNFINISHED/ UNNECESSARY CURRENTLY
-	@Override
-	public boolean removedByPlayer(IBlockState state, World world, BlockPos pos, EntityPlayer player, boolean willHarvest) {
-		if (world.isRemote) return true; // don't do logic on client
-		TileEntity te = world.getTileEntity(pos);
-		if(te != null) {
-			TileEntitySiegeCamp siegeCamp = (TileEntitySiegeCamp)te;
-			siegeCamp.OnServerRemovePlayerFlag(siegeCamp.getPlacer().getName());
-		}
-		return true;
-	}
-	 */
 
-    /**
-     * Called on both Client and Server when World#addBlockEvent is called. On the Server, this may perform additional
-     * changes to the world, like pistons replacing the block with an extended base. On the client, the update may
-     * involve replacing tile entities, playing sounds, or performing other visual actions to reflect the server side
-     * changes.
-     */
-	/*
-	boolean onBlockEventReceived(World worldIn, BlockPos pos, int id, int param) {
-		TileEntity te = worldIn.getTileEntity(pos);
-		if (worldIn.isRemote && te instanceof TileEntitySiegeCamp && param == 2) {
-			((TileEntitySiegeCamp) te).concludeSiege();
-			return true;
-		}
-		return false;
-	}
-	 */
-
-    // server side and allows client to have the possibility to accept events, alongside enabling server acceptance
     @Deprecated
     public boolean eventReceived(IBlockState state, World worldIn, BlockPos pos, int id, int param) {
         return true;
@@ -303,15 +272,6 @@ public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvi
     @Override
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
         super.breakBlock(worldIn, pos, state);
-		/*
-		if (worldIn.isRemote) return;
-		TileEntity te = worldIn.getTileEntity(pos);
-		if(te != null) {
-			TileEntitySiegeCamp siegeCamp = (TileEntitySiegeCamp)te;
-			if (siegeCamp != null) siegeCamp.onDestroyed();
-		}
-
-		 */
     }
 
     @Override

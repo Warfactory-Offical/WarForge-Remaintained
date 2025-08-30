@@ -7,9 +7,6 @@ import com.flansmod.warforge.api.vein.init.VeinUtils;
 import com.flansmod.warforge.client.PlayerNametagCache;
 import com.flansmod.warforge.common.blocks.IMultiBlockInit;
 import com.flansmod.warforge.common.blocks.TileEntityClaim;
-import com.flansmod.warforge.client.PlayerNametagCache;
-import com.flansmod.warforge.common.blocks.IMultiBlockInit;
-import com.flansmod.warforge.common.blocks.TileEntityClaim;
 import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
 import com.flansmod.warforge.common.effect.EffectRegistry;
 import com.flansmod.warforge.common.network.*;
@@ -19,7 +16,6 @@ import com.flansmod.warforge.common.util.DimChunkPos;
 import com.flansmod.warforge.common.util.TimeHelper;
 import com.flansmod.warforge.server.*;
 import com.flansmod.warforge.server.Faction.Role;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandHandler;
@@ -136,10 +132,12 @@ public class WarForgeMod implements ILateMixinLoader {
         if (block == null) return false;
 
         boolean matchesAnyInvalidBlocks = false;
-        for (Block invalidBlock : notEquals) {
-            if (block.equals(invalidBlock)) {
-                matchesAnyInvalidBlocks = true;
-                break;
+        if(notEquals != null) {
+            for (Block invalidBlock : notEquals) {
+                if (block.equals(invalidBlock)) {
+                    matchesAnyInvalidBlocks = true;
+                    break;
+                }
             }
         }
 
@@ -264,21 +262,6 @@ public class WarForgeMod implements ILateMixinLoader {
         WarForgeConfig.SIEGECAMP_OTHER.findBlocks();
     }
 
-    public long getCooldownRemainingSeconds(float cooldown, long startOfCooldown) {
-
-        return timeHelper.getCooldownRemainingSeconds(cooldown, startOfCooldown);
-    }
-
-    public int getCooldownRemainingMinutes(float cooldown, long startOfCooldown) {
-
-        return timeHelper.getCooldownRemainingMinutes(cooldown, startOfCooldown);
-    }
-
-    public int getCooldownRemainingHours(float cooldown, long startOfCooldown) {
-
-        return timeHelper.getCooldownRemainingHours(cooldown, startOfCooldown);
-    }
-
     public long getTimeToNextSiegeAdvanceMs() {
 
         return timeHelper.getTimeToNextSiegeAdvanceMs();
@@ -389,20 +372,10 @@ public class WarForgeMod implements ILateMixinLoader {
     @SubscribeEvent
     public void blockRemoved(BlockEvent.BreakEvent event) {
         IBlockState state = event.getState();
-        if (isClaim(state.getBlock(), Content.siegeCampBlock)) {
+        if (isClaim(state.getBlock(), null)) {
             if (event.getWorld().getTileEntity(event.getPos()) instanceof TileEntityClaim te && te.getFaction().equals(Faction.nullUuid))
                 return;
             event.setCanceled(true);
-            return;
-        }
-
-        if (!event.getWorld().isRemote) {
-            if (state.getBlock() == Content.siegeCampBlock) {
-                TileEntitySiegeCamp siegeBlock = (TileEntitySiegeCamp) event.getWorld().getTileEntity(event.getPos());
-                if (siegeBlock != null) siegeBlock.onDestroyed();
-            }
-
-            blockPlacedOrRemoved(event, event.getState());
         }
     }
 

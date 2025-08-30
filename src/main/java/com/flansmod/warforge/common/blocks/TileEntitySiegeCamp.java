@@ -91,12 +91,6 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 	@Override
 	public boolean canBeSieged() { return false; }
 
-	// returns true to invalidate forceful; run when chunk wants to replace dat; Chunk shouldnt want to invalidate te until after normal procedure has been run
-	@Override
-	public boolean shouldRefresh(World world, BlockPos pos, IBlockState oldState, IBlockState newState) {
-		onDestroyed(); // in case block is somehow destroyed outside of normal procedures
-		return super.shouldRefresh(world, pos, oldState, newState);
-	}
 
 
 	private enum SiegeStatus {
@@ -189,12 +183,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 		destroy();
 	}
 
-	// called whenever block should be destroyed
-	public void onDestroyed() {
-		// will fail the siege if it is on going, or just do the destruction actions if finished or never started
-		if (siegeStatus == SiegeStatus.ACTIVE) failSiege();
-		else destroy();
-	}
+
 
     @SideOnly(Side.SERVER)//NEVER let client use this
 	public void destroy() {
@@ -214,7 +203,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 
 		// clear out ghost sieges for debugging
 		if (!(world.getBlockState(pos).getBlock() instanceof BlockSiegeCamp)) {
-			onDestroyed();
+			destroy();
 			return;
 		}
 
