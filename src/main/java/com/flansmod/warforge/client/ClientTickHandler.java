@@ -653,6 +653,10 @@ public class ClientTickHandler {
             DimChunkPos pos = kvp.getKey();
             BorderRenderData data = kvp.getValue();
 
+            if (data.renderList != 0) {
+                GlStateManager.glDeleteLists(data.renderList, 1);
+                data.renderList = 0;
+            }
             data.renderList = GLAllocation.generateDisplayLists(1);
             GlStateManager.glNewList(data.renderList, 4864);
 
