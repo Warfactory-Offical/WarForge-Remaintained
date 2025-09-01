@@ -32,8 +32,7 @@ public class PacketStartSiege extends PacketBase {
         mSiegeCampPos = new DimBlockPos(dim, x, y, z);
         byte dx = data.readByte();
         byte dz = data.readByte();
-        mOffset = new Vec3i(dz, 0, dx); //FIXME: I fucking flipped the axis, too lazy to actually sort it out rn
-        //No eight, this is a symptom, not a cause
+        mOffset = new Vec3i(dx, 0, dz);
     }
 
     @Override

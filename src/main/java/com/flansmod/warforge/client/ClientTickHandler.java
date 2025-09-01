@@ -441,8 +441,9 @@ public class ClientTickHandler {
 			return result;
 		}
 
-		// vein is now guaranteed valid and received; begin formatting data to be displayed
-		result.add(I18n.format(currVein.translationKey, I18n.format(currQual.getTranslationKey())));
+        // vein is now guaranteed valid and received; prepare formatted data for display
+		result.add(I18n.format(currVein.translationKey,
+                I18n.format(currQual.getTranslationKey()) + " [" + currQual.getMultString(currVein) + "]"));
 		int dim = Minecraft.getMinecraft().player.dimension;
 
 		// turn each component into the item we will be displaying and list them

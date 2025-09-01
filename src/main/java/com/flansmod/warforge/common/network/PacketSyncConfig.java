@@ -75,7 +75,10 @@ public class PacketSyncConfig extends PacketBase {
             WarForgeMod.LOGGER.error("Failed to parse momentumMap from config sync: " + mapString, e);
         }
 
-        WarForgeConfig.YIELD_QUALITY_MULTIPLIER = compound.getFloat("yieldQualMult");
+        WarForgeConfig.POOR_QUAL_MULT = compound.getFloat("poorQualMult");
+        WarForgeConfig.FAIR_QUAL_MULT = compound.getFloat("fairQualMult");
+        WarForgeConfig.RICH_QUAL_MULT = compound.getFloat("richQualMult");
+
         ClientProxy.megachunkLength = compound.getShort("megachunkLength");
         WarForgeConfig.SIEGE_ATTACKER_RADIUS = compound.getInteger("atkSiegeRadius");
         WarForgeConfig.SIEGE_DEFENDER_RADIUS = compound.getInteger("defSiegeRadius");
@@ -86,8 +89,7 @@ public class PacketSyncConfig extends PacketBase {
         WarForgeMod.LOGGER.info("Synced siege config:"
                 + " maxMomentum=" + WarForgeConfig.SIEGE_MOMENTUM_MAX
                 + ", duration=" + WarForgeConfig.SIEGE_MOMENTUM_DURATION
-                + ", multipliers=" + WarForgeConfig.SIEGE_MOMENTUM_TIME
-                + ", yieldQualMult=" + WarForgeConfig.YIELD_QUALITY_MULTIPLIER);
+                + ", multipliers=" + WarForgeConfig.SIEGE_MOMENTUM_TIME);
     }
 
     public boolean canUseCompression() {

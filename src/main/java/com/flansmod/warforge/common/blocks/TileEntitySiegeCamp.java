@@ -136,24 +136,22 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 		}
 
 		// only modify external information if not performing cleanup on this tile entity
-		if (!siegeStatus.isCleanup()) {
+		Siege siege = WarForgeMod.FACTIONS.getSieges().get(siegeTarget.toChunkPos());
+		if (!siegeStatus.isCleanup() && siege != null) {
 			// update siege info and notify all nearby
-			Siege siege = WarForgeMod.FACTIONS.getSieges().get(siegeTarget.toChunkPos());
-			if(siege != null) {
-				SiegeCampProgressInfo info = siege.GetSiegeInfo();
-				info.progress = siegeStatus.isFailed() ? -5 : info.completionPoint;
-				PacketSiegeCampProgressUpdate packet = new PacketSiegeCampProgressUpdate();
-				packet.info = info;
+			SiegeCampProgressInfo info = siege.GetSiegeInfo();
+			info.progress = siegeStatus.isFailed() ? -5 : info.completionPoint;
+			PacketSiegeCampProgressUpdate packet = new PacketSiegeCampProgressUpdate();
+			packet.info = info;
 
-				for (EntityPlayer attacker : getAttacking().getOnlinePlayers(Objects::nonNull))
-					WarForgeMod.NETWORK.sendTo(packet, (EntityPlayerMP) attacker);
-				for (EntityPlayer defender : defenders.getOnlinePlayers(Objects::nonNull))
-					WarForgeMod.NETWORK.sendTo(packet, (EntityPlayerMP) defender);
-			}
+			for (EntityPlayer attacker : getAttacking().getOnlinePlayers(Objects::nonNull))
+				WarForgeMod.NETWORK.sendTo(packet, (EntityPlayerMP) attacker);
+			for (EntityPlayer defender : defenders.getOnlinePlayers(Objects::nonNull))
+				WarForgeMod.NETWORK.sendTo(packet, (EntityPlayerMP) defender);
 
 			// attempt to actually modify siege information, now that all nearby have been updated
 			try {
-				WarForgeMod.FACTIONS.getSieges().get(siegeTarget.toChunkPos()).setAttackProgress(siegeStatus.isFailed() ? -5 : WarForgeMod.FACTIONS.getSieges().get(siegeTarget.toChunkPos()).GetAttackSuccessThreshold()); // ends siege
+				siege.setAttackProgress(siegeStatus.isFailed() ? -5 : siege.GetAttackSuccessThreshold()); // ends siege
 				WarForgeMod.FACTIONS.handleCompletedSiege(siegeTarget.toChunkPos(), false); // performs check on completed sieges without invoking checks on unrelated sieges
 			} catch (Exception e) {
 				WarForgeMod.LOGGER.atError().log("Got exception when attempting to force end siege of: " + e + " with siegeTarget of: " + siegeTarget + " and pos of: " + getClaimPos());
@@ -176,7 +174,7 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 		destroy();
 	}
 
-    @SideOnly(Side.SERVER)//NEVER let client use this
+	// Sided annotations and checks try to be useful challenge
 	public void destroy() {
         WarForgeMod.FACTIONS.requestRemoveClaimServer(getClaimPos());
 	}
@@ -189,8 +187,8 @@ public class TileEntitySiegeCamp extends TileEntityClaim implements ITickable
 
 	@Override
 	public void update() {
-		// do not do logic on client
-		if (world.isRemote) return;
+		// do not do logic on client (somehow this got accessed by the client)
+		if (world.isRemote || FMLCommonHandler.instance().getEffectiveSide() == Side.CLIENT) return;
 
 		// clear out ghost sieges for debugging
 		if (!(world.getBlockState(pos).getBlock() instanceof BlockSiegeCamp)) {

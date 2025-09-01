@@ -1,6 +1,7 @@
 package com.flansmod.warforge.common;
 
 import com.flansmod.warforge.api.Time;
+import com.flansmod.warforge.api.vein.Quality;
 import com.flansmod.warforge.common.network.PacketSyncConfig;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
@@ -41,8 +42,10 @@ public class WarForgeConfig {
 
     // Yields/ Vein
     public static float YIELD_DAY_LENGTH = 1.0f; // In real-world hours
-    public static float YIELD_QUALITY_MULTIPLIER = 2;
     public static long VEIN_MEMBER_DISPLAY_TIME_MS = 1000;
+    public static float POOR_QUAL_MULT = 0.5f;
+    public static float FAIR_QUAL_MULT = 1f;
+    public static float RICH_QUAL_MULT = 2f;
 
     // Claims
     public static boolean ENABLE_CITADEL_UPGRADES = false;
@@ -279,8 +282,11 @@ public class WarForgeConfig {
         VAULT_BLOCK_IDS = configFile.getStringList("Valuable Blocks", Configuration.CATEGORY_GENERAL, VAULT_BLOCK_IDS, "The block IDs that count towards the value of your citadel's vault");
 
         // Yield parameters
+        String qualityText = "The global multiplier for %s quality veins which all veins fall back to if they do not have an override.";
         YIELD_DAY_LENGTH = configFile.getFloat("Yield Day Length", CATEGORY_YIELDS, YIELD_DAY_LENGTH, 0.0001f, 100000f, "The length of time between yields, in real-world hours.");
-        YIELD_QUALITY_MULTIPLIER = configFile.getFloat("Yield Quality Multiplier", CATEGORY_YIELDS, YIELD_QUALITY_MULTIPLIER, 1, 10000, "A number to be used to vary yield amounts for every vein's components, dividing by this for poor quality veins and multiplying for high quality. Set to 1 to effectively have no difference.");
+        POOR_QUAL_MULT = configFile.getFloat("Global Poor Quality Multiplier", CATEGORY_YIELDS, POOR_QUAL_MULT, 0f, 512f, String.format(qualityText, Quality.POOR));
+        FAIR_QUAL_MULT = configFile.getFloat("Global Fair Quality Multiplier", CATEGORY_YIELDS, FAIR_QUAL_MULT, 0f, 512f, String.format(qualityText, Quality.FAIR));
+        RICH_QUAL_MULT = configFile.getFloat("Global Rich Quality Multiplier", CATEGORY_YIELDS, RICH_QUAL_MULT, 0f, 512f, String.format(qualityText, Quality.RICH));
 
         // Notoriety
         NOTORIETY_PER_PLAYER_KILL = configFile.getInt("Notoriety gain per PVP kill", CATEGORY_NOTORIETY, NOTORIETY_PER_PLAYER_KILL, 0, 1024, "How much notoriety a player earns for their faction when killing another player");
@@ -344,7 +350,9 @@ public class WarForgeConfig {
         compoundNBT.setInteger("maxMomentum", SIEGE_MOMENTUM_MAX);
         compoundNBT.setInteger("timeMomentum", SIEGE_MOMENTUM_DURATION);
         compoundNBT.setString("momentumMap", SIEGE_MOMENTUM_TIME.toString());
-        compoundNBT.setFloat("yieldQualMult", YIELD_QUALITY_MULTIPLIER);
+        compoundNBT.setFloat("poorQualMult", POOR_QUAL_MULT);
+        compoundNBT.setFloat("fairQualMult", FAIR_QUAL_MULT);
+        compoundNBT.setFloat("richQualMult", RICH_QUAL_MULT);
         compoundNBT.setShort("megachunkLength", VEIN_HANDLER.megachunkLength);
         compoundNBT.setInteger("atkSiegeRadius", SIEGE_ATTACKER_RADIUS);
         compoundNBT.setInteger("defSiegeRadius", SIEGE_DEFENDER_RADIUS);

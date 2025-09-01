@@ -41,24 +41,23 @@ public class GuiSiegeCamp {
 
     @SideOnly(Side.CLIENT)
     public static ModularScreen makeGUI(DimBlockPos siegeCampPos, List<SiegeCampAttackInfo> possibleAttacks, byte momentum) {
-
+        // do janky reverse sorting to match modularUI's weird bottom right starting position
         EntityPlayer player = Minecraft.getMinecraft().player;
         WorldClient world = (WorldClient) player.world;
         possibleAttacks.sort(Comparator
-                .comparingInt((SiegeCampAttackInfo s) -> s.mOffset.getZ())
-                .thenComparingInt(s -> s.mOffset.getX()));
+                .comparingInt((SiegeCampAttackInfo s) -> s.mOffset.getX())
+                .thenComparingInt(s -> s.mOffset.getZ()));
 
         ChunkPos centerChunk = siegeCampPos.toChunkPos();
-
 
         int radius = 2;  // 2 chunks in each direction → 5x5 total area
         int centerX = centerChunk.x;
         int centerZ = centerChunk.z;
         List<Thread> threads = new ArrayList<>();
 
-        boolean[][] adjesencyArray = new boolean[possibleAttacks.size()][4];
+        boolean[][] adjacencyArray = new boolean[possibleAttacks.size()][4];
         threads.add(new Thread(() ->
-                computeAdjacency(possibleAttacks, radius, adjesencyArray))
+                computeAdjacency(possibleAttacks, radius, adjacencyArray))
         );
 
         threads.get(0).start();
@@ -214,7 +213,7 @@ public class GuiSiegeCamp {
                 int finalId = id;
                 SiegeCampAttackInfoRender chunkInfo = new SiegeCampAttackInfoRender(possibleAttacks.get(finalId));
                 panel.child(new ButtonWidget<>()
-                        .overlay(new MapDrawable("chunk" + id, chunkInfo, adjesencyArray[id]))
+                        .overlay(new MapDrawable("chunk" + id, chunkInfo, adjacencyArray[id]))
                         .onMousePressed(mouseButton -> {
                             if ((chunkInfo.mOffset.getX() == 0 && chunkInfo.mOffset.getZ() == 0) && !chunkInfo.canAttack)
                                 return false;
@@ -243,7 +242,10 @@ public class GuiSiegeCamp {
                                                 .filter(Objects::nonNull)
                                                 .toArray(ItemStack[]::new)
                                 ).asIcon().size(25));
-                                richTooltip.addLine(IKey.str("Ore In the chunk: " + I18n.format(chunkInfo.mWarforgeVein.translationKey, I18n.format(chunkInfo.mOreQuality.getTranslationKey()))));
+                                richTooltip.addLine(IKey.str("Ore In the chunk: " +
+                                        I18n.format(chunkInfo.mWarforgeVein.translationKey,
+                                                I18n.format(chunkInfo.mOreQuality.getTranslationKey()) + " [" +
+                                                chunkInfo.mOreQuality.getMultString(chunkInfo.mWarforgeVein) + "]")));
                             } else {
                                 richTooltip.addLine(IKey.str("No ores in this chunk"));
                             }
@@ -253,7 +255,8 @@ public class GuiSiegeCamp {
                             }
                         })
                         .size(16 * 4)
-                        .pos((i * (16 * 4) + offset), (j * (16 * 4) + offset) + VERT_OFFSET));
+                        .pos((i * (16 * 4) + offset), (j * (16 * 4) + offset) + VERT_OFFSET));  // T->B, L->R
+                        // chud try not to flip indices challenge (impossible)
                 id++;
             }
         }

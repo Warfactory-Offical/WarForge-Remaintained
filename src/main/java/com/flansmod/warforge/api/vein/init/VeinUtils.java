@@ -85,8 +85,7 @@ public class VeinUtils {
             float yield = yields.get(subCompIndex).get(dim);
 
             // scale the guaranteed yield based on quality
-            if (veinInfo.second() == Quality.POOR) { yield /= YIELD_QUALITY_MULTIPLIER; }
-            else if (veinInfo.second() == Quality.RICH) { yield *= YIELD_QUALITY_MULTIPLIER; }
+            yield *= qual.getLocalMultiplier(vein);
 
             short[] result = new short[]{
                     weights.get(subCompIndex).get(dim),

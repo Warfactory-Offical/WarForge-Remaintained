@@ -220,12 +220,10 @@ public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvi
         int centerIndexZ = BORDER_SIZE / 2;
 
         int index = 0;
+        DimChunkPos siegeChunkPos = siegePos.toChunkPos();
         for (DimChunkPos chunk : new ArrayList<>(validTargets.keySet())) {
-            int row = index / BORDER_SIZE;
-            int col = index % BORDER_SIZE;
-
-            int dx = col - centerIndexX;
-            int dz = row - centerIndexZ;
+            int dx = chunk.x - siegeChunkPos.x;
+            int dz = chunk.z - siegeChunkPos.z;
 
             Vec3i offset = new Vec3i(dx, 0, dz);
 

@@ -21,6 +21,8 @@ import static com.flansmod.warforge.common.WarForgeMod.VEIN_HANDLER;
 
 public class Vein {
     public final String translationKey;
+    public final float[] qualMults;
+
     @Nonnull
     public final LinkedHashSet<StackComparable> compIds;  // if this is null, then nothing is produced
     @Nonnull
@@ -48,6 +50,7 @@ public class Vein {
 
         // carry over the obvious values
         this.translationKey = veinEntry.translationKey;
+        qualMults = veinEntry.qualMults;
         id = veinEntry.id;
         dimWeights = new Int2ObjectOpenHashMap<>(veinEntry.dimWeights.size());
         dimWeights.defaultReturnValue(new short[]{0, 0});

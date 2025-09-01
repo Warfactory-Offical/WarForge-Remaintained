@@ -39,13 +39,13 @@ public class MapDrawable implements IDrawable, Interactable {
     private final ResourceLocation attackIcon = new ResourceLocation(WarForgeMod.MODID, "gui/icon_siege_attack.png");
     private final ResourceLocation selfIcon = new ResourceLocation(WarForgeMod.MODID, "gui/icon_siege_self.png");
     private final ResourceLocation selfIconBase = new ResourceLocation(WarForgeMod.MODID, "gui/icon_siege_self_base.png");
-    private final boolean[] adjesency;
+    private final boolean[] adjacency;
     private final boolean campChunk;
 
-    public MapDrawable(String mapData, SiegeCampAttackInfoRender chunkState, boolean[] adjesency) {
+    public MapDrawable(String mapData, SiegeCampAttackInfoRender chunkState, boolean[] adjacency) {
         this.mapData = mapData;
         this.chunkState = chunkState;
-        this.adjesency = adjesency;
+        this.adjacency = adjacency;
         this.campChunk = chunkState.mOffset.getZ() == 0 && chunkState.mOffset.getX() == 0;
         rgb = Color4i.fromRGB(chunkState.mFactionColour).asFloatRGB();
     }
@@ -93,17 +93,17 @@ public class MapDrawable implements IDrawable, Interactable {
             Gui.drawRect(x, y, x + width + 1, y + height + 1, baseNoAlpha | 0x20_000000);
 
             // Top (light)
-            if (adjesency[3])
+            if (adjacency[3])
                 Gui.drawRect(x, y, x + width + 1, y + CB_THICKNESS, lightColor);
             // Left (light)
-            if (adjesency[0])
+            if (adjacency[0])
                 Gui.drawRect(x, y + CB_THICKNESS - 2, x + CB_THICKNESS, y + height, lightColor);
 
             // Bottom (dark)
-            if (adjesency[1])
+            if (adjacency[1])
                 Gui.drawRect(x, y + height - CB_THICKNESS, x + width, y + height, darkColor);
             // Right (dark)
-            if (adjesency[2])
+            if (adjacency[2])
                 Gui.drawRect(x + width - CB_THICKNESS, y, x + width, y + height, darkColor);
         } else {
             Gui.drawRect(x, y, x + width + 1, y + GRID_THICKNESS, GRID_COLOR);
