@@ -1,6 +1,6 @@
 package com.flansmod.warforge.common.network;
 
-import akka.japi.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import com.flansmod.warforge.api.vein.Quality;
 import com.flansmod.warforge.api.vein.Vein;
 import com.flansmod.warforge.api.vein.init.VeinUtils;

@@ -1,6 +1,6 @@
 package com.flansmod.warforge.api.vein.init;
 
-import akka.japi.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import com.flansmod.warforge.api.vein.Quality;
 import com.flansmod.warforge.common.WarForgeMod;
 import com.flansmod.warforge.common.network.PacketBase;
@@ -122,7 +122,7 @@ public class VeinConfigHandler {
             return;
         }
 
-        List<LinkedHashMap<String, Object>> allVeinData = veinData.second();
+        List<LinkedHashMap<String, Object>> allVeinData = veinData.getRight();
         if (allVeinData == null) {
             VEIN_HANDLER.populateVeinMap(null);
             return;
@@ -184,7 +184,7 @@ public class VeinConfigHandler {
                 infoWriter.close();
 
                 // write the yaml data to the file
-                yaml.dump(veinData.first(), new FileWriter(CONFIG_PATH.toFile(), true));  // write data
+                yaml.dump(veinData.getLeft(), new FileWriter(CONFIG_PATH.toFile(), true));  // write data
             } catch (Exception exception) {
                 WarForgeMod.LOGGER.atError().log("Could not write back to vein file; id's will not be updated.");
             }
@@ -216,7 +216,7 @@ public class VeinConfigHandler {
             return null;
         }
 
-        return new Pair<>(globalVeinData, rawVeins);
+        return Pair.of(globalVeinData, rawVeins);
     }
 
     // returns the number of occupiedIds found

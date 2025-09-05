@@ -1,7 +1,6 @@
 package com.flansmod.warforge.client;
 
 import com.flansmod.warforge.api.vein.Vein;
-import com.flansmod.warforge.api.vein.init.VeinUtils;
 import com.flansmod.warforge.common.CommonProxy;
 import com.flansmod.warforge.common.Content;
 import com.flansmod.warforge.common.blocks.models.ClaimModels;
@@ -28,7 +27,6 @@ import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;

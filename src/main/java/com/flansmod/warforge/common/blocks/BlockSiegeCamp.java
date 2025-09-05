@@ -1,6 +1,6 @@
 package com.flansmod.warforge.common.blocks;
 
-import akka.japi.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import com.flansmod.warforge.api.vein.Quality;
 import com.flansmod.warforge.api.vein.Vein;
 import com.flansmod.warforge.common.WarForgeMod;
@@ -239,8 +239,8 @@ public class BlockSiegeCamp extends MultiBlockColumn implements ITileEntityProvi
             Pair<Vein, Quality> veinInfo = VEIN_HANDLER.getVein(chunk.dim, chunk.x, chunk.z,
                     FMLCommonHandler.instance().getMinecraftServerInstance().worlds[0].getSeed());
             if (veinInfo != null) {
-                info.mWarforgeVein = veinInfo.first();
-                info.mOreQuality =  veinInfo.second();
+                info.mWarforgeVein = veinInfo.getLeft();
+                info.mOreQuality =  veinInfo.getRight();
             }
 
             list.add(info);

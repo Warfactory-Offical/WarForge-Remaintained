@@ -1,6 +1,6 @@
 package com.flansmod.warforge.client;
 
-import akka.japi.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import com.flansmod.warforge.api.WarforgeCache;
 import com.flansmod.warforge.api.vein.Quality;
 import com.flansmod.warforge.api.vein.Vein;
@@ -44,6 +44,6 @@ public class ChunkVeinCache {
     // checks that the pos is recognized, not checking if it has already been received
     public boolean isRecognized(DimChunkPos chunkPosKey) {
         Pair<Vein, Quality> veinInfo = cache.get(chunkPosKey);
-        return veinInfo == null || veinInfo.first() != null;
+        return veinInfo == null || veinInfo.getLeft() != null;
     }
 }

@@ -1,11 +1,9 @@
 package com.flansmod.warforge.client;
 
-import akka.japi.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import com.flansmod.warforge.api.vein.Quality;
 import com.flansmod.warforge.api.vein.Vein;
 import com.flansmod.warforge.api.vein.init.VeinUtils;
-import com.flansmod.warforge.common.*;
-import akka.japi.Pair;
 import com.flansmod.warforge.client.util.RenderUtil;
 import com.flansmod.warforge.client.util.ScreenSpaceUtil;
 import com.flansmod.warforge.common.Content;
@@ -338,26 +336,26 @@ public class ClientTickHandler {
 		// even though intelliJ thinks veinInfo is never null, it definitely should be able to be
 		// we render either the item, or some waiting icon
 		ItemStack currMemberItemStack = null;
-		boolean hasItemToRender = veinInfo != null && veinInfo.first() != null && veinInfo.first().compIds.size() > 0;
+		boolean hasItemToRender = veinInfo != null && veinInfo.getLeft() != null && veinInfo.getLeft().compIds.size() > 0;
 		if (hasItemToRender)  {
 			// initialize render info
 			if (lastRenderStartTimeMs == -1) {
 				lastRenderStartTimeMs = currTimeMs;
-				compIt = veinInfo.first().compIds.iterator();  // LinkedHashSet should give a consistent ordering
+				compIt = veinInfo.getLeft().compIds.iterator();  // LinkedHashSet should give a consistent ordering
 				currComp = compIt.next();
 			}
 
 			// check if the display time is up
 			else if (currTimeMs - lastRenderStartTimeMs > WarForgeConfig.VEIN_MEMBER_DISPLAY_TIME_MS) {
 				lastRenderStartTimeMs = currTimeMs;  // we are updating the component that we are rendering
-				if (!compIt.hasNext()) { compIt = veinInfo.first().compIds.iterator(); } // restart from beginning
+				if (!compIt.hasNext()) { compIt = veinInfo.getLeft().compIds.iterator(); } // restart from beginning
 				currComp = compIt.next();
 			}
 
 			currMemberItemStack = currComp.toItem();
 
 			if (currMemberItemStack == null) {
-				WarForgeMod.LOGGER.atError().log("Got unexpected null stack for vein " + veinInfo.first().toString());
+				WarForgeMod.LOGGER.atError().log("Got unexpected null stack for vein " + veinInfo.getLeft().toString());
 				return;
 			}
 		}
@@ -432,8 +430,8 @@ public class ClientTickHandler {
 		}
 
 		// translate and format the vein name by supplying the localized quality name as an argument
-		Vein currVein = veinInfo.first();
-		Quality currQual = veinInfo.second();
+		Vein currVein = veinInfo.getLeft();
+		Quality currQual = veinInfo.getRight();
 
 		// handle unrecognized veins specially
 		if (currVein == null || currQual == null) {
@@ -483,7 +481,7 @@ public class ClientTickHandler {
 
 			// if there is a chance for an extra yield, display as much
 			if (subCompInfo[2] > 0) {
-				compInfoStr.append(";+");
+				compInfoStr.append("; +");
 				compInfoStr.append(VeinUtils.shortToPercentStr(subCompInfo[2]));
 			}
 

@@ -1,6 +1,6 @@
 package com.flansmod.warforge.common.blocks;
 
-import akka.japi.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import com.flansmod.warforge.api.vein.Quality;
 import com.flansmod.warforge.api.vein.Vein;
 import com.flansmod.warforge.api.vein.init.VeinUtils;
@@ -52,8 +52,8 @@ public abstract class TileEntityYieldCollector extends TileEntityClaim implement
 		Pair<Vein, Quality> veinInfo = VEIN_HANDLER.getVein(world.provider.getDimension(), currPos.x, currPos.z, world.getSeed());
 		if (veinInfo == null) { return; }  // ignore null veins
 
-		Vein currVein = veinInfo.first();
-		Quality currQual = veinInfo.second();
+		Vein currVein = veinInfo.getLeft();
+		Quality currQual = veinInfo.getRight();
 
 		Random rand = new Random((WarForgeMod.currTickTimestamp * world.getSeed()) * 2654435761L);
 		ArrayList<ItemStack> yieldComps = new ArrayList<>(currVein.compIds.size());
