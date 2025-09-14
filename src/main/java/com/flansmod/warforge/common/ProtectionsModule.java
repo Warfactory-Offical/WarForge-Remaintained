@@ -21,6 +21,7 @@ import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.event.world.WorldEvent.PotentialSpawns;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
@@ -172,15 +173,31 @@ public class ProtectionsModule {
         }
     }
 
+    // might be useful at some point
     @SubscribeEvent
-    public void BlockPlaced(BlockEvent.PlaceEvent event) {
+    public void EntityPlaced(BlockEvent.PlaceEvent event) {
+        if (event.getWorld().isRemote) { return; }
+        WarForgeMod.LOGGER.atDebug().log("Place Event: " + event);
+    }
+
+    // TODO: Make the protections module properly handle mekanism place events where the placer is actually null
+    // is called twice for mekanism cables for some reason; first call has null entity, second has placer (which might be null)
+    @SubscribeEvent
+    public void BlockPlaced(BlockEvent.EntityPlaceEvent event) {
         if (event.getWorld().isRemote)
             return;
 
-        if (OP_OVERRIDE && WarForgeMod.isOp(event.getEntity()))
+        Entity eventEntity = event.getEntity();
+
+        // best effort compat with mekanism
+        Block placedBlock = event.getPlacedBlock().getBlock();
+        var blockId = ForgeRegistries.BLOCKS.getKey(placedBlock);
+        if (blockId == null) { WarForgeMod.LOGGER.atDebug().log("Could not get id of block placed in event: " + event); }
+        else if (blockId.getNamespace().equals("mekanism") && eventEntity == null) { return; }  // ignore mek place w/ null entity
+
+        if (OP_OVERRIDE && WarForgeMod.isOp(eventEntity))
             return;
 
-        Entity eventEntity = event.getEntity();
         if (eventEntity == null) {
             WarForgeMod.LOGGER.atError().log("Detected null entity for event with detals: pos - " + event.getPos() + "; world - " + event.getWorld() + ";");
             event.setCanceled(true);
