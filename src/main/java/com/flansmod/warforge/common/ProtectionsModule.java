@@ -173,7 +173,7 @@ public class ProtectionsModule {
     }
 
     @SubscribeEvent
-    public void BlockPlaced(BlockEvent.EntityPlaceEvent event) {
+    public void BlockPlaced(BlockEvent.PlaceEvent event) {
         if (event.getWorld().isRemote)
             return;
 
