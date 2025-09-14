@@ -189,14 +189,14 @@ public class ProtectionsModule {
 
         Entity eventEntity = event.getEntity();
 
+        if (OP_OVERRIDE && WarForgeMod.isOp(eventEntity))
+            return;
+
         // best effort compat with mekanism
         Block placedBlock = event.getPlacedBlock().getBlock();
         var blockId = ForgeRegistries.BLOCKS.getKey(placedBlock);
         if (blockId == null) { WarForgeMod.LOGGER.atDebug().log("Could not get id of block placed in event: " + event); }
         else if (blockId.getNamespace().equals("mekanism") && eventEntity == null) { return; }  // ignore mek place w/ null entity
-
-        if (OP_OVERRIDE && WarForgeMod.isOp(eventEntity))
-            return;
 
         if (eventEntity == null) {
             WarForgeMod.LOGGER.atError().log("Detected null entity for event with detals: pos - " + event.getPos() + "; world - " + event.getWorld() + ";");
