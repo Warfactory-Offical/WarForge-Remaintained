@@ -34,7 +34,7 @@ public class CommandFactions extends CommandBase {
     };
     private static final String[] tabCompletionsOp = new String[]{
             "invite", "accept", "disband", "expel", "leave", "time", "info", "top", "notoriety", "wealth", "legacy",
-            "promote", "demote", "msg", "setleader, siege", "borders",
+            "promote", "demote", "msg", "setleader", "siege", "borders",
             "safe", "war", "protection", "resetflagcooldowns",
     };
 
@@ -58,7 +58,12 @@ public class CommandFactions extends CommandBase {
 
     @Override
     public String getUsage(ICommandSender sender) {
-        return null;
+        final boolean isOp = WarForgeMod.isOp(sender);
+        final String base = "/f <help|create|invite|accept|disband|expel|remove|leave|exit|setleader|time|info|top|" +
+                            "wealth|bal|baltop|notoriety|pvp|pvptop|legacy|playtime|playtimetop|home|spawn|" + "promote|demote|chat|msg|borders>";
+        if (!isOp) return base;
+        final String opExtras = " | safezone|claimsafe|warzone|claimwarzone|war|protection|sieges|clearnotoriety|clearlegacy|resetflagcooldowns";
+        return base + opExtras;
     }
 
     @Override
