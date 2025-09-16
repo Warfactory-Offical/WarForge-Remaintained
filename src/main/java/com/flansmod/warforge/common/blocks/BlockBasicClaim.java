@@ -32,6 +32,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.IBlockAccess;
@@ -51,6 +52,7 @@ import java.util.UUID;
 import static com.flansmod.warforge.client.models.BakingUtil.registerFacingModels;
 import static com.flansmod.warforge.common.Content.dummyTranslusent;
 import static com.flansmod.warforge.common.Content.statue;
+import static com.flansmod.warforge.common.WarForgeMod.FACTIONS;
 import static com.flansmod.warforge.common.blocks.BlockDummy.MODEL;
 import static com.flansmod.warforge.common.blocks.BlockDummy.modelEnum.KING;
 import static com.flansmod.warforge.common.blocks.BlockDummy.modelEnum.TRANSLUCENT;
@@ -66,7 +68,6 @@ public class BlockBasicClaim extends MultiBlockColumn implements ITileEntityProv
         this.setResistance(30000000f);
         IDynamicModels.INSTANCES.add(this);
     }
-
 
     @Override
     public boolean isOpaqueCube(IBlockState state) {
@@ -91,11 +92,21 @@ public class BlockBasicClaim extends MultiBlockColumn implements ITileEntityProv
             return new TileEntityReinforcedClaim();
     }
 
+    // returns the first located adjacent position (in SWNE order), or null if there was none
+    public static DimChunkPos hasAdjacent(DimChunkPos sourcePos, Faction placingFaction) {
+        for (var facing : EnumFacing.HORIZONTALS) {
+            DimChunkPos adj = new DimChunkPos(sourcePos.dim, sourcePos.x + facing.getXOffset(), sourcePos.z + facing.getZOffset());
+            if (Objects.equals(FACTIONS.getClaims().get(adj), placingFaction.uuid)) { return adj; }
+        }
+
+        return null;
+    }
+
     @Override
     public boolean canPlaceBlockAt(World world, BlockPos pos) {
         if (!world.isRemote) {
             // Can't claim a chunk claimed by another faction
-            UUID existingClaim = WarForgeMod.FACTIONS.getClaim(new DimChunkPos(world.provider.getDimension(), pos));
+            UUID existingClaim = FACTIONS.getClaim(new DimChunkPos(world.provider.getDimension(), pos));
             if (!existingClaim.equals(Faction.nullUuid))
                 return false;
 
@@ -116,7 +127,7 @@ public class BlockBasicClaim extends MultiBlockColumn implements ITileEntityProv
             TileEntity te = world.getTileEntity(pos);
             if (te instanceof TileEntityBasicClaim claim) {
 
-                WarForgeMod.FACTIONS.onNonCitadelClaimPlaced(claim, placer);
+                FACTIONS.onNonCitadelClaimPlaced(claim, placer);
                 super.onBlockPlacedBy(world, pos, state, placer, stack);
                 claim.onPlacedBy(placer);
             }
@@ -147,12 +158,12 @@ public class BlockBasicClaim extends MultiBlockColumn implements ITileEntityProv
             return true;
         }
         if (!world.isRemote) {
-            Faction playerFaction = WarForgeMod.FACTIONS.getFactionOfPlayer(player.getUniqueID());
+            Faction playerFaction = FACTIONS.getFactionOfPlayer(player.getUniqueID());
             TileEntityBasicClaim claimTE = (TileEntityBasicClaim) world.getTileEntity(pos);
 
             // Any factionless players, and players who aren't in this faction get an info panel
             if (playerFaction == null || !playerFaction.uuid.equals(claimTE.factionUUID)) {
-                Faction citadelFaction = WarForgeMod.FACTIONS.getFaction(claimTE.factionUUID);
+                Faction citadelFaction = FACTIONS.getFaction(claimTE.factionUUID);
                 if (citadelFaction != null) {
                     PacketFactionInfo packet = new PacketFactionInfo();
                     packet.info = citadelFaction.createInfo();

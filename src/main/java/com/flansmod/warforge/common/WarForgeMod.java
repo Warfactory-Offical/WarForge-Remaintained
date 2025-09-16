@@ -5,9 +5,9 @@ import com.flansmod.warforge.api.vein.Vein;
 import com.flansmod.warforge.api.vein.init.VeinConfigHandler;
 import com.flansmod.warforge.api.vein.init.VeinUtils;
 import com.flansmod.warforge.client.PlayerNametagCache;
+import com.flansmod.warforge.common.blocks.BlockBasicClaim;
 import com.flansmod.warforge.common.blocks.IMultiBlockInit;
 import com.flansmod.warforge.common.blocks.TileEntityClaim;
-import com.flansmod.warforge.common.blocks.TileEntitySiegeCamp;
 import com.flansmod.warforge.common.effect.EffectRegistry;
 import com.flansmod.warforge.common.network.*;
 import com.flansmod.warforge.common.potions.PotionsModule;
@@ -474,8 +474,12 @@ public class WarForgeMod implements ILateMixinLoader {
                 player.sendMessage(new TextComponentString("Your faction reached it's level's claim limit, upgrade the level to incrase the limit"));
                 event.setCanceled(true);
             }
-        } else // Must be siege block
-        {
+
+            if (!WarForgeConfig.ENABLE_ISOLATED_CLAIMS && BlockBasicClaim.hasAdjacent(pos, playerFaction) == null) {
+                player.sendMessage(new TextComponentString("Isolated claims are disabled; you cannot put a claim here with no adjacent claims"));
+                event.setCanceled(true);
+            }
+        } else { // Must be siege block
             if (playerFaction == null) // Can't start sieges if you aren't in a faction
             {
                 player.sendMessage(new TextComponentString("You aren't in a faction. Craft a citadel or join a faction"));
