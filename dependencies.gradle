@@ -48,5 +48,5 @@ dependencies {
     runtimeOnly rfg.deobf("curse.maven:configanytime-870276:5212709")
     runtimeOnly rfg.deobf("curse.maven:mekanism-ce-399904:6853226")
 
-    implementation ("com.cleanroommc:modularui:2.5.0-rc5"){transitive = false}
+    implementation ("com.cleanroommc:modularui:3.0.4"){transitive = false}
 }

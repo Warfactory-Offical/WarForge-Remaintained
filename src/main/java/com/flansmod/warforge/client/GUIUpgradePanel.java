@@ -49,7 +49,7 @@ public class GUIUpgradePanel {
     public static ModularScreen createGui(UUID factionID, String factionName, int level, int color, boolean outrankingOfficer) {
         ListWidget list = new ListWidget<>()
                 .scrollDirection(GuiAxis.Y)
-                .keepScrollBarInArea(true)
+//                .keepScrollBarInArea(true)
                 .background(GuiTextures.SLOT_ITEM)
                 .widthRel(0.98f)
                 .height(30 * 6 + 10);
@@ -155,7 +155,7 @@ public class GUIUpgradePanel {
                 .overlay(IKey.str("Close"))
                 .bottomRel(0.5f)
                 .onMousePressed(button -> {
-                    panel.closeIfOpen(true);
+                    panel.closeIfOpen();
                     return true;
                 });
 
@@ -175,7 +175,7 @@ public class GUIUpgradePanel {
                     PacketRequestUpgrade packet = new PacketRequestUpgrade();
                     packet.factionID = factionID;
                     NETWORK.sendToServer(packet);
-                    panel.closeIfOpen(true);
+                    panel.closeIfOpen();
 
                     return true;
                 });
@@ -272,7 +272,7 @@ public class GUIUpgradePanel {
                         .size(100, 16)
                         .overlay(IKey.str("Close"))
                         .onMousePressed(button -> {
-                            panel.closeIfOpen(true);
+                            panel.closeIfOpen();
                             return true;
                         })
                         .center()

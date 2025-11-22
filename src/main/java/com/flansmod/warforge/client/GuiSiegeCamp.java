@@ -177,7 +177,7 @@ public class GuiSiegeCamp {
                 .background(GuiTextures.BUTTON_CLEAN)
                 .overlay(GuiTextures.CLOSE)
                 .onMousePressed(mouseButton -> {
-                            panel.closeIfOpen(true);
+                            panel.closeIfOpen();
                             return true;
                         }
                 )
@@ -224,7 +224,7 @@ public class GuiSiegeCamp {
                             siegePacket.mOffset = chunkInfo.mOffset;
 
                             WarForgeMod.NETWORK.sendToServer(siegePacket);
-                            panel.closeIfOpen(true);
+                            panel.closeIfOpen();
                             return true;
                         })
                         .tooltip(richTooltip ->
