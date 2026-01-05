@@ -1,0 +1,45 @@
+tile.citadelblock.name=Блок цитадели
+tile.basicclaimblock.name=Простой блок владения
+tile.reinforcedclaimblock.name=Укрепленный блок владения
+tile.siegecampblock.name=Блок осадного лагеря
+tile.adminclaimblock.name=Админский блок владения
+tile.topleaderboard.name=Блок таблицы лидеров (Топ)
+tile.wealthleaderboard.name=Блок таблицы лидеров (Богатство)
+tile.legacyleaderboard.name=Блок таблицы лидеров (Наследие)
+tile.notorietyleaderboard.name=Блок таблицы лидеров (Слава)
+splash_potion.effect.tpacceptpotion=Взрывное зелье Телевосприимчивости
+splash_potion.effect.tprequestpotion=Взрывное зелье Телепортации
+potion.effect.tpacceptpotion=Зелье Телевосприимчивости
+potion.effect.tprequestpotion=Зелье Телепортации
+lingering_potion.effect.tpacceptpotion=Туманное зелье  Телевосприимчивости
+lingering_potion.effect.tprequestpotion=Туманное зелье Телепортации
+effect.tpaccept=Телевосприимчивость (Игроки могут tp к Вам)
+effect.tprequest=Телепортация (tp к ближайшему игроку с эффектом Телевосприимчивости)
+
+warforge.info.vein.rich=Богатая
+warforge.info.vein.fair=Средняя
+warforge.info.vein.poor=Бедная
+warforge.info.vein.waiting=Ожидание данных о жиле от сервера...
+warforge.info.vein.null=В этом чанке нет жил.
+warforge.info.vein.unrecognized=Неопознанная жила в этом чанке; подождите окончания синхронизации или переподключитесь, если пролема не исчезнет.
+
+warforge.veins.gold=%s золотая жила
+warforge.veins.gold=%s алмазно-золотая жила
+warforge.veins.iron=%s железо-угольная жила
+
+warforge.info.too_many_siege_blocks=Ваша фракция достигла лимита осад.
+warforge.info.siege_count=Текущее число осад Вашей фракции: %d.
+warforge.info.siege_defense_info=Вашу фракции выбрали целью осады блоком по координатам: %s.
+warforge.info.siege_idle_exceeded_current=Ваша фракция слишком долго отсутствовала на осаде; осада проиграна.
+warforge.info.siege_idle_exceeded_opposing=Вражеская фракция бросила свои позиции; осада выиграна.
+warforge.info.siege_abandon_approaching_current=Осталось %d секунд до признания осады брошенной; вернитесь на расстояние %d чанков от блока осады для уменьшения таймера.
+warforge.info.siege_abandon_approaching_opposing=Осталось %d секунд до того, как вражеская фракция бросит осаду; удерживайте врагов на расстоянии %d чанков от блока осады.
+warforge.info.siege_won_attackers=Ваша фракция [%s] выиграла осаду в %s.
+warforge.info.siege_lost_attackers=Осада вашей фракции [%s] в %s провалилась.
+warforge.info.siege_won_defenders=Ваша фракция [%s] успешно отразила осаду в %s.
+warforge.info.siege_lost_defenders=Ваша фракция [%s] не смогла отразить осаду в %s и потеряла территории.
+warforge.info.chunk_is_conquered=Этот чанк был завоёван %s и не может быть осаждён или перейти во владение ещё %s.
+
+warforge.notification.siege_abandon_current=Члены вашей фракции отсутствовуют в чанке [%d] %d секунд. Осада будет считаться брошенной через %d секунд и не завершится; один участник должен вернуться для уменьшения таймера.
+warforge.notification.siege_abandon_opposing=Члены вашей фракции отсутствовуют в чанке [%d] %d секунд. Осада будет считаться брошенной через %d секунд и не завершится; хотя бы один участник должен вернуться для уменьшения таймера.
+warforge.notification.siege_death=Смерть %s сместила осаду на %d; АТК: %d/%d, ЗАЩ: %d/5.
